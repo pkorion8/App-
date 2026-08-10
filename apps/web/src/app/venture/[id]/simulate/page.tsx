@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
-import { requiresDecision, getDecisionOptions, rowToSimulationState } from "@venture-sandbox/simulator";
+import {
+  requiresDecision,
+  getDecisionOptions,
+  getDelayedConsequenceNotes,
+  rowToSimulationState,
+} from "@venture-sandbox/simulator";
 import { Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { StartSimulationForm } from "./StartSimulationForm";
 import { RunControls } from "./RunControls";
+import { CheckpointPanel } from "./CheckpointPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -60,15 +66,42 @@ export default async function SimulatePage({
     .maybeSingle();
 
   let events: { id: string; virtual_day: number; description: string; event_type: string }[] = [];
+  let decisions: { virtual_day: number; decision_type: string; choice: string }[] = [];
+  let checkpoints: { id: string; virtual_day: number; label: string | null; created_at: string }[] = [];
   if (run) {
-    const { data } = await supabase
-      .from("simulation_events")
-      .select("id, virtual_day, description, event_type")
-      .eq("simulation_run_id", run.id)
-      .order("virtual_day", { ascending: false })
-      .limit(15);
-    events = data ?? [];
+    const [{ data: eventData }, { data: decisionData }, { data: checkpointData }] = await Promise.all([
+      supabase
+        .from("simulation_events")
+        .select("id, virtual_day, description, event_type")
+        .eq("simulation_run_id", run.id)
+        .order("virtual_day", { ascending: false })
+        .limit(15),
+      supabase
+        .from("simulation_decisions")
+        .select("virtual_day, decision_type, choice")
+        .eq("simulation_run_id", run.id)
+        .order("virtual_day", { ascending: true }),
+      supabase
+        .from("simulation_checkpoints")
+        .select("id, virtual_day, label, created_at")
+        .eq("simulation_run_id", run.id)
+        .order("created_at", { ascending: false }),
+    ]);
+    events = eventData ?? [];
+    decisions = decisionData ?? [];
+    checkpoints = checkpointData ?? [];
   }
+
+  const delayedConsequenceNotes = run
+    ? getDelayedConsequenceNotes(
+        rowToSimulationState(run),
+        decisions.map((d) => ({
+          virtualDay: d.virtual_day,
+          decisionType: d.decision_type,
+          choice: d.choice,
+        })),
+      )
+    : [];
 
   return (
     <main className="mx-auto max-w-3xl p-6">
@@ -113,6 +146,30 @@ export default async function SimulatePage({
               awaitingDecision={requiresDecision(rowToSimulationState(run))}
               decisionOptions={getDecisionOptions(rowToSimulationState(run))}
               isComplete={run.stage === "complete"}
+            />
+          </Card>
+
+          {delayedConsequenceNotes.length > 0 && (
+            <Card className="border-vs-primary/40 bg-vs-primary/5">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
+                Why this is happening
+              </p>
+              <ul className="space-y-1.5">
+                {delayedConsequenceNotes.map((note) => (
+                  <li key={note} className="text-sm text-vs-fg">
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          <Card>
+            <CheckpointPanel
+              ventureId={venture.id}
+              runId={run.id}
+              checkpoints={checkpoints}
+              currentDay={run.virtual_day}
             />
           </Card>
 

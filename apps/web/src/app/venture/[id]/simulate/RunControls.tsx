@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { Button } from "@venture-sandbox/ui";
-import { advanceSimDay, submitSimDecision } from "./actions";
+import { advanceSimDay, advanceToNextCheckpoint, submitSimDecision } from "./actions";
 
 interface DecisionOption {
   id: string;
@@ -53,15 +53,39 @@ export function RunControls({
   }
 
   return (
-    <Button
-      disabled={isPending}
-      onClick={() =>
-        startTransition(() => {
-          advanceSimDay(ventureId, runId);
-        })
-      }
-    >
-      {isPending ? "Running..." : "Run next day"}
-    </Button>
+    <div className="flex flex-wrap gap-2">
+      <Button
+        disabled={isPending}
+        onClick={() =>
+          startTransition(() => {
+            advanceSimDay(ventureId, runId, 1);
+          })
+        }
+      >
+        {isPending ? "Running..." : "Run next day"}
+      </Button>
+      <Button
+        variant="secondary"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(() => {
+            advanceSimDay(ventureId, runId, 3);
+          })
+        }
+      >
+        Run 3 days
+      </Button>
+      <Button
+        variant="secondary"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(() => {
+            advanceToNextCheckpoint(ventureId, runId);
+          })
+        }
+      >
+        Advance to next checkpoint
+      </Button>
+    </div>
   );
 }

@@ -51,7 +51,7 @@ tests/
      editor (or `supabase db push` once linked).
 
    Copy `.env.example` to `.env.local` in the repo root and fill in
-   `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
    Until this is done, the app still runs — sign-in and dashboard routes
    show a "Supabase isn't connected yet" notice instead of crashing.

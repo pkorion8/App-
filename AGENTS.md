@@ -20,11 +20,32 @@ one direction quietly.
 
 **What's genuinely done and tested, not just written:**
 - Full auth (magic link), workspace/venture CRUD, RLS on everything — Slice 1
-- Research: clarification flow, DEMO-labeled placeholder findings, one
-  live source (Apple's free iTunes Search API for App Store competitors)
+- Research: clarification flow (geography is now a dropdown, not free
+  text — resolves reliably to a country code), DEMO-labeled placeholder
+  findings, live App Store competitor search (Apple's free iTunes Search
+  API) with newcomer detection (apps released in the trailing 12 months,
+  flagged directly in the finding text), live World Bank market
+  indicators (population, GDP/capita, internet penetration) with
+  graceful per-indicator degradation since the API is empirically flaky
 - Creator Intelligence: YouTube official discovery (tested live, works),
   browser-assisted transcript connector (untested live — see below),
   heuristic claim extraction (tested against sample transcripts)
+- Simulator: deterministic state machine (Setup → ... → Month 1),
+  delayed-consequence narration tied to real past decisions + current
+  metrics, batch day-advance controls (1/3/to-next-checkpoint), checkpoint
+  save + rewind (duplicate-and-replay, not git-like branching), and real
+  day-by-day trend charts (cash/users/revenue) — all tested
+- Build Studio V1 (stack/cost/backlog generator), Compare V1
+  (side-by-side facts, no invented "winner" score)
+- Monitor V1: manual real-world outcome logging (users/revenue/cost/
+  retention) with the same trend-chart treatment as Simulate, kept
+  deliberately separate from the simulation's projected numbers
+- Billing V1: Stripe Checkout + customer portal + webhook sync wired to
+  the existing billing_accounts table — code-complete and typechecked,
+  but genuinely untested live (needs a real Stripe test-mode account from
+  the product owner; see .env.example)
+- Public landing page (`/`) and `/pricing` — Pro honestly labeled "coming
+  soon" until Stripe is actually configured
 - Deployed and live on Vercel, real Supabase project connected
 
 **Two external-source findings from real testing, not assumptions —

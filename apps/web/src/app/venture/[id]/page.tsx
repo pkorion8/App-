@@ -5,7 +5,7 @@ import { Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const FUTURE_TABS = ["Simulate", "Build"] as const;
+const FUTURE_TABS = ["Build"] as const;
 
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
@@ -70,6 +70,12 @@ export default async function VenturePage({
           className="rounded-vs-sm border border-vs-primary bg-vs-primary px-3 py-1.5 text-sm text-vs-primary-fg hover:opacity-90"
         >
           Research
+        </Link>
+        <Link
+          href={`/venture/${venture.id}/simulate`}
+          className="rounded-vs-sm border border-vs-primary bg-vs-primary px-3 py-1.5 text-sm text-vs-primary-fg hover:opacity-90"
+        >
+          Simulate
         </Link>
         {FUTURE_TABS.map((tab) => (
           <span

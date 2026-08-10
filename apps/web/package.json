@@ -18,6 +18,7 @@
     "@venture-sandbox/observability": "workspace:*",
     "@venture-sandbox/research": "workspace:*",
     "@venture-sandbox/schemas": "workspace:*",
+    "@venture-sandbox/simulator": "workspace:*",
     "@venture-sandbox/ui": "workspace:*",
     "next": "^14.2.15",
     "react": "^18.3.1",

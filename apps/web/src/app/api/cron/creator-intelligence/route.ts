@@ -12,8 +12,15 @@ import { extractHeuristicClaims } from "@venture-sandbox/research/heuristic-clai
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const SINCE_DAYS = 7;
-const MAX_TRANSCRIPTS_PER_RUN = 6;
+const DEFAULT_SINCE_DAYS = 7;
+const DEFAULT_MAX_TRANSCRIPTS_PER_RUN = 6;
+// The real daily schedule (vercel.json) always hits this route with no
+// query params, so it gets the defaults above. These params exist for
+// manual backfills -- e.g. registering a channel and wanting its last two
+// months, not just what's new today -- invoked by hand with the same
+// CRON_SECRET, not by the scheduler.
+const MAX_SINCE_DAYS = 120;
+const MAX_LIMIT_PER_RUN = 10;
 
 interface RunSummary {
   channelsChecked: number;
@@ -30,6 +37,18 @@ export async function GET(request: NextRequest) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const sinceDaysParam = Number(request.nextUrl.searchParams.get("sinceDays"));
+  const sinceDays =
+    Number.isFinite(sinceDaysParam) && sinceDaysParam > 0
+      ? Math.min(sinceDaysParam, MAX_SINCE_DAYS)
+      : DEFAULT_SINCE_DAYS;
+
+  const limitParam = Number(request.nextUrl.searchParams.get("limit"));
+  const maxTranscriptsPerRun =
+    Number.isFinite(limitParam) && limitParam > 0
+      ? Math.min(limitParam, MAX_LIMIT_PER_RUN)
+      : DEFAULT_MAX_TRANSCRIPTS_PER_RUN;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -83,7 +102,7 @@ export async function GET(request: NextRequest) {
   for (const channel of channels) {
     summary.channelsChecked++;
     try {
-      const uploads = await getRecentUploads(channel.channel_id, youtubeApiKey, SINCE_DAYS);
+      const uploads = await getRecentUploads(channel.channel_id, youtubeApiKey, sinceDays);
       for (const video of uploads) {
         discovered.push({
           channelRowId: channel.id,
@@ -112,7 +131,7 @@ export async function GET(request: NextRequest) {
   // Step 2: transcript + extraction, capped per run (see maxDuration
   // comment above). Newest videos first.
   discovered.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-  const toProcess = discovered.slice(0, MAX_TRANSCRIPTS_PER_RUN);
+  const toProcess = discovered.slice(0, maxTranscriptsPerRun);
 
   const chromiumExecutablePath = await resolveChromiumExecutablePath();
   if (!chromiumExecutablePath) {

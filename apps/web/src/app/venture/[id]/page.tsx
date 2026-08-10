@@ -62,7 +62,7 @@ export default async function VenturePage({
         </p>
       </Card>
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         <Link
           href={`/venture/${venture.id}/research`}
           className="rounded-vs-sm border border-vs-primary bg-vs-primary px-3 py-1.5 text-sm text-vs-primary-fg hover:opacity-90"

@@ -64,7 +64,7 @@ export function CheckpointPanel({
           {checkpoints.map((cp) => (
             <li
               key={cp.id}
-              className="flex items-center justify-between rounded-vs-sm border border-vs-border p-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-vs-sm border border-vs-border p-2 text-sm"
             >
               <span className="text-vs-fg">
                 Day {cp.virtual_day} — {cp.label || "untitled"}

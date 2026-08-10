@@ -74,5 +74,15 @@ export function generateDemoFindings(input: DemoFindingInput): DemoFinding[] {
       limitations: NO_SOURCE_LIMITATION,
       nextTest: "Cross-check technical feasibility (APIs, licensing) once Technology & Ownership research is connected.",
     },
+    {
+      normalizedClaim: `Market size & digital readiness for ${geography}`,
+      userFacingSummary:
+        `Once connected, this will show population, income level, and internet ` +
+        `access for ${geography} — the macro backdrop for how big this market ` +
+        `could realistically be.`,
+      state,
+      limitations: NO_SOURCE_LIMITATION,
+      nextTest: "Pull population, GDP per capita, and internet penetration from the World Bank Open Data API.",
+    },
   ];
 }

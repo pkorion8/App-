@@ -2,7 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { clarificationSchema } from "@venture-sandbox/schemas";
-import { generateDemoFindings, researchAppStoreCompetitors } from "@venture-sandbox/research";
+import {
+  generateDemoFindings,
+  researchAppStoreCompetitors,
+  researchMarketIndicators,
+} from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -80,19 +84,25 @@ export async function startResearch(
     geography,
   });
 
-  // Slot 0 (competitor landscape) tries a real, free App Store search first;
-  // falls back to the honest DEMO placeholder if it fails or nothing else
-  // has been wired up yet. The other 3 slots stay DEMO until their sources
-  // (YouTube, Trends, etc.) are connected too.
-  const liveCompetitorFinding = await researchAppStoreCompetitors({
-    ventureName: venture.name,
-    ideaText: venture.raw_idea_text,
-    geography,
-  });
+  // Slots 0 and 4 try real, free sources first (App Store search, World
+  // Bank Open Data); each falls back to its honest DEMO placeholder if the
+  // live call fails or finds nothing. Slots 1-3 stay DEMO until their
+  // sources (YouTube, Trends, etc.) are connected too.
+  const [liveCompetitorFinding, liveMarketIndicators] = await Promise.all([
+    researchAppStoreCompetitors({
+      ventureName: venture.name,
+      ideaText: venture.raw_idea_text,
+      geography,
+    }),
+    researchMarketIndicators({ geography }),
+  ]);
 
   const findingsToInsert = demoFindings.map((f, i) => {
     if (i === 0 && liveCompetitorFinding) {
       return { ...liveCompetitorFinding, isDemo: false };
+    }
+    if (i === 4 && liveMarketIndicators) {
+      return { ...liveMarketIndicators, isDemo: false };
     }
     return { ...f, isDemo: true };
   });

@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./youtube-discovery": "./src/sources/youtube-discovery.ts",
     "./youtube-transcript": "./src/sources/youtube-transcript-connector.ts",
-    "./heuristic-claims": "./src/extraction/heuristic-claims.ts"
+    "./heuristic-claims": "./src/extraction/heuristic-claims.ts",
+    "./geography": "./src/geography.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

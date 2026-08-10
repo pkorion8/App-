@@ -1,0 +1,17 @@
+{
+  "name": "venture-sandbox",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @venture-sandbox/web dev",
+    "build": "pnpm -r --filter=./apps/* --filter=./packages/* build",
+    "lint": "pnpm -r --filter=./apps/* --filter=./packages/* lint",
+    "typecheck": "pnpm -r --filter=./apps/* --filter=./packages/* typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

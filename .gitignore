@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+out/
+coverage/
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+.turbo/
+supabase/.branches/
+supabase/.temp/

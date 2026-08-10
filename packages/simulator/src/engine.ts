@@ -40,6 +40,9 @@ export function createInitialState(budgetTotal: number): SimulationState {
     monthlyRevenue: 0,
     monthlyCost: 0,
     marketConfidence: "unknown",
+    history: [
+      { day: 0, cashRemaining: budgetTotal, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct: 50 },
+    ],
   };
 }
 
@@ -155,6 +158,18 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
     default:
       break;
   }
+
+  next.history = [
+    ...state.history,
+    {
+      day: next.virtualDay,
+      cashRemaining: next.cashRemaining,
+      totalUsers: next.totalUsers,
+      monthlyRevenue: next.monthlyRevenue,
+      buildProgressPct: next.buildProgressPct,
+      productQualityPct: next.productQualityPct,
+    },
+  ];
 
   return { state: next, events, awaitingDecision: requiresDecision(next) };
 }

@@ -13,6 +13,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { StartSimulationForm } from "./StartSimulationForm";
 import { RunControls } from "./RunControls";
 import { CheckpointPanel } from "./CheckpointPanel";
+import { HistoryChart } from "./HistoryChart";
 
 export const dynamic = "force-dynamic";
 
@@ -92,9 +93,11 @@ export default async function SimulatePage({
     checkpoints = checkpointData ?? [];
   }
 
-  const delayedConsequenceNotes = run
+  const runState = run ? rowToSimulationState(run) : null;
+
+  const delayedConsequenceNotes = runState
     ? getDelayedConsequenceNotes(
-        rowToSimulationState(run),
+        runState,
         decisions.map((d) => ({
           virtualDay: d.virtual_day,
           decisionType: d.decision_type,
@@ -138,6 +141,31 @@ export default async function SimulatePage({
               <Stat label="Cost/mo" value={`$${run.monthly_cost.toLocaleString()}`} />
             </div>
           </Card>
+
+          {runState && runState.history.length >= 2 && (
+            <Card>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
+                Trend
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <HistoryChart
+                  title="Cash remaining"
+                  format="currency"
+                  points={runState.history.map((h) => ({ day: h.day, value: h.cashRemaining }))}
+                />
+                <HistoryChart
+                  title="Total users"
+                  format="number"
+                  points={runState.history.map((h) => ({ day: h.day, value: h.totalUsers }))}
+                />
+                <HistoryChart
+                  title="Revenue / mo"
+                  format="currency"
+                  points={runState.history.map((h) => ({ day: h.day, value: h.monthlyRevenue }))}
+                />
+              </div>
+            </Card>
+          )}
 
           <Card>
             <RunControls

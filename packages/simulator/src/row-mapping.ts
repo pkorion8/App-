@@ -1,4 +1,4 @@
-import type { SimulationState } from "./types";
+import type { SimulationHistoryPoint, SimulationState } from "./types";
 
 /**
  * Snake_case DB row <-> camelCase engine state. Lives here (not in
@@ -20,6 +20,7 @@ export interface SimulationRunRow {
   monthly_revenue: number;
   monthly_cost: number;
   market_confidence: string;
+  history?: unknown;
 }
 
 export function rowToSimulationState(row: SimulationRunRow): SimulationState {
@@ -37,6 +38,7 @@ export function rowToSimulationState(row: SimulationRunRow): SimulationState {
     monthlyRevenue: row.monthly_revenue,
     monthlyCost: row.monthly_cost,
     marketConfidence: row.market_confidence as SimulationState["marketConfidence"],
+    history: Array.isArray(row.history) ? (row.history as SimulationHistoryPoint[]) : [],
   };
 }
 
@@ -55,6 +57,7 @@ export function simulationStateToRow(state: SimulationState) {
     monthly_revenue: state.monthlyRevenue,
     monthly_cost: state.monthlyCost,
     market_confidence: state.marketConfidence,
+    history: state.history as unknown as Record<string, unknown>[],
     status: state.stage === "complete" ? ("complete" as const) : ("running" as const),
   };
 }

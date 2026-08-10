@@ -15,6 +15,16 @@ export type SimulationStage =
 export type TechnicalRisk = "low" | "medium" | "high";
 export type MarketConfidence = "unknown" | "weak" | "mixed" | "strong";
 
+/** One point-in-time snapshot of the metrics that are worth charting over the run. */
+export interface SimulationHistoryPoint {
+  day: number;
+  cashRemaining: number;
+  totalUsers: number;
+  monthlyRevenue: number;
+  buildProgressPct: number;
+  productQualityPct: number;
+}
+
 export interface SimulationState {
   stage: SimulationStage;
   virtualDay: number;
@@ -29,6 +39,8 @@ export interface SimulationState {
   monthlyRevenue: number;
   monthlyCost: number;
   marketConfidence: MarketConfidence;
+  /** Append-only day-by-day trail, oldest first -- what the Simulate page charts. */
+  history: SimulationHistoryPoint[];
 }
 
 export interface SimulationEvent {

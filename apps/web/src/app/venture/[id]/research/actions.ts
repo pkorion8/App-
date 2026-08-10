@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { clarificationSchema } from "@venture-sandbox/schemas";
-import { generateDemoFindings } from "@venture-sandbox/research";
+import { generateDemoFindings, researchAppStoreCompetitors } from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -80,14 +80,31 @@ export async function startResearch(
     geography,
   });
 
+  // Slot 0 (competitor landscape) tries a real, free App Store search first;
+  // falls back to the honest DEMO placeholder if it fails or nothing else
+  // has been wired up yet. The other 3 slots stay DEMO until their sources
+  // (YouTube, Trends, etc.) are connected too.
+  const liveCompetitorFinding = await researchAppStoreCompetitors({
+    ventureName: venture.name,
+    ideaText: venture.raw_idea_text,
+    geography,
+  });
+
+  const findingsToInsert = demoFindings.map((f, i) => {
+    if (i === 0 && liveCompetitorFinding) {
+      return { ...liveCompetitorFinding, isDemo: false };
+    }
+    return { ...f, isDemo: true };
+  });
+
   const { error: findingsError } = await supabase.from("findings").insert(
-    demoFindings.map((f) => ({
+    findingsToInsert.map((f) => ({
       mission_id: mission.id,
       workspace_id: venture.workspace_id,
       normalized_claim: f.normalizedClaim,
       user_facing_summary: f.userFacingSummary,
       state: f.state,
-      is_demo: true,
+      is_demo: f.isDemo,
       limitations: f.limitations,
       next_test: f.nextTest,
     })),
@@ -97,13 +114,19 @@ export async function startResearch(
     return { status: "error", message: findingsError.message };
   }
 
+  const liveFindingsCount = findingsToInsert.filter((f) => !f.isDemo).length;
+
   await supabase.from("audit_log").insert({
     actor_id: user.id,
     workspace_id: venture.workspace_id,
     action: "research_mission.completed",
     entity_type: "research_mission",
     entity_id: mission.id,
-    metadata: { venture_id: venture.id, is_demo: true },
+    metadata: {
+      venture_id: venture.id,
+      total_findings: findingsToInsert.length,
+      live_findings: liveFindingsCount,
+    },
   });
 
   logEvent({
@@ -112,7 +135,10 @@ export async function startResearch(
     workspaceId: venture.workspace_id,
     entityType: "research_mission",
     entityId: mission.id,
-    metadata: { is_demo: true },
+    metadata: {
+      total_findings: findingsToInsert.length,
+      live_findings: liveFindingsCount,
+    },
   });
 
   redirect(`/venture/${venture.id}/research`);

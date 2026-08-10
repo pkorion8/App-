@@ -18,6 +18,23 @@ skipping a module; do not silently expand it into full-depth work either.
 If a tradeoff decision is needed, say so explicitly rather than picking
 one direction quietly.
 
+**Every module in that list now exists at V1 depth as of this commit.**
+Two decisions made along the way, called out explicitly per the rule
+above rather than resolved silently:
+- **"Similar Apps/Tech"** was folded into Research rather than built as a
+  separate page: the live App Store competitor search (with newcomer
+  detection) *is* "Similar Apps," and the demo "Cost and time to build"
+  finding slot *is* "Tech" (build-journey sourcing, once Creator
+  Intelligence feeds it). If the product owner wants this as its own
+  distinct screen later, it's a straightforward split out of Research.
+- **"Shape"** was built as a founder-filled structured brief (target
+  user, problem, value prop, MVP scope, differentiation) rather than
+  AI-generated — there's no LLM API budget yet (`packages/ai` stays
+  reserved for that upgrade). It populates `ventures.target_user` /
+  `ventures.geography` (already-reserved columns) and advances
+  `ventures.status` from `draft` to `shaped` (an already-reserved enum
+  value neither had been wired up before).
+
 **What's genuinely done and tested, not just written:**
 - Full auth (magic link), workspace/venture CRUD, RLS on everything — Slice 1
 - Research: clarification flow (geography is now a dropdown, not free
@@ -46,6 +63,8 @@ one direction quietly.
   the product owner; see .env.example)
 - Public landing page (`/`) and `/pricing` — Pro honestly labeled "coming
   soon" until Stripe is actually configured
+- Shape V1: founder-filled brief (target user/geography/problem/value
+  prop/MVP scope/differentiation), advances venture status draft→shaped
 - Deployed and live on Vercel, real Supabase project connected
 
 **Two external-source findings from real testing, not assumptions —

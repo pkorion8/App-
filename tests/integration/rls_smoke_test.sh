@@ -49,6 +49,7 @@ grant select, insert, update on public.ventures to app_user;
 grant select, insert on public.audit_log to app_user;
 grant select on public.workspaces to app_user;
 grant select on public.workspace_members to app_user;
+grant select, insert, update on public.venture_shapes to app_user;
 SQL
 
 OWNER_ID=$($PSQL -d "$DB_NAME" -tAc "select id from auth.users where email='owner@example.com';")
@@ -115,6 +116,38 @@ select count(*) from public.ventures;
 " | tail -n1 | tr -d '[:space:]')
 if [ "$VISIBLE_TO_INTRUDER" -ne 0 ]; then
   echo "FAIL: intruder should see 0 ventures, saw $VISIBLE_TO_INTRUDER"
+  exit 1
+fi
+
+VENTURE_ID=$($PSQL -d "$DB_NAME" -tAc "select id from ventures where name='Smoke test venture';")
+
+echo "==> Asserting the owner can create and read a venture_shapes row"
+$PSQL -d "$DB_NAME" -v ON_ERROR_STOP=1 <<SQL
+set role app_user;
+set request.jwt.uid = '$OWNER_ID';
+insert into public.venture_shapes (venture_id, workspace_id, problem_statement)
+values ('$VENTURE_ID', '$WORKSPACE_ID', 'Smoke test problem statement.');
+reset role;
+SQL
+
+SHAPES_VISIBLE_TO_OWNER=$($PSQL -d "$DB_NAME" -tAc "
+set role app_user;
+set request.jwt.uid = '$OWNER_ID';
+select count(*) from public.venture_shapes;
+" | tail -n1 | tr -d '[:space:]')
+if [ "$SHAPES_VISIBLE_TO_OWNER" -ne 1 ]; then
+  echo "FAIL: owner should see exactly 1 venture_shapes row, saw $SHAPES_VISIBLE_TO_OWNER"
+  exit 1
+fi
+
+echo "==> Asserting a different user cannot see that venture_shapes row"
+SHAPES_VISIBLE_TO_INTRUDER=$($PSQL -d "$DB_NAME" -tAc "
+set role app_user;
+set request.jwt.uid = '$INTRUDER_ID';
+select count(*) from public.venture_shapes;
+" | tail -n1 | tr -d '[:space:]')
+if [ "$SHAPES_VISIBLE_TO_INTRUDER" -ne 0 ]; then
+  echo "FAIL: intruder should see 0 venture_shapes rows, saw $SHAPES_VISIBLE_TO_INTRUDER"
   exit 1
 fi
 

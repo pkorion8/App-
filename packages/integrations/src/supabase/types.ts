@@ -567,6 +567,42 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      venture_shapes: {
+        Row: {
+          id: string;
+          venture_id: string;
+          workspace_id: string;
+          problem_statement: string | null;
+          value_proposition: string | null;
+          mvp_scope: string | null;
+          differentiation: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          venture_id: string;
+          workspace_id: string;
+          problem_statement?: string | null;
+          value_proposition?: string | null;
+          mvp_scope?: string | null;
+          differentiation?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          venture_id?: string;
+          workspace_id?: string;
+          problem_statement?: string | null;
+          value_proposition?: string | null;
+          mvp_scope?: string | null;
+          differentiation?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

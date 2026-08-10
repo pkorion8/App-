@@ -7,6 +7,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import { CreateVentureForm } from "./CreateVentureForm";
 
+// See sign-in/page.tsx: without this, env-var-dependent content here can
+// get baked in at build time instead of reflecting the live deployment.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const configured = isSupabaseConfigured({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,

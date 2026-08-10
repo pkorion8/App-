@@ -3,6 +3,12 @@ import { isSupabaseConfigured } from "@venture-sandbox/integrations";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { SignInForm } from "./SignInForm";
 
+// Without this, Next prerenders this page once at build time and bakes in
+// whatever NEXT_PUBLIC_SUPABASE_* values (or lack of them) were present
+// during that build — so adding real env vars in Vercel and redeploying
+// doesn't change what's served until a fresh, non-cached render happens.
+export const dynamic = "force-dynamic";
+
 export default function SignInPage() {
   const configured = isSupabaseConfigured({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,

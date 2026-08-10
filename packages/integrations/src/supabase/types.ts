@@ -129,6 +129,67 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      research_missions: {
+        Row: {
+          id: string;
+          venture_id: string;
+          workspace_id: string;
+          target_user: string | null;
+          geography: string | null;
+          status: "queued" | "running" | "complete" | "failed";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          venture_id: string;
+          workspace_id: string;
+          target_user?: string | null;
+          geography?: string | null;
+          status?: "queued" | "running" | "complete" | "failed";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          venture_id?: string;
+          workspace_id?: string;
+          target_user?: string | null;
+          geography?: string | null;
+          status?: "queued" | "running" | "complete" | "failed";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      findings: {
+        Row: {
+          id: string;
+          mission_id: string;
+          workspace_id: string;
+          normalized_claim: string;
+          user_facing_summary: string;
+          state: "SOLID" | "MIXED" | "WEAK" | "UNKNOWN";
+          is_demo: boolean;
+          limitations: string | null;
+          next_test: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          mission_id: string;
+          workspace_id: string;
+          normalized_claim: string;
+          user_facing_summary: string;
+          state?: "SOLID" | "MIXED" | "WEAK" | "UNKNOWN";
+          is_demo?: boolean;
+          limitations?: string | null;
+          next_test?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

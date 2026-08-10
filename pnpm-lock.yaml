@@ -29,6 +29,9 @@ importers:
       '@venture-sandbox/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@venture-sandbox/research':
+        specifier: workspace:*
+        version: link:../../packages/research
       '@venture-sandbox/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -102,6 +105,16 @@ importers:
         version: 5.9.3
 
   packages/observability:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/research:
+    dependencies:
+      '@venture-sandbox/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: ^5.6.3

@@ -15,6 +15,7 @@
     "@venture-sandbox/domain": "workspace:*",
     "@venture-sandbox/integrations": "workspace:*",
     "@venture-sandbox/observability": "workspace:*",
+    "@venture-sandbox/research": "workspace:*",
     "@venture-sandbox/schemas": "workspace:*",
     "@venture-sandbox/ui": "workspace:*",
     "next": "^14.2.15",

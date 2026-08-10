@@ -17,6 +17,8 @@ export interface AppStoreResult {
   url: string;
   genre: string;
   lastUpdated: string | null;
+  /** The app's original App Store release date (not its latest update) — what newcomer detection is based on. */
+  releaseDate: string | null;
 }
 
 interface ITunesRawResult {
@@ -28,6 +30,7 @@ interface ITunesRawResult {
   trackViewUrl?: string;
   primaryGenreName?: string;
   currentVersionReleaseDate?: string;
+  releaseDate?: string;
 }
 
 const FETCH_TIMEOUT_MS = 6000;
@@ -63,6 +66,7 @@ export async function searchAppStore(
         url: r.trackViewUrl ?? "",
         genre: r.primaryGenreName ?? "Unknown",
         lastUpdated: r.currentVersionReleaseDate ?? null,
+        releaseDate: r.releaseDate ?? null,
       }));
   } finally {
     clearTimeout(timeout);

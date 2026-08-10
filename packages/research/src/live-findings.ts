@@ -15,6 +15,22 @@ function classifyTraction(ratingCounts: number[]): "Strong" | "Moderate" | "Weak
   return "Weak";
 }
 
+const NEWCOMER_WINDOW_DAYS = 365;
+
+/**
+ * A "newcomer" is an app whose original App Store release date (not its
+ * latest update) falls inside the trailing year -- a single, real,
+ * computable signal from the same search, not a guess. No historical
+ * snapshot store needed: this is always relative to "now."
+ */
+function isNewcomer(releaseDate: string | null): boolean {
+  if (!releaseDate) return false;
+  const releasedAt = new Date(releaseDate).getTime();
+  if (Number.isNaN(releasedAt)) return false;
+  const ageDays = (Date.now() - releasedAt) / (1000 * 60 * 60 * 24);
+  return ageDays >= 0 && ageDays <= NEWCOMER_WINDOW_DAYS;
+}
+
 /**
  * Real App Store competitor search (spec's "Layer 1: Market" research).
  * Returns null if the live call fails or finds nothing usable — the caller
@@ -63,20 +79,33 @@ export async function researchAppStoreCompetitors(input: {
       const updated = r.lastUpdated
         ? new Date(r.lastUpdated).toISOString().slice(0, 10)
         : "unknown update date";
-      return `${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}`;
+      const newcomerTag = isNewcomer(r.releaseDate) ? ", NEW in the last year" : "";
+      return `${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}${newcomerTag}`;
     })
     .join("; ");
 
+  const newcomers = results.filter((r) => isNewcomer(r.releaseDate));
+  const newcomerSentence =
+    newcomers.length > 0
+      ? ` ${newcomers.length} of ${results.length} launched within the last year: ${newcomers
+          .map((r) => r.name)
+          .join(", ")} — worth watching as active new entrants, not just established players.`
+      : ` None of the ${results.length} matches launched within the last year — this looks like an established field rather than one with fresh entrants right now.`;
+
   return {
-    normalizedClaim: `Live App Store competitors for "${input.ventureName}"`,
+    normalizedClaim: `Live App Store competitors for "${input.ventureName}"${
+      newcomers.length > 0 ? ` (${newcomers.length} newcomer${newcomers.length === 1 ? "" : "s"})` : ""
+    }`,
     userFacingSummary:
       `Real App Store search (${input.geography}, Apple only): ${results.length} ` +
       `${results.length === 1 ? "app" : "apps"} found. ` +
-      `Traction signal: ${traction} — based on ratings volume of the closest matches. ${listLines}.`,
+      `Traction signal: ${traction} — based on ratings volume of the closest matches. ${listLines}.` +
+      newcomerSentence,
     state: "MIXED",
     limitations:
       "Apple App Store only (no Google Play), matched by name/keyword only, and rating " +
-      "counts are a proxy for traction, not actual download or revenue figures.",
+      "counts are a proxy for traction, not actual download or revenue figures. \"Newcomer\" is " +
+      "based on the app's original release date being within the last 12 months, not on repeated checks over time.",
     nextTest: "Cross-check the top matches on Google Play and read their recent reviews directly.",
   };
 }

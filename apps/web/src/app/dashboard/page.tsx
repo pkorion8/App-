@@ -46,6 +46,9 @@ export default async function DashboardPage() {
           <Link href="/channels" className="text-sm text-vs-fg-muted hover:underline">
             Monitored channels
           </Link>
+          <Link href="/billing" className="text-sm text-vs-fg-muted hover:underline">
+            Billing
+          </Link>
           <form action={signOut}>
             <Button type="submit" variant="ghost">
               Sign out

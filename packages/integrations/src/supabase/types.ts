@@ -190,6 +190,87 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      youtube_channels: {
+        Row: {
+          id: string;
+          channel_id: string;
+          channel_handle: string | null;
+          channel_name: string | null;
+          added_by: string | null;
+          is_active: boolean;
+          last_checked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          channel_id: string;
+          channel_handle?: string | null;
+          channel_name?: string | null;
+          added_by?: string | null;
+          is_active?: boolean;
+          last_checked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          channel_id?: string;
+          channel_handle?: string | null;
+          channel_name?: string | null;
+          added_by?: string | null;
+          is_active?: boolean;
+          last_checked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      creator_claims: {
+        Row: {
+          id: string;
+          channel_id: string;
+          video_id: string;
+          video_title: string;
+          video_url: string;
+          published_at: string | null;
+          claim_type:
+            | "cost"
+            | "revenue"
+            | "users"
+            | "tooling"
+            | "timeline"
+            | "problem"
+            | "marketing"
+            | "other";
+          claim_text: string;
+          video_timestamp_seconds: number | null;
+          extraction_method: "heuristic" | "llm" | "manual";
+          confidence: "unverified" | "corroborated";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          channel_id: string;
+          video_id: string;
+          video_title: string;
+          video_url: string;
+          published_at?: string | null;
+          claim_type:
+            | "cost"
+            | "revenue"
+            | "users"
+            | "tooling"
+            | "timeline"
+            | "problem"
+            | "marketing"
+            | "other";
+          claim_text: string;
+          video_timestamp_seconds?: number | null;
+          extraction_method?: "heuristic" | "llm" | "manual";
+          confidence?: "unverified" | "corroborated";
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -42,11 +42,16 @@ export default async function DashboardPage() {
           <h1 className="text-xl font-semibold text-vs-fg">Your ventures</h1>
           <p className="text-sm text-vs-fg-muted">{user.email}</p>
         </div>
-        <form action={signOut}>
-          <Button type="submit" variant="ghost">
-            Sign out
-          </Button>
-        </form>
+        <div className="flex items-center gap-4">
+          <Link href="/channels" className="text-sm text-vs-fg-muted hover:underline">
+            Monitored channels
+          </Link>
+          <form action={signOut}>
+            <Button type="submit" variant="ghost">
+              Sign out
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">

@@ -5,8 +5,6 @@ import { Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const FUTURE_TABS = ["Build"] as const;
-
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
@@ -77,15 +75,18 @@ export default async function VenturePage({
         >
           Simulate
         </Link>
-        {FUTURE_TABS.map((tab) => (
-          <span
-            key={tab}
-            className="cursor-not-allowed rounded-vs-sm border border-vs-border px-3 py-1.5 text-sm text-vs-fg-muted"
-            title="Lands in a later vertical slice — see spec §21.2"
-          >
-            {tab}
-          </span>
-        ))}
+        <Link
+          href={`/venture/${venture.id}/build`}
+          className="rounded-vs-sm border border-vs-primary bg-vs-primary px-3 py-1.5 text-sm text-vs-primary-fg hover:opacity-90"
+        >
+          Build
+        </Link>
+        <Link
+          href={`/venture/${venture.id}/compare`}
+          className="rounded-vs-sm border border-vs-primary bg-vs-primary px-3 py-1.5 text-sm text-vs-primary-fg hover:opacity-90"
+        >
+          Compare
+        </Link>
       </div>
     </main>
   );

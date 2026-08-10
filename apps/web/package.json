@@ -13,6 +13,7 @@
     "@sparticuz/chromium": "^131.0.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.45.4",
+    "@venture-sandbox/build": "workspace:*",
     "@venture-sandbox/domain": "workspace:*",
     "@venture-sandbox/integrations": "workspace:*",
     "@venture-sandbox/observability": "workspace:*",

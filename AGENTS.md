@@ -74,6 +74,26 @@ mission now (previously it counted findings across every mission ever,
 inconsistent with the Research page's own latest-mission-only display --
 fixed as part of this same change). A venture with no research yet shows
 "Not researched yet" per field, never a fabricated placeholder.
+
+**Simulator gained a 4th real evidence signal**: `MarketContext.estimatedMonthlyCost`,
+read from the venture's most recent `build_packages.cost_estimate.totalMonthly`
+if one has been generated. Previously Build Studio's cost estimate and the
+Simulator's `monthlyCost` were two completely disconnected numbers -- a
+founder could see "$45/mo estimated" on the Build page and a wildly
+different `monthlyCost` in their simulation with no relationship between
+them. Now, once launched, `monthlyCost = burn-derived cost + Build
+Studio's real estimate` (additive, not a replacement -- burn still
+represents the simulation's own cash spend-down separately from real
+recurring operating cost). Null-safe/neutral when no build plan exists
+yet, same pattern as every other `MarketContext` field. 1 new test
+(23 total in `engine.test.ts`) proves the exact additive relationship.
+This is the last of the 4 real-evidence-signal additions from this round;
+category/audience/pricing/V1-scope remain unwired per `NEXT_WORK.md` in
+the handoff package (`Venture_Sandbox_Full_Handoff_2026-08-11.zip`,
+commit `10881c2`) -- those need a place to live as structured venture
+data first (e.g. extending the Shape module) before they can meaningfully
+feed the simulator, which is a real, larger piece of work, not a copy-
+paste of this round's pattern.
 - Added a `Spinner` component (`packages/ui`) and wired it into Build's
   generate button and Compare's compare button -- both are fast
   synchronous DB writes (no external API calls), so a spinner is honest;

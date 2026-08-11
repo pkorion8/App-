@@ -79,6 +79,7 @@ describe("createInitialState", () => {
       summary: "test summary",
       internetPenetrationPct: null,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     };
     const state = createInitialState(10_000, marketContext);
     expect(state.marketContext).toEqual(marketContext);
@@ -102,6 +103,7 @@ describe("market context effects", () => {
         summary: "Research found 3 competitors, strong traction overall.",
         internetPenetrationPct: null,
         activeRelatedReposFound: null,
+        estimatedMonthlyCost: null,
       }),
     );
     expect(withResearch.events.some((e) => e.description.includes("Research found 3 competitors"))).toBe(true);
@@ -118,6 +120,7 @@ describe("market context effects", () => {
       summary: "strong",
       internetPenetrationPct: null,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     });
     const none = driveToFirstUsers({
       hasResearch: true,
@@ -126,6 +129,7 @@ describe("market context effects", () => {
       summary: "none",
       internetPenetrationPct: null,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     });
     expect(strong.totalUsers).toBeLessThan(none.totalUsers);
   });
@@ -139,6 +143,7 @@ describe("market context effects", () => {
         summary: "moderate",
         internetPenetrationPct: null,
         activeRelatedReposFound: null,
+        estimatedMonthlyCost: null,
       }),
       "first_users",
       { build_event: "workaround", mvp_ready: "launch_now" },
@@ -160,6 +165,7 @@ describe("market context effects", () => {
       summary: "low access",
       internetPenetrationPct: 30,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     });
     const highAccess = driveToFirstUsers({
       hasResearch: true,
@@ -168,6 +174,7 @@ describe("market context effects", () => {
       summary: "high access",
       internetPenetrationPct: 95,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     });
     expect(lowAccess.totalUsers).toBeLessThan(highAccess.totalUsers);
   });
@@ -180,6 +187,7 @@ describe("market context effects", () => {
       summary: "unknown access",
       internetPenetrationPct: null,
       activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
     });
     const noResearch = driveToFirstUsers(undefined);
     // Moderate traction (1.0x) with unknown reach (1.0x) should match the
@@ -195,6 +203,7 @@ describe("market context effects", () => {
       summary: "tech evidence",
       internetPenetrationPct: null,
       activeRelatedReposFound: 4,
+      estimatedMonthlyCost: null,
     });
     const withoutTechEvidence = createInitialState(10_000, {
       hasResearch: true,
@@ -203,10 +212,33 @@ describe("market context effects", () => {
       summary: "no tech evidence",
       internetPenetrationPct: null,
       activeRelatedReposFound: 0,
+      estimatedMonthlyCost: null,
     });
     expect(withTechEvidence.productQualityPct).toBeGreaterThan(withoutTechEvidence.productQualityPct);
     expect(withTechEvidence.technicalRisk).toBe("low");
     expect(withoutTechEvidence.technicalRisk).toBe("medium");
+  });
+
+  it("Build Studio's real cost estimate adds a floor to monthlyCost once launched, on top of burn", () => {
+    const withCostEstimate = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary: "has cost estimate",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
+      estimatedMonthlyCost: 500,
+    });
+    const withoutCostEstimate = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary: "no cost estimate",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
+      estimatedMonthlyCost: null,
+    });
+    expect(withCostEstimate.monthlyCost).toBe(withoutCostEstimate.monthlyCost + 500);
   });
 });
 

@@ -36,6 +36,7 @@ export const DEFAULT_MARKET_CONTEXT: MarketContext = {
     "calibrated to actual competitors.",
   internetPenetrationPct: null,
   activeRelatedReposFound: null,
+  estimatedMonthlyCost: null,
 };
 
 // Real competitor traction (from Research's live App Store search) makes
@@ -192,7 +193,12 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       const retentionRate = clamp(RETURNING_USER_FLOOR + next.productQualityPct / 200, 0, 0.9);
       next.returningUsers = Math.round(next.totalUsers * retentionRate);
       next.monthlyRevenue = Math.round(next.totalUsers * CONVERSION_RATE * PRICE_PER_CONVERTING_USER);
-      next.monthlyCost = Math.round(dailyBurn * 30);
+      // Real operating-cost floor, when Build Studio has actually
+      // estimated one for this venture -- burn rate alone is a spend-down
+      // mechanic tied to the starting simulation budget, not a stand-in
+      // for real hosting/API costs the founder will actually pay post-
+      // launch. Additive, not a replacement: burn still happens regardless.
+      next.monthlyCost = Math.round(dailyBurn * 30) + (next.marketContext.estimatedMonthlyCost ?? 0);
 
       if (state.totalUsers < MARKET_EVENT_TRIGGER_USERS && next.totalUsers >= MARKET_EVENT_TRIGGER_USERS) {
         next.stage = "user_or_market_event";

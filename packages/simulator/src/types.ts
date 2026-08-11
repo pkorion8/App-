@@ -33,6 +33,8 @@ export interface MarketContext {
   internetPenetrationPct: number | null;
   /** Actively-maintained related open-source projects Research found on GitHub. Null = not researched (neutral). 0 = researched, found none (still neutral -- absence isn't evidence of difficulty). >=2 is what earns a starting-quality bonus. */
   activeRelatedReposFound: number | null;
+  /** Build Studio's cost_estimate.totalMonthly for this venture, if a build package has been generated. Null = no build plan yet -- monthlyCost stays purely burn-derived, same as before this field existed. */
+  estimatedMonthlyCost: number | null;
 }
 
 /** One point-in-time snapshot of the metrics that are worth charting over the run. */

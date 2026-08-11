@@ -45,14 +45,31 @@ async function buildMarketContext(
     return DEFAULT_MARKET_CONTEXT;
   }
 
-  const [{ data: snapshotRows }, { data: findingRows }] = await Promise.all([
+  const [{ data: snapshotRows }, { data: findingRows }, { data: buildPackage }] = await Promise.all([
     supabase
       .from("research_competitor_snapshots")
       .select("app_id, app_name, rating_count, checked_at")
       .eq("venture_id", ventureId)
       .order("checked_at", { ascending: false }),
     supabase.from("findings").select("metadata").eq("mission_id", recentMission.id),
+    supabase
+      .from("build_packages")
+      .select("cost_estimate")
+      .eq("venture_id", ventureId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  // Build Studio's real cost estimate, if one has been generated -- a
+  // number that already exists and was previously completely disconnected
+  // from the simulator's own (burn-rate-only) monthlyCost.
+  const buildCost = buildPackage?.cost_estimate as unknown as { totalMonthly?: number } | undefined;
+  const estimatedMonthlyCost = typeof buildCost?.totalMonthly === "number" ? buildCost.totalMonthly : null;
+  const costNote =
+    estimatedMonthlyCost !== null
+      ? ` Build Studio estimates $${estimatedMonthlyCost}/mo in real operating costs, added to this simulation's ongoing monthly cost once launched.`
+      : "";
 
   // Most recent snapshot per app, same dedup pattern as the research
   // action that writes these rows.
@@ -98,9 +115,10 @@ async function buildMarketContext(
       topCompetitorName: null,
       summary:
         "Research has been run for this venture, but its App Store search found no " +
-        `competitors — simulation proceeding without a competitive-pressure adjustment.${reachNote}${techNote}`,
+        `competitors — simulation proceeding without a competitive-pressure adjustment.${reachNote}${techNote}${costNote}`,
       internetPenetrationPct,
       activeRelatedReposFound,
+      estimatedMonthlyCost,
     };
   }
 
@@ -116,9 +134,10 @@ async function buildMarketContext(
       `Research found ${entries.length} competitor${entries.length === 1 ? "" : "s"} in the App Store, ` +
       `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ` +
       `${top.ratingCount.toLocaleString()} ratings). This simulation's growth conditions are calibrated to that.` +
-      `${reachNote}${techNote}`,
+      `${reachNote}${techNote}${costNote}`,
     internetPenetrationPct,
     activeRelatedReposFound,
+    estimatedMonthlyCost,
   };
 }
 

@@ -84,5 +84,15 @@ export function generateDemoFindings(input: DemoFindingInput): DemoFinding[] {
       limitations: NO_SOURCE_LIMITATION,
       nextTest: "Pull population, GDP per capita, and internet penetration from the World Bank Open Data API.",
     },
+    {
+      normalizedClaim: `Related open-source projects for "${ventureName}"`,
+      userFacingSummary:
+        `Once connected, this will show whether something like "${ideaText}" already ` +
+        `exists as an open-source project — how popular it is and whether it's still ` +
+        `actively maintained.`,
+      state,
+      limitations: NO_SOURCE_LIMITATION,
+      nextTest: "Search GitHub for repositories matching the idea and check their recent activity.",
+    },
   ];
 }

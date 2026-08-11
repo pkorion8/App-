@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNewcomer } from "./live-findings";
+import { isActivelyMaintained, isNewcomer } from "./live-findings";
 
 describe("isNewcomer", () => {
   it("treats a release from a few months ago as a newcomer", () => {
@@ -21,5 +21,21 @@ describe("isNewcomer", () => {
   it("is false for missing or unparseable dates rather than throwing", () => {
     expect(isNewcomer(null)).toBe(false);
     expect(isNewcomer("not a date")).toBe(false);
+  });
+});
+
+describe("isActivelyMaintained", () => {
+  it("treats a repo pushed to last week as active", () => {
+    const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isActivelyMaintained(lastWeek)).toBe(true);
+  });
+
+  it("treats a repo untouched for 2 years as inactive", () => {
+    const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isActivelyMaintained(twoYearsAgo)).toBe(false);
+  });
+
+  it("is false for a missing pushedAt rather than throwing", () => {
+    expect(isActivelyMaintained(null)).toBe(false);
   });
 });

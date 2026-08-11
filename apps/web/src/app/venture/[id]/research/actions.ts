@@ -5,6 +5,7 @@ import { clarificationSchema } from "@venture-sandbox/schemas";
 import {
   generateDemoFindings,
   researchAppStoreCompetitors,
+  researchGitHubActivity,
   researchMarketIndicators,
 } from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
@@ -84,17 +85,18 @@ export async function startResearch(
     geography,
   });
 
-  // Slots 0 and 4 try real, free sources first (App Store search, World
-  // Bank Open Data); each falls back to its honest DEMO placeholder if the
-  // live call fails or finds nothing. Slots 1-3 stay DEMO until their
-  // sources (YouTube, Trends, etc.) are connected too.
-  const [liveCompetitorFinding, liveMarketIndicators] = await Promise.all([
+  // Slots 0, 4, and 5 try real, free sources first (App Store search,
+  // World Bank Open Data, GitHub search); each falls back to its honest
+  // DEMO placeholder if the live call fails or finds nothing. Slots 1-3
+  // stay DEMO until their sources (YouTube, Trends, etc.) are connected too.
+  const [liveCompetitorFinding, liveMarketIndicators, liveGitHubActivity] = await Promise.all([
     researchAppStoreCompetitors({
       ventureName: venture.name,
       ideaText: venture.raw_idea_text,
       geography,
     }),
     researchMarketIndicators({ geography }),
+    researchGitHubActivity({ ventureName: venture.name }),
   ]);
 
   const findingsToInsert = demoFindings.map((f, i) => {
@@ -103,6 +105,9 @@ export async function startResearch(
     }
     if (i === 4 && liveMarketIndicators) {
       return { ...liveMarketIndicators, isDemo: false };
+    }
+    if (i === 5 && liveGitHubActivity) {
+      return { ...liveGitHubActivity, isDemo: false };
     }
     return { ...f, isDemo: true };
   });

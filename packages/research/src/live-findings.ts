@@ -1,6 +1,7 @@
 import type { FindingState } from "@venture-sandbox/domain";
 import { searchAppStore } from "./sources/itunes-search";
 import { fetchWorldBankIndicators, type WorldBankIndicatorResult } from "./sources/world-bank";
+import { searchGitHubRepos } from "./sources/github";
 import { resolveCountryCode } from "./geography";
 import type { DemoFinding } from "./demo-findings";
 
@@ -157,5 +158,70 @@ export async function researchMarketIndicators(input: {
     nextTest:
       "Cross-reference with a market-sizing source specific to this product category " +
       "(industry reports, local trade or app-store category data).",
+  };
+}
+
+const ACTIVE_REPO_WINDOW_DAYS = 180;
+
+export function isActivelyMaintained(pushedAt: string | null): boolean {
+  if (!pushedAt) return false;
+  const pushedAtMs = new Date(pushedAt).getTime();
+  if (Number.isNaN(pushedAtMs)) return false;
+  const ageDays = (Date.now() - pushedAtMs) / (1000 * 60 * 60 * 24);
+  return ageDays >= 0 && ageDays <= ACTIVE_REPO_WINDOW_DAYS;
+}
+
+/**
+ * Real GitHub search for open-source projects related to the idea (the
+ * "Tech" half of Similar Apps/Tech, alongside the App Store competitor
+ * search above). Free, no key, unauthenticated. Returns null if nothing
+ * usable comes back, so the caller falls back to the DEMO placeholder.
+ *
+ * State is capped at MIXED for the same reason as every other live
+ * source here: one uncorroborated source, no independent cross-check.
+ */
+export async function researchGitHubActivity(input: {
+  ventureName: string;
+}): Promise<(Omit<DemoFinding, "state"> & { state: FindingState }) | null> {
+  let results;
+  try {
+    results = await searchGitHubRepos(input.ventureName, 5);
+  } catch {
+    return null;
+  }
+
+  if (results.length === 0) {
+    return {
+      normalizedClaim: `Open-source search for "${input.ventureName}"`,
+      userFacingSummary:
+        `A GitHub search for "${input.ventureName}" didn't surface a close match. That could ` +
+        `mean this hasn't been built as an open-source project before — or just that the ` +
+        `search terms need adjusting.`,
+      state: "WEAK",
+      limitations: "Covers only public GitHub repositories, matched by name/keyword only.",
+      nextTest: "Try a broader or differently-worded search on GitHub directly.",
+    };
+  }
+
+  const activeCount = results.filter((r) => isActivelyMaintained(r.pushedAt)).length;
+  const top = results.slice(0, 4);
+  const listLines = top
+    .map((r) => {
+      const updated = r.pushedAt ? new Date(r.pushedAt).toISOString().slice(0, 10) : "unknown";
+      const desc = r.description ? ` — ${r.description}` : "";
+      return `${r.fullName} (${r.stars.toLocaleString()}★, last pushed ${updated})${desc}`;
+    })
+    .join("; ");
+
+  return {
+    normalizedClaim: `Related open-source projects for "${input.ventureName}"`,
+    userFacingSummary:
+      `Real GitHub search: ${results.length} related ${results.length === 1 ? "repo" : "repos"} found, ` +
+      `${activeCount} actively maintained (pushed to in the last ${ACTIVE_REPO_WINDOW_DAYS} days). ${listLines}.`,
+    state: "MIXED",
+    limitations:
+      "Public GitHub repositories only, matched by name/keyword only. Star count is a rough " +
+      "popularity proxy, not a measure of real-world usage or commercial competition.",
+    nextTest: "Check whether any close matches are actively used in production, not just starred.",
   };
 }

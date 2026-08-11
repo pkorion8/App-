@@ -43,7 +43,7 @@ export default async function ResearchPage({
 
   const { data: venture } = await supabase
     .from("ventures")
-    .select("id, name, raw_idea_text")
+    .select("id, name, raw_idea_text, target_user, geography")
     .eq("id", id)
     .maybeSingle();
 
@@ -86,11 +86,8 @@ export default async function ResearchPage({
 
       {showForm ? (
         <Card className="mt-4">
-          <p className="mb-4 text-sm text-vs-fg-muted">
-            Two quick questions before we start — these focus the research on
-            the right audience and market.
-          </p>
-          <ClarificationForm ventureId={venture.id} />
+          <p className="mb-4 text-sm text-vs-fg-muted">We use the audience and market already saved in Shape. Review them here only if they need changing.</p>
+          <ClarificationForm ventureId={venture.id} targetUser={venture.target_user} geography={venture.geography} />
         </Card>
       ) : (
         <div className="mt-4 space-y-4">
@@ -107,9 +104,24 @@ export default async function ResearchPage({
             </p>
           </Card>
 
-          {findings.map((f) => (
+          <nav className="grid gap-2 sm:grid-cols-4" aria-label="Research modules">
+            <Link href={`/venture/${venture.id}/research`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Competitors</Link>
+            <Link href={`/venture/${venture.id}/reviews`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Reviews</Link>
+            <Link href={`/venture/${venture.id}/technology`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Technology &amp; ownership</Link>
+            <Link href={`/venture/${venture.id}/evidence`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Evidence explorer</Link>
+          </nav>
+
+          <h2 className="pt-2 text-lg font-semibold text-vs-fg">People &amp; alternatives</h2>
+
+          {findings.slice(0, 4).map((f) => (
             <FindingCard key={f.id} f={f} />
           ))}
+          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Can it be built?</h2>
+          {findings.slice(5, 6).map((f) => <FindingCard key={f.id} f={f} />)}
+          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Market &amp; money</h2>
+          {findings.slice(4, 5).concat(findings.slice(6, 7)).map((f) => <FindingCard key={f.id} f={f} />)}
+          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Reasons to be careful</h2>
+          {findings.slice(7).map((f) => <FindingCard key={f.id} f={f} />)}
         </div>
       )}
     </main>

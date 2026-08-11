@@ -61,6 +61,7 @@ export async function addOutcome(
   if (error) {
     return { status: "error", message: error.message };
   }
+  await supabase.from("ventures").update({ status: "learning" }).eq("id", ventureId);
 
   logEvent({
     event: "venture_outcome.logged",

@@ -197,6 +197,7 @@ export async function startSimulation(
   if (error) {
     return { status: "error", message: error.message };
   }
+  await supabase.from("ventures").update({ status: "simulating" }).eq("id", ventureId);
 
   logEvent({
     event: "simulation.started",
@@ -266,6 +267,9 @@ export async function advanceSimDay(
     .from("simulation_runs")
     .update(simulationStateToRow(currentState))
     .eq("id", runId);
+  if (currentState.stage === "complete") {
+    await supabase.from("ventures").update({ status: "simulated" }).eq("id", ventureId);
+  }
 
   if (allEvents.length > 0) {
     await supabase.from("simulation_events").insert(

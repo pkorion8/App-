@@ -43,11 +43,13 @@ const PRICING_MODEL_LABEL: Record<string, string> = {
 };
 
 export default async function SimulatePage({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ run?: string }>;
 }) {
   const { id } = await params;
+  const { run: requestedRunId } = await searchParams;
 
   const configured = isSupabaseConfigured({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -68,13 +70,12 @@ export default async function SimulatePage({
     .maybeSingle();
   if (!venture) notFound();
 
-  const { data: run } = await supabase
+  const { data: runs } = await supabase
     .from("simulation_runs")
     .select("*")
     .eq("venture_id", venture.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
+  const run = (requestedRunId ? runs?.find((candidate) => candidate.id === requestedRunId) : runs?.[0]) ?? null;
 
   let events: { id: string; virtual_day: number; description: string; event_type: string }[] = [];
   let decisions: { virtual_day: number; decision_type: string; choice: string }[] = [];
@@ -134,6 +135,7 @@ export default async function SimulatePage({
         </Card>
       ) : (
         <div className="mt-4 space-y-4">
+          {(runs?.length ?? 0) > 1 && <Card><label htmlFor="run-history" className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Run history</label><div className="mt-2 flex flex-wrap gap-2">{runs!.map((item, index) => <Link key={item.id} href={`/venture/${venture.id}/simulate?run=${item.id}`} className={`rounded-full border px-3 py-1.5 text-sm ${item.id === run.id ? "border-vs-primary bg-vs-primary text-vs-primary-fg" : "border-vs-border text-vs-fg"}`}>Run {runs!.length-index} · Day {item.virtual_day}</Link>)}</div></Card>}
           <Card>
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">

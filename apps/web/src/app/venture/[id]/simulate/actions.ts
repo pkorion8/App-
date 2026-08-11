@@ -63,6 +63,11 @@ export async function startSimulation(
 
 async function loadRun(ventureId: string, runId: string) {
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
   const { data: run } = await supabase
     .from("simulation_runs")
     .select("*")
@@ -164,6 +169,18 @@ export async function rewindToCheckpoint(ventureId: string, checkpointId: string
     .eq("id", checkpointId)
     .maybeSingle();
   if (!checkpoint) return;
+
+  // ventureId comes from the caller (ultimately a route param), not from
+  // the checkpoint itself -- verify it actually belongs to the same
+  // workspace as the checkpoint before using it, so a member of workspace
+  // A can't seed a new simulation_run against a venture_id that belongs
+  // to workspace B while tagging it with workspace A's workspace_id.
+  const { data: venture } = await supabase
+    .from("ventures")
+    .select("workspace_id")
+    .eq("id", ventureId)
+    .maybeSingle();
+  if (!venture || venture.workspace_id !== checkpoint.workspace_id) return;
 
   const snapshot = checkpoint.state_snapshot as unknown as ReturnType<typeof simulationStateToRow>;
 

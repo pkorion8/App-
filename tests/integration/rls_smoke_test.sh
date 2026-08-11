@@ -50,6 +50,7 @@ grant select, insert on public.audit_log to app_user;
 grant select on public.workspaces to app_user;
 grant select on public.workspace_members to app_user;
 grant select, insert, update on public.venture_shapes to app_user;
+grant select, update on public.billing_accounts to app_user;
 SQL
 
 OWNER_ID=$($PSQL -d "$DB_NAME" -tAc "select id from auth.users where email='owner@example.com';")
@@ -148,6 +149,40 @@ select count(*) from public.venture_shapes;
 " | tail -n1 | tr -d '[:space:]')
 if [ "$SHAPES_VISIBLE_TO_INTRUDER" -ne 0 ]; then
   echo "FAIL: intruder should see 0 venture_shapes rows, saw $SHAPES_VISIBLE_TO_INTRUDER"
+  exit 1
+fi
+
+echo "==> Asserting handle_new_user auto-created a free billing_accounts row the owner can see"
+OWNER_PLAN=$($PSQL -d "$DB_NAME" -tAc "
+set role app_user;
+set request.jwt.uid = '$OWNER_ID';
+select plan from public.billing_accounts where workspace_id = '$WORKSPACE_ID';
+" | tail -n1 | tr -d '[:space:]')
+if [ "$OWNER_PLAN" != "free" ]; then
+  echo "FAIL: expected the auto-created billing_accounts row to be plan='free', got '$OWNER_PLAN'"
+  exit 1
+fi
+
+echo "==> Asserting a workspace member (even the owner) CANNOT self-upgrade billing_accounts -- only the service-role webhook may write here"
+set +e
+SELF_UPGRADE_OUTPUT=$($PSQL -d "$DB_NAME" 2>&1 <<SQL
+set role app_user;
+set request.jwt.uid = '$OWNER_ID';
+update public.billing_accounts set plan = 'pro', status = 'active' where workspace_id = '$WORKSPACE_ID';
+reset role;
+SQL
+)
+set -e
+# With select+update GRANTed but no UPDATE policy, Postgres RLS silently
+# matches zero rows rather than raising -- so the real assertion is that
+# the row is still 'free' after this, not that the statement errored.
+PLAN_AFTER_ATTEMPT=$($PSQL -d "$DB_NAME" -tAc "
+set role app_user;
+set request.jwt.uid = '$OWNER_ID';
+select plan from public.billing_accounts where workspace_id = '$WORKSPACE_ID';
+" | tail -n1 | tr -d '[:space:]')
+if [ "$PLAN_AFTER_ATTEMPT" != "free" ]; then
+  echo "FAIL: a workspace member was able to self-upgrade billing_accounts to '$PLAN_AFTER_ATTEMPT' -- this is a revenue-bypass vulnerability"
   exit 1
 fi
 

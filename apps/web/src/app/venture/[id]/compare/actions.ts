@@ -22,6 +22,17 @@ export async function createComparison(
     .maybeSingle();
   if (!venture) return;
 
+  // otherVentureId is caller-supplied -- confirm it's actually in the same
+  // workspace as ventureIdA before recording the comparison, rather than
+  // trusting it (the UI's picker only ever offers same-workspace ventures,
+  // but a server action can be invoked directly with any id).
+  const { data: otherVenture } = await supabase
+    .from("ventures")
+    .select("workspace_id")
+    .eq("id", otherVentureId)
+    .maybeSingle();
+  if (!otherVenture || otherVenture.workspace_id !== venture.workspace_id) return;
+
   await supabase.from("venture_comparisons").insert({
     workspace_id: venture.workspace_id,
     venture_id_a: ventureIdA,

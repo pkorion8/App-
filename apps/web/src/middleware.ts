@@ -6,7 +6,7 @@ import {
   type Database,
 } from "@venture-sandbox/integrations";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/venture"];
+const PROTECTED_PREFIXES = ["/dashboard", "/venture", "/billing", "/channels"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

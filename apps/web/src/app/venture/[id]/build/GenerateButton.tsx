@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Button } from "@venture-sandbox/ui";
+import { Button, Spinner } from "@venture-sandbox/ui";
 import { generateBuild } from "./actions";
 
 export function GenerateButton({ ventureId }: { ventureId: string }) {
@@ -12,6 +12,7 @@ export function GenerateButton({ ventureId }: { ventureId: string }) {
       disabled={isPending}
       onClick={() => startTransition(() => generateBuild(ventureId))}
     >
+      {isPending && <Spinner className="mr-2" />}
       {isPending ? "Generating..." : "Generate build plan"}
     </Button>
   );

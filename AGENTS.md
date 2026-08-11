@@ -6,6 +6,69 @@ maintained specifically for that handoff, not just as a style guide.
 
 ## Current status and plan (as of 2026-08-11)
 
+**Latest round: Build/Compare visual pass, World Bank gap explained, idea-aware
+search, and Simulator consuming more real Research evidence.** Prompted by a
+product-owner-relayed external critique (partially right, partially wrong --
+see below) of the app producing "generic" results:
+- **Corrected a wrong diagnosis first.** The critique assumed a hardcoded/
+  silently-defaulted "Canada" bug in the World Bank card. Verified by
+  grep + code trace that's false: `resolveCountryCode()` (geography.ts)
+  has no fallback, returns `null` on no match, and every live-source
+  caller either uses the real resolved geography or degrades to the DEMO
+  placeholder -- never a silent substitute country. The actual bug was
+  narrower: the World Bank API is empirically flaky and had only
+  returned 1 of 3 tracked indicators that run, and the UI didn't explain
+  the gap. Fixed: retries bumped 2→3, and `MarketFindingMetadata` now
+  carries `missingIndicatorLabels` so the card explains a partial result
+  instead of silently looking incomplete.
+- **Idea-aware search, not just venture-name search.** GitHub and App
+  Store search both used to query on the bare venture name only, ignoring
+  the idea text entirely -- a real, fair critique. New
+  `packages/research/src/search-keywords.ts` (`deriveSearchKeywords`,
+  heuristic-tier stopword-stripped keyword extraction, same tier label as
+  `extraction/heuristic-claims.ts`) mixes a few real idea-text terms in
+  with the venture name for both GitHub and App Store searches. App
+  Store falls back to the bare venture name if the expanded query returns
+  zero results (recall safety net -- App Store search is more
+  recall-sensitive than GitHub's). 6 new tests prove 5 example ventures
+  (nail/roti/pets/invoice/study) produce genuinely different queries, plus
+  wiring tests (mocked fetch) proving both call sites actually receive the
+  expanded query.
+- **Simulator now consumes 2 more real evidence signals, not just
+  competitor traction.** `MarketContext` gained `internetPenetrationPct`
+  (World Bank, scales organic growth -- low access = real headwind) and
+  `activeRelatedReposFound` (GitHub, >=2 actively-maintained related repos
+  = a starting productQuality/technicalRisk bonus, since that's evidence
+  the technical territory is less unproven). Both null-safe/neutral when
+  absent, same "no evidence ≠ evidence of ease" principle as everything
+  else here. Sourced from the *same* `findings.metadata` the Research
+  page's cards already render (`simulate/actions.ts`'s `buildMarketContext`
+  now also reads the latest mission's market/github findings, no new
+  table). This is explicitly not the full VentureContext/ResearchSnapshot
+  rearchitecture the critique also proposed -- that's real production-depth
+  work, already logged as deferred post-launch scope below, and the
+  product owner agreed to keep it there once the Canada misdiagnosis was
+  corrected. What shipped here is bounded, evidence-linked, and tested.
+- **Build and Compare got the same visual system Research got last
+  round** (StatTile/Badge/BarList from `packages/ui`): Build's cost
+  card is now a hero stat + a real cost-breakdown bar chart instead of a
+  bullet list, its Stack/How-to-build sections are labeled "same for every
+  venture" (they deliberately are -- a fixed reference recommendation, not
+  per-idea) so the Task list's "specific to this idea" framing isn't
+  confusing next to them. Compare replaced its plain HTML table with
+  stat-tile pairs per dimension (Idea/Status/Research/Simulation/Cost) --
+  the "$1" vs "Not generated yet" table row that read as broken/funny to
+  the product owner is now framed as a proper stat. Compare does **not**
+  yet do the deeper "compare actual research findings dimension-by-
+  dimension" (competitor traction, market size, tech signal side by side)
+  -- that's the next queued step, using the same `findings.metadata`
+  already available, not a new fetch/model.
+- Added a `Spinner` component (`packages/ui`) and wired it into Build's
+  generate button and Compare's compare button -- both are fast
+  synchronous DB writes (no external API calls), so a spinner is honest;
+  a fake multi-stage progress bar (like Research's, which really does run
+  3 parallel external API calls) would not be.
+
 **Hardening pass done on top of the full breadth list**, ahead of the
 product owner having time to run the pending SQL / set up Stripe:
 - Security audit: fixed a real cross-tenant data-integrity gap

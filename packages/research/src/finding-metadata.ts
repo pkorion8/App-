@@ -48,6 +48,8 @@ export interface MarketFindingMetadata {
   kind: "market";
   geography: string;
   indicators: MarketIndicatorSummary[];
+  /** Labels of tracked indicators that didn't come back this run (World Bank is empirically flaky) -- shown so a shorter card reads as "temporarily missing," not broken or arbitrary. */
+  missingIndicatorLabels: string[];
 }
 
 export interface GithubRepoSummary {

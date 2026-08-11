@@ -16,7 +16,7 @@ export interface WorldBankIndicatorResult {
   year: string;
 }
 
-const INDICATORS: { id: string; label: string }[] = [
+export const TRACKED_INDICATORS: { id: string; label: string }[] = [
   { id: "SP.POP.TOTL", label: "Population" },
   { id: "NY.GDP.PCAP.CD", label: "GDP per capita (current US$)" },
   { id: "IT.NET.USER.ZS", label: "Internet users (% of population)" },
@@ -33,7 +33,7 @@ async function fetchIndicator(
 ): Promise<WorldBankIndicatorResult | null> {
   const url = `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicator.id}?format=json&mrnev=1`;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) continue;
@@ -55,6 +55,6 @@ async function fetchIndicator(
 
 /** Fetches whichever of the tracked indicators succeed; never throws. */
 export async function fetchWorldBankIndicators(countryCode: string): Promise<WorldBankIndicatorResult[]> {
-  const results = await Promise.all(INDICATORS.map((indicator) => fetchIndicator(countryCode, indicator)));
+  const results = await Promise.all(TRACKED_INDICATORS.map((indicator) => fetchIndicator(countryCode, indicator)));
   return results.filter((r): r is WorldBankIndicatorResult => r !== null);
 }

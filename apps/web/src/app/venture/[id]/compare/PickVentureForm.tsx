@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Select } from "@venture-sandbox/ui";
+import { Button, Select, Spinner } from "@venture-sandbox/ui";
 import { createComparison } from "./actions";
 
 export function PickVentureForm({
@@ -39,6 +39,7 @@ export function PickVentureForm({
         disabled={isPending || !selected}
         onClick={() => startTransition(() => createComparison(ventureId, selected))}
       >
+        {isPending && <Spinner className="mr-2" />}
         {isPending ? "Comparing..." : "Compare"}
       </Button>
     </div>

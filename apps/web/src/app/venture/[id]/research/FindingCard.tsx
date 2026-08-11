@@ -168,6 +168,12 @@ function MarketCard({ f, metadata }: { f: FindingRow; metadata: MarketFindingMet
           <StatTile key={ind.id} label={ind.label} value={ind.formatted} hint={`as of ${ind.year}`} />
         ))}
       </div>
+      {metadata.missingIndicatorLabels.length > 0 && (
+        <p className="mt-3 rounded-vs-sm bg-vs-warning/10 px-3 py-2 text-xs text-vs-warning">
+          {metadata.missingIndicatorLabels.join(" and ")} didn&apos;t come back from the World Bank this run —
+          their API is occasionally flaky, not a bug here. Run Research again and they may come through.
+        </p>
+      )}
       <Footer limitations={f.limitations} nextTest={f.next_test} />
     </Card>
   );

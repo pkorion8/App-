@@ -143,7 +143,7 @@ export async function startResearch(
       previousSnapshots,
     }),
     researchMarketIndicators({ geography }),
-    researchGitHubActivity({ ventureName: venture.name }),
+    researchGitHubActivity({ ventureName: venture.name, ideaText: venture.raw_idea_text }),
   ]);
 
   const findingsToInsert = demoFindings.map((f, i) => {

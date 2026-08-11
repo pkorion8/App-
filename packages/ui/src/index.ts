@@ -8,4 +8,5 @@ export * from "./components/Badge";
 export * from "./components/StatTile";
 export * from "./components/Meter";
 export * from "./components/BarList";
+export * from "./components/Spinner";
 export * from "./utils/cn";

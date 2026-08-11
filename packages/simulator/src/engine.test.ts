@@ -77,6 +77,8 @@ describe("createInitialState", () => {
       competitorTraction: "Strong",
       topCompetitorName: "Rival App",
       summary: "test summary",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
     };
     const state = createInitialState(10_000, marketContext);
     expect(state.marketContext).toEqual(marketContext);
@@ -98,6 +100,8 @@ describe("market context effects", () => {
         competitorTraction: "Strong",
         topCompetitorName: "Rival App",
         summary: "Research found 3 competitors, strong traction overall.",
+        internetPenetrationPct: null,
+        activeRelatedReposFound: null,
       }),
     );
     expect(withResearch.events.some((e) => e.description.includes("Research found 3 competitors"))).toBe(true);
@@ -112,12 +116,16 @@ describe("market context effects", () => {
       competitorTraction: "Strong",
       topCompetitorName: "Rival App",
       summary: "strong",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
     });
     const none = driveToFirstUsers({
       hasResearch: true,
       competitorTraction: "None",
       topCompetitorName: null,
       summary: "none",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
     });
     expect(strong.totalUsers).toBeLessThan(none.totalUsers);
   });
@@ -129,6 +137,8 @@ describe("market context effects", () => {
         competitorTraction: "Moderate",
         topCompetitorName: "Rival App",
         summary: "moderate",
+        internetPenetrationPct: null,
+        activeRelatedReposFound: null,
       }),
       "first_users",
       { build_event: "workaround", mvp_ready: "launch_now" },
@@ -140,6 +150,63 @@ describe("market context effects", () => {
       events.push(...result.events.map((e) => e.description));
     }
     expect(events.some((d) => d.includes("Rival App"))).toBe(true);
+  });
+
+  it("low internet access in the researched geography slows growth relative to high access, all else equal", () => {
+    const lowAccess = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "Moderate",
+      topCompetitorName: null,
+      summary: "low access",
+      internetPenetrationPct: 30,
+      activeRelatedReposFound: null,
+    });
+    const highAccess = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "Moderate",
+      topCompetitorName: null,
+      summary: "high access",
+      internetPenetrationPct: 95,
+      activeRelatedReposFound: null,
+    });
+    expect(lowAccess.totalUsers).toBeLessThan(highAccess.totalUsers);
+  });
+
+  it("not knowing internet access (null) behaves identically to not having researched it at all", () => {
+    const unknown = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "Moderate",
+      topCompetitorName: null,
+      summary: "unknown access",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: null,
+    });
+    const noResearch = driveToFirstUsers(undefined);
+    // Moderate traction (1.0x) with unknown reach (1.0x) should match the
+    // fully-neutral default context's math exactly.
+    expect(unknown.totalUsers).toBe(noResearch.totalUsers);
+  });
+
+  it("finding actively-maintained related open-source projects starts the venture with higher quality and lower technical risk", () => {
+    const withTechEvidence = createInitialState(10_000, {
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary: "tech evidence",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: 4,
+    });
+    const withoutTechEvidence = createInitialState(10_000, {
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary: "no tech evidence",
+      internetPenetrationPct: null,
+      activeRelatedReposFound: 0,
+    });
+    expect(withTechEvidence.productQualityPct).toBeGreaterThan(withoutTechEvidence.productQualityPct);
+    expect(withTechEvidence.technicalRisk).toBe("low");
+    expect(withoutTechEvidence.technicalRisk).toBe("medium");
   });
 });
 

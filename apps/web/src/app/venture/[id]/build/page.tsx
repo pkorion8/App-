@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
 import type { RecommendedStack, BacklogItem, CostEstimate } from "@venture-sandbox/build";
-import { Card } from "@venture-sandbox/ui";
+import { Badge, BarList, Card, StatTile, type BadgeStatus } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { GenerateButton } from "./GenerateButton";
@@ -18,6 +18,15 @@ const CATEGORY_LABEL: Record<string, string> = {
   payments: "Payments",
   polish: "Polish",
   launch: "Launch",
+};
+
+const CATEGORY_BADGE_STATUS: Record<string, BadgeStatus> = {
+  setup: "neutral",
+  core: "primary",
+  auth: "neutral",
+  payments: "warning",
+  polish: "neutral",
+  launch: "success",
 };
 
 export default async function BuildPage({
@@ -76,16 +85,30 @@ export default async function BuildPage({
       ) : (
         <div className="mt-4 space-y-4">
           <Card>
-            <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Stack</p>
-            <p className="mt-2 text-sm text-vs-fg">
-              Database: {stack.database} · Auth: {stack.auth} · Hosting: {stack.hosting}
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Stack</p>
+              <Badge status="neutral">Same for every venture</Badge>
+            </div>
+            <p className="mt-1 text-xs text-vs-fg-muted">
+              A sensible reference stack, not a personalized pick — the task list below is what&apos;s
+              actually specific to this idea.
             </p>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <StatTile label="Database" value={stack.database} />
+              <StatTile label="Auth" value={stack.auth} />
+              <StatTile label="Hosting" value={stack.hosting} />
+            </div>
             {stack.notableApis.length > 0 && (
-              <ul className="mt-2 list-inside list-disc text-sm text-vs-fg-muted">
-                {stack.notableApis.map((api) => (
-                  <li key={api}>{api}</li>
-                ))}
-              </ul>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">
+                  Also needed for this idea
+                </p>
+                <ul className="mt-1 list-inside list-disc text-sm text-vs-fg-muted">
+                  {stack.notableApis.map((api) => (
+                    <li key={api}>{api}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </Card>
 
@@ -96,28 +119,35 @@ export default async function BuildPage({
             <p className="mt-1 text-xs text-vs-fg-muted">{stack.rationale}</p>
             <div className="mt-3 space-y-2">
               {stack.builderOptions.map((opt) => (
-                <div key={opt.name} className="rounded-vs-sm border border-vs-border p-3">
+                <div key={opt.name} className="rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
                   <p className="text-sm font-medium text-vs-fg">{opt.name}</p>
-                  <p className="text-xs text-vs-fg-muted">Speed: {opt.speed}</p>
-                  <p className="text-xs text-vs-fg-muted">Ownership: {opt.ownership}</p>
-                  <p className="text-xs text-vs-fg-muted">{opt.costNote}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Badge status="primary">Speed: {opt.speed}</Badge>
+                    <Badge status="neutral">Ownership: {opt.ownership}</Badge>
+                  </div>
+                  <p className="mt-1.5 text-xs text-vs-fg-muted">{opt.costNote}</p>
                 </div>
               ))}
             </div>
           </Card>
 
           <Card>
-            <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
-              Task list
-            </p>
-            <ul className="mt-2 space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
+                Task list
+              </p>
+              <Badge status="primary">Specific to this idea</Badge>
+            </div>
+            <ul className="mt-3 space-y-2">
               {backlog.map((item) => (
-                <li key={item.title} className="text-sm">
-                  <span className="mr-2 rounded-vs-sm bg-vs-bg-subtle px-1.5 py-0.5 text-xs uppercase text-vs-fg-muted">
-                    {CATEGORY_LABEL[item.category] ?? item.category}
-                  </span>
-                  <span className="font-medium text-vs-fg">{item.title}</span>
-                  <p className="ml-0.5 mt-0.5 text-xs text-vs-fg-muted">{item.description}</p>
+                <li key={item.title} className="rounded-vs-md border border-vs-border p-3">
+                  <div className="flex items-baseline gap-2">
+                    <Badge status={CATEGORY_BADGE_STATUS[item.category] ?? "neutral"}>
+                      {CATEGORY_LABEL[item.category] ?? item.category}
+                    </Badge>
+                    <span className="text-sm font-medium text-vs-fg">{item.title}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-vs-fg-muted">{item.description}</p>
                 </li>
               ))}
             </ul>
@@ -125,15 +155,23 @@ export default async function BuildPage({
 
           <Card>
             <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
-              Estimated monthly cost: ${cost.totalMonthly}
+              Estimated monthly cost
             </p>
-            <ul className="mt-2 space-y-1">
-              {cost.items.map((item) => (
-                <li key={item.name} className="text-sm text-vs-fg-muted">
-                  <span className="font-medium text-vs-fg">${item.monthlyCost}</span> — {item.name}: {item.note}
-                </li>
-              ))}
-            </ul>
+            <StatTile
+              className="mt-3"
+              label="At low volume, on free tiers where possible"
+              value={`$${cost.totalMonthly}`}
+              hint="Grows with real usage — this is the honest floor, not a permanent number."
+            />
+            <BarList
+              className="mt-4"
+              items={cost.items.map((item) => ({
+                label: item.name,
+                sublabel: item.note,
+                value: item.monthlyCost,
+                valueLabel: `$${item.monthlyCost}`,
+              }))}
+            />
           </Card>
         </div>
       )}

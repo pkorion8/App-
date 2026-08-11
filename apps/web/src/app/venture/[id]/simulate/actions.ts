@@ -20,12 +20,14 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Seeds a run's starting conditions from the venture's own Research
- * findings instead of ignoring them -- real competitor traction (from the
+ * findings instead of ignoring them. Beyond competitor traction (from the
  * most recent live App Store search, stored per-app in
- * research_competitor_snapshots) makes growth harder or easier, and the
- * top competitor's name shows up in the market event later. If Research
- * has never been run for this venture, that's stated plainly rather than
- * silently defaulting.
+ * research_competitor_snapshots), this also reads the same research run's
+ * World Bank and GitHub findings (findings.metadata) for internet-access
+ * reach and technical-territory evidence -- reusing the structured data
+ * the Research page's cards already render, not a new data model. If
+ * Research has never been run for this venture, that's stated plainly
+ * rather than silently defaulting.
  */
 async function buildMarketContext(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
@@ -33,7 +35,7 @@ async function buildMarketContext(
 ): Promise<MarketContext> {
   const { data: recentMission } = await supabase
     .from("research_missions")
-    .select("created_at")
+    .select("id, created_at")
     .eq("venture_id", ventureId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -43,11 +45,14 @@ async function buildMarketContext(
     return DEFAULT_MARKET_CONTEXT;
   }
 
-  const { data: snapshotRows } = await supabase
-    .from("research_competitor_snapshots")
-    .select("app_id, app_name, rating_count, checked_at")
-    .eq("venture_id", ventureId)
-    .order("checked_at", { ascending: false });
+  const [{ data: snapshotRows }, { data: findingRows }] = await Promise.all([
+    supabase
+      .from("research_competitor_snapshots")
+      .select("app_id, app_name, rating_count, checked_at")
+      .eq("venture_id", ventureId)
+      .order("checked_at", { ascending: false }),
+    supabase.from("findings").select("metadata").eq("mission_id", recentMission.id),
+  ]);
 
   // Most recent snapshot per app, same dedup pattern as the research
   // action that writes these rows.
@@ -58,6 +63,34 @@ async function buildMarketContext(
     }
   }
 
+  // Same findings.metadata the Research page's cards render -- read here
+  // too rather than re-fetching or re-deriving from live APIs, since this
+  // run's Research results are already the source of truth on file.
+  let internetPenetrationPct: number | null = null;
+  let activeRelatedReposFound: number | null = null;
+  for (const row of findingRows ?? []) {
+    const meta = row.metadata as { kind?: string } | null;
+    if (meta?.kind === "market") {
+      const indicators = (meta as { indicators?: { id: string; value: number }[] }).indicators ?? [];
+      const internet = indicators.find((i) => i.id === "IT.NET.USER.ZS");
+      if (internet) internetPenetrationPct = internet.value;
+    }
+    if (meta?.kind === "github") {
+      const activeCount = (meta as { activeCount?: number }).activeCount;
+      if (typeof activeCount === "number") activeRelatedReposFound = activeCount;
+    }
+  }
+
+  const reachNote =
+    internetPenetrationPct !== null && internetPenetrationPct < 85
+      ? ` Internet access in this market is ${internetPenetrationPct.toFixed(0)}%, which tempers organic reach.`
+      : "";
+  const techNote =
+    activeRelatedReposFound !== null && activeRelatedReposFound >= 2
+      ? ` Research also found ${activeRelatedReposFound} actively-maintained related open-source projects — ` +
+        `less unproven technical territory than average, reflected in a lower starting technical risk.`
+      : "";
+
   if (latestByAppId.size === 0) {
     return {
       hasResearch: true,
@@ -65,7 +98,9 @@ async function buildMarketContext(
       topCompetitorName: null,
       summary:
         "Research has been run for this venture, but its App Store search found no " +
-        "competitors — simulation proceeding without a competitive-pressure adjustment.",
+        `competitors — simulation proceeding without a competitive-pressure adjustment.${reachNote}${techNote}`,
+      internetPenetrationPct,
+      activeRelatedReposFound,
     };
   }
 
@@ -80,7 +115,10 @@ async function buildMarketContext(
     summary:
       `Research found ${entries.length} competitor${entries.length === 1 ? "" : "s"} in the App Store, ` +
       `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ` +
-      `${top.ratingCount.toLocaleString()} ratings). This simulation's growth conditions are calibrated to that.`,
+      `${top.ratingCount.toLocaleString()} ratings). This simulation's growth conditions are calibrated to that.` +
+      `${reachNote}${techNote}`,
+    internetPenetrationPct,
+    activeRelatedReposFound,
   };
 }
 

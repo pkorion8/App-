@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
-import { Card } from "@venture-sandbox/ui";
+import { Badge, Card, StatTile } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PickVentureForm } from "./PickVentureForm";
@@ -117,26 +117,6 @@ export default async function ComparePage({
   if (!a) notFound();
   if (!b) notFound();
 
-  const rows: [string, string, string][] = [
-    ["Idea", a.venture.raw_idea_text, b.venture.raw_idea_text],
-    ["Status", a.venture.status, b.venture.status],
-    [
-      "Research",
-      `${a.findingsCount} findings (${a.liveFindingsCount} live)`,
-      `${b.findingsCount} findings (${b.liveFindingsCount} live)`,
-    ],
-    [
-      "Simulation",
-      a.run ? `Day ${a.run.virtual_day} · ${a.run.stage} · ${a.run.total_users} users · $${a.run.monthly_revenue}/mo` : "Not run yet",
-      b.run ? `Day ${b.run.virtual_day} · ${b.run.stage} · ${b.run.total_users} users · $${b.run.monthly_revenue}/mo` : "Not run yet",
-    ],
-    [
-      "Est. monthly cost",
-      a.monthlyCost !== undefined ? `$${a.monthlyCost}` : "Not generated yet",
-      b.monthlyCost !== undefined ? `$${b.monthlyCost}` : "Not generated yet",
-    ],
-  ];
-
   return (
     <main className="mx-auto max-w-3xl p-6">
       <Link href={`/venture/${id}/compare`} className="text-sm text-vs-fg-muted hover:underline">
@@ -146,26 +126,84 @@ export default async function ComparePage({
         {a.venture.name} vs {b.venture.name}
       </h1>
 
-      <Card className="mt-4 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-vs-border text-left">
-              <th className="py-2 pr-4 text-vs-fg-muted">Dimension</th>
-              <th className="py-2 pr-4 text-vs-fg">{a.venture.name}</th>
-              <th className="py-2 text-vs-fg">{b.venture.name}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(([label, valA, valB]) => (
-              <tr key={label} className="border-b border-vs-border last:border-0">
-                <td className="py-2 pr-4 font-medium text-vs-fg-muted">{label}</td>
-                <td className="py-2 pr-4 text-vs-fg">{valA}</td>
-                <td className="py-2 text-vs-fg">{valB}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      <div className="mt-4 space-y-4">
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Idea</p>
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
+              <p className="text-xs text-vs-fg-muted">{a.venture.name}</p>
+              <p className="mt-1 text-sm text-vs-fg">{a.venture.raw_idea_text}</p>
+            </div>
+            <div className="rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
+              <p className="text-xs text-vs-fg-muted">{b.venture.name}</p>
+              <p className="mt-1 text-sm text-vs-fg">{b.venture.raw_idea_text}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Status</p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Badge status="neutral">
+              {a.venture.name}: {a.venture.status}
+            </Badge>
+            <Badge status="neutral">
+              {b.venture.name}: {b.venture.status}
+            </Badge>
+          </div>
+        </Card>
+
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Research</p>
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <StatTile
+              label={a.venture.name}
+              value={`${a.findingsCount} findings`}
+              hint={`${a.liveFindingsCount} live, ${a.findingsCount - a.liveFindingsCount} pending`}
+            />
+            <StatTile
+              label={b.venture.name}
+              value={`${b.findingsCount} findings`}
+              hint={`${b.liveFindingsCount} live, ${b.findingsCount - b.liveFindingsCount} pending`}
+            />
+          </div>
+        </Card>
+
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Simulation</p>
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <StatTile
+              label={a.venture.name}
+              value={a.run ? `${a.run.total_users.toLocaleString()} users` : "Not started"}
+              hint={a.run ? `Day ${a.run.virtual_day} · ${a.run.stage} · $${a.run.monthly_revenue}/mo` : undefined}
+            />
+            <StatTile
+              label={b.venture.name}
+              value={b.run ? `${b.run.total_users.toLocaleString()} users` : "Not started"}
+              hint={b.run ? `Day ${b.run.virtual_day} · ${b.run.stage} · $${b.run.monthly_revenue}/mo` : undefined}
+            />
+          </div>
+        </Card>
+
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">
+            Estimated monthly cost
+          </p>
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <StatTile
+              label={a.venture.name}
+              value={a.monthlyCost !== undefined ? `$${a.monthlyCost}` : "—"}
+              hint={a.monthlyCost === undefined ? "No build plan generated yet" : undefined}
+            />
+            <StatTile
+              label={b.venture.name}
+              value={b.monthlyCost !== undefined ? `$${b.monthlyCost}` : "—"}
+              hint={b.monthlyCost === undefined ? "No build plan generated yet" : undefined}
+            />
+          </div>
+        </Card>
+      </div>
+
       <p className="mt-3 text-xs text-vs-fg-muted">
         This is a factual side-by-side of what each venture has actually produced so far —
         not a computed &quot;winner&quot; score.

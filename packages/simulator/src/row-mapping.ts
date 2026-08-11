@@ -41,11 +41,19 @@ export function rowToSimulationState(row: SimulationRunRow): SimulationState {
     monthlyCost: row.monthly_cost,
     marketConfidence: row.market_confidence as SimulationState["marketConfidence"],
     history: Array.isArray(row.history) ? (row.history as SimulationHistoryPoint[]) : [],
-    marketContext: isMarketContext(row.market_context) ? row.market_context : DEFAULT_MARKET_CONTEXT,
+    // Spread onto defaults rather than trusting the stored JSON shape
+    // outright -- a row written before a MarketContext field existed
+    // (e.g. internetPenetrationPct/activeRelatedReposFound) would
+    // otherwise deserialize with that field `undefined`, not `null`,
+    // which the engine's `=== null` neutral-evidence checks don't treat
+    // the same way.
+    marketContext: isMarketContext(row.market_context)
+      ? { ...DEFAULT_MARKET_CONTEXT, ...row.market_context }
+      : DEFAULT_MARKET_CONTEXT,
   };
 }
 
-function isMarketContext(value: unknown): value is MarketContext {
+function isMarketContext(value: unknown): value is Partial<MarketContext> {
   return typeof value === "object" && value !== null && "hasResearch" in value;
 }
 

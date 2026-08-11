@@ -34,6 +34,8 @@ export const DEFAULT_MARKET_CONTEXT: MarketContext = {
     "No research has been run for this venture yet — this simulation is running " +
     "without real market context. Run Research first for starting conditions " +
     "calibrated to actual competitors.",
+  internetPenetrationPct: null,
+  activeRelatedReposFound: null,
 };
 
 // Real competitor traction (from Research's live App Store search) makes
@@ -56,18 +58,42 @@ function growthMultiplierFor(marketContext: MarketContext): number {
   return marketContext.hasResearch ? TRACTION_GROWTH_MULTIPLIER[marketContext.competitorTraction] : 1.0;
 }
 
+// World Bank internet-access % for the venture's geography -- a real,
+// separate evidence source from competitor traction. Below ~50% meaningfully
+// shrinks the realistically reachable digital audience for a typical
+// consumer app; above ~85% is treated as no meaningful constraint. Missing
+// evidence (null) is neutral, same principle as everywhere else here.
+function reachMultiplierFor(marketContext: MarketContext): number {
+  const pct = marketContext.internetPenetrationPct;
+  if (pct === null) return 1.0;
+  if (pct >= 85) return 1.0;
+  if (pct >= 50) return 0.9;
+  return 0.75;
+}
+
+// Real, actively-maintained related open-source projects Research found on
+// GitHub -- evidence the technical territory is less unproven than average.
+// Only ever a bonus for positive evidence, never a penalty for zero found
+// (that could just mean nothing indexed, not that it's harder).
+const TECH_EVIDENCE_THRESHOLD = 2;
+
 export function createInitialState(
   budgetTotal: number,
   marketContext: MarketContext = DEFAULT_MARKET_CONTEXT,
 ): SimulationState {
+  const hasTechEvidence =
+    marketContext.activeRelatedReposFound !== null && marketContext.activeRelatedReposFound >= TECH_EVIDENCE_THRESHOLD;
+  const productQualityPct = hasTechEvidence ? 55 : 50;
+  const technicalRisk: SimulationState["technicalRisk"] = hasTechEvidence ? "low" : "medium";
+
   return {
     stage: "resource_planning",
     virtualDay: 0,
     cashRemaining: budgetTotal,
     budgetTotal,
     buildProgressPct: 0,
-    productQualityPct: 50,
-    technicalRisk: "medium",
+    productQualityPct,
+    technicalRisk,
     launchReadinessPct: 0,
     totalUsers: 0,
     returningUsers: 0,
@@ -75,7 +101,7 @@ export function createInitialState(
     monthlyCost: 0,
     marketConfidence: "unknown",
     history: [
-      { day: 0, cashRemaining: budgetTotal, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct: 50 },
+      { day: 0, cashRemaining: budgetTotal, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct },
     ],
     marketContext,
   };
@@ -158,7 +184,7 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       if (state.stage === "launch") {
         next.stage = "first_users";
       }
-      const growthMultiplier = growthMultiplierFor(next.marketContext);
+      const growthMultiplier = growthMultiplierFor(next.marketContext) * reachMultiplierFor(next.marketContext);
       const dailyNewUsers = Math.round(
         (DAILY_NEW_USERS_BASE + Math.floor(next.productQualityPct / 20)) * growthMultiplier,
       );

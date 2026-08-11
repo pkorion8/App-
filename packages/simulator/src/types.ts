@@ -29,6 +29,10 @@ export interface MarketContext {
   competitorTraction: CompetitorTraction;
   topCompetitorName: string | null;
   summary: string;
+  /** World Bank internet-access % for the venture's geography, if Research found it. Null = no evidence -- stays neutral, never penalized. */
+  internetPenetrationPct: number | null;
+  /** Actively-maintained related open-source projects Research found on GitHub. Null = not researched (neutral). 0 = researched, found none (still neutral -- absence isn't evidence of difficulty). >=2 is what earns a starting-quality bonus. */
+  activeRelatedReposFound: number | null;
 }
 
 /** One point-in-time snapshot of the metrics that are worth charting over the run. */

@@ -1,9 +1,10 @@
 import type { FindingState } from "@venture-sandbox/domain";
 import { searchAppStore } from "./sources/itunes-search";
-import { fetchWorldBankIndicators, type WorldBankIndicatorResult } from "./sources/world-bank";
+import { fetchWorldBankIndicators, TRACKED_INDICATORS, type WorldBankIndicatorResult } from "./sources/world-bank";
 import { searchGitHubRepos } from "./sources/github";
 import { resolveCountryCode } from "./geography";
 import { compareSnapshots, type PreviousAppSnapshot, type TrendResult } from "./trend";
+import { deriveSearchKeywords } from "./search-keywords";
 import type { DemoFinding } from "./demo-findings";
 import type {
   CompetitorFindingMetadata,
@@ -70,10 +71,19 @@ export async function researchAppStoreCompetitors(input: {
   | null
 > {
   const country = guessStoreCountry(input.geography);
+  // Idea-aware, not just the bare venture name (see search-keywords.ts) --
+  // but App Store search is recall-sensitive (too many required terms can
+  // return zero results for a real competitor), so an empty result on the
+  // expanded query falls back to the plain venture name, a strictly
+  // broader search, before giving up.
+  const query = deriveSearchKeywords(input.ventureName, input.ideaText);
 
   let results;
   try {
-    results = await searchAppStore(input.ventureName, country, 15);
+    results = await searchAppStore(query, country, 15);
+    if (results.length === 0 && query !== input.ventureName) {
+      results = await searchAppStore(input.ventureName, country, 15);
+    }
   } catch {
     return null;
   }
@@ -232,6 +242,15 @@ export async function researchMarketIndicators(input: {
     .map((ind) => `• ${ind.label} (${ind.year}): ${formatIndicatorValue(ind)}`)
     .join("\n");
 
+  const returnedIds = new Set(indicators.map((ind) => ind.indicatorId));
+  const missingIndicatorLabels = TRACKED_INDICATORS.filter((t) => !returnedIds.has(t.id)).map((t) => t.label);
+  const missingSentence =
+    missingIndicatorLabels.length > 0
+      ? `\n\n${missingIndicatorLabels.join(" and ")} didn't come back from the World Bank this run — ` +
+        `their API is empirically flaky (returns an error page with a 200 status sometimes), not a bug on this end. ` +
+        `Run Research again and they may come through.`
+      : "";
+
   const metadata: MarketFindingMetadata = {
     kind: "market",
     geography: input.geography,
@@ -242,11 +261,12 @@ export async function researchMarketIndicators(input: {
       value: ind.value,
       formatted: formatIndicatorValue(ind),
     })),
+    missingIndicatorLabels,
   };
 
   return {
     normalizedClaim: `World Bank market indicators for ${input.geography}`,
-    userFacingSummary: `Live World Bank data for ${input.geography}:\n\n${lines}`,
+    userFacingSummary: `Live World Bank data for ${input.geography}:\n\n${lines}${missingSentence}`,
     state: "MIXED",
     limitations:
       "World Bank's most recently reported figures per indicator, which can lag a year or " +
@@ -280,10 +300,17 @@ export function isActivelyMaintained(pushedAt: string | null): boolean {
  */
 export async function researchGitHubActivity(input: {
   ventureName: string;
+  ideaText: string;
 }): Promise<(Omit<DemoFinding, "state"> & { state: FindingState; metadata: GithubFindingMetadata | null }) | null> {
+  // Idea-aware, not just the bare venture name -- "Roti" alone is a weak,
+  // generic GitHub search; "roti ordering delivery" (name + real terms
+  // pulled from the idea text) actually distinguishes it from an unrelated
+  // repo that merely mentions bread. See search-keywords.ts.
+  const query = deriveSearchKeywords(input.ventureName, input.ideaText);
+
   let results;
   try {
-    results = await searchGitHubRepos(input.ventureName, 5);
+    results = await searchGitHubRepos(query, 5);
   } catch {
     return null;
   }
@@ -292,7 +319,7 @@ export async function researchGitHubActivity(input: {
     return {
       normalizedClaim: `Open-source search for "${input.ventureName}"`,
       userFacingSummary:
-        `A GitHub search for "${input.ventureName}" didn't surface a close match. That could ` +
+        `A GitHub search for "${query}" didn't surface a close match. That could ` +
         `mean this hasn't been built as an open-source project before — or just that the ` +
         `search terms need adjusting.`,
       state: "WEAK",

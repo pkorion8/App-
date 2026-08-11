@@ -5,6 +5,11 @@ import { searchGitHubRepos } from "./sources/github";
 import { resolveCountryCode } from "./geography";
 import { compareSnapshots, type PreviousAppSnapshot, type TrendResult } from "./trend";
 import type { DemoFinding } from "./demo-findings";
+import type {
+  CompetitorFindingMetadata,
+  GithubFindingMetadata,
+  MarketFindingMetadata,
+} from "./finding-metadata";
 
 export interface CompetitorSnapshotToPersist {
   appId: number;
@@ -57,7 +62,11 @@ export async function researchAppStoreCompetitors(input: {
   /** Prior runs' snapshots for this venture, if any -- enables real trend detection without any new scheduled infrastructure. */
   previousSnapshots?: PreviousAppSnapshot[];
 }): Promise<
-  | (Omit<DemoFinding, "state"> & { state: FindingState; snapshots: CompetitorSnapshotToPersist[] })
+  | (Omit<DemoFinding, "state"> & {
+      state: FindingState;
+      snapshots: CompetitorSnapshotToPersist[];
+      metadata: CompetitorFindingMetadata | null;
+    })
   | null
 > {
   const country = guessStoreCountry(input.geography);
@@ -82,6 +91,7 @@ export async function researchAppStoreCompetitors(input: {
         "public listing search returns — not Google Play, and not download/revenue data.",
       nextTest: "Try a broader or differently-worded search on the App Store and Google Play directly.",
       snapshots: [],
+      metadata: null,
     };
   }
 
@@ -128,6 +138,31 @@ export async function researchAppStoreCompetitors(input: {
   const trends = compareSnapshots(trendable, input.previousSnapshots ?? []);
   const trendSection = formatTrendSection(trends);
 
+  const metadata: CompetitorFindingMetadata = {
+    kind: "competitors",
+    totalFound: results.length,
+    traction,
+    newcomerCount: newcomers.length,
+    weakest: weakest ? { name: weakest.name, ratingCount: weakest.ratingCount } : null,
+    apps: shown.map((r) => ({
+      name: r.name,
+      seller: r.seller,
+      rating: r.rating,
+      ratingCount: r.ratingCount,
+      price: r.price,
+      lastUpdated: r.lastUpdated,
+      isNew: isNewcomer(r.releaseDate),
+    })),
+    trends: trends.map((t) => ({
+      name: t.name,
+      direction: t.direction,
+      delta: t.delta,
+      daysSincePrevious: t.daysSincePrevious,
+      previousRatingCount: t.previousRatingCount,
+      currentRatingCount: t.currentRatingCount,
+    })),
+  };
+
   return {
     normalizedClaim: `Live App Store competitors for "${input.ventureName}"${
       newcomers.length > 0 ? ` (${newcomers.length} newcomer${newcomers.length === 1 ? "" : "s"})` : ""
@@ -145,6 +180,7 @@ export async function researchAppStoreCompetitors(input: {
       "No revenue, subscription pricing, or review content is available from this free API.",
     nextTest: "Cross-check the top matches on Google Play and read their recent reviews directly.",
     snapshots: trendable,
+    metadata,
   };
 }
 
@@ -185,7 +221,7 @@ function formatIndicatorValue(indicator: WorldBankIndicatorResult): string {
  */
 export async function researchMarketIndicators(input: {
   geography: string;
-}): Promise<(Omit<DemoFinding, "state"> & { state: FindingState }) | null> {
+}): Promise<(Omit<DemoFinding, "state"> & { state: FindingState; metadata: MarketFindingMetadata }) | null> {
   const countryCode = resolveCountryCode(input.geography);
   if (!countryCode) return null;
 
@@ -195,6 +231,18 @@ export async function researchMarketIndicators(input: {
   const lines = indicators
     .map((ind) => `• ${ind.label} (${ind.year}): ${formatIndicatorValue(ind)}`)
     .join("\n");
+
+  const metadata: MarketFindingMetadata = {
+    kind: "market",
+    geography: input.geography,
+    indicators: indicators.map((ind) => ({
+      id: ind.indicatorId,
+      label: ind.label,
+      year: ind.year,
+      value: ind.value,
+      formatted: formatIndicatorValue(ind),
+    })),
+  };
 
   return {
     normalizedClaim: `World Bank market indicators for ${input.geography}`,
@@ -207,6 +255,7 @@ export async function researchMarketIndicators(input: {
     nextTest:
       "Cross-reference with a market-sizing source specific to this product category " +
       "(industry reports, local trade or app-store category data).",
+    metadata,
   };
 }
 
@@ -231,7 +280,7 @@ export function isActivelyMaintained(pushedAt: string | null): boolean {
  */
 export async function researchGitHubActivity(input: {
   ventureName: string;
-}): Promise<(Omit<DemoFinding, "state"> & { state: FindingState }) | null> {
+}): Promise<(Omit<DemoFinding, "state"> & { state: FindingState; metadata: GithubFindingMetadata | null }) | null> {
   let results;
   try {
     results = await searchGitHubRepos(input.ventureName, 5);
@@ -249,6 +298,7 @@ export async function researchGitHubActivity(input: {
       state: "WEAK",
       limitations: "Covers only public GitHub repositories, matched by name/keyword only.",
       nextTest: "Try a broader or differently-worded search on GitHub directly.",
+      metadata: null,
     };
   }
 
@@ -262,6 +312,19 @@ export async function researchGitHubActivity(input: {
     })
     .join("\n");
 
+  const metadata: GithubFindingMetadata = {
+    kind: "github",
+    totalFound: results.length,
+    activeCount,
+    repos: top.map((r) => ({
+      fullName: r.fullName,
+      stars: r.stars,
+      pushedAt: r.pushedAt,
+      description: r.description,
+      isActive: isActivelyMaintained(r.pushedAt),
+    })),
+  };
+
   return {
     normalizedClaim: `Related open-source projects for "${input.ventureName}"`,
     userFacingSummary:
@@ -273,5 +336,6 @@ export async function researchGitHubActivity(input: {
       "Public GitHub repositories only, matched by name/keyword only. Star count is a rough " +
       "popularity proxy, not a measure of real-world usage or commercial competition.",
     nextTest: "Check whether any close matches are actively used in production, not just starred.",
+    metadata,
   };
 }

@@ -16,6 +16,7 @@
   --vs-color-primary-fg: 255 255 255;
   --vs-color-danger: 200 55 55;
   --vs-color-success: 31 138 91;
+  --vs-color-warning: 176 92 6;
 
   --vs-radius-sm: 6px;
   --vs-radius-md: 10px;
@@ -41,4 +42,5 @@
   --vs-color-primary-fg: 18 18 22;
   --vs-color-danger: 232 110 110;
   --vs-color-success: 90 196 148;
+  --vs-color-warning: 232 168 82;
 }

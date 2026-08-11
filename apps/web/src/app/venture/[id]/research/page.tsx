@@ -6,18 +6,12 @@ import { Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ClarificationForm } from "./ClarificationForm";
+import { FindingCard, type FindingRow } from "./FindingCard";
 
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Research" };
-
-const STATE_LABEL: Record<string, string> = {
-  SOLID: "Solid",
-  MIXED: "Mixed signals",
-  WEAK: "Weak",
-  UNKNOWN: "Not yet checked",
-};
 
 export default async function ResearchPage({
   params,
@@ -68,20 +62,12 @@ export default async function ResearchPage({
 
   const showForm = !mission || again === "1";
 
-  let findings: {
-    id: string;
-    normalized_claim: string;
-    user_facing_summary: string;
-    state: string;
-    is_demo: boolean;
-    limitations: string | null;
-    next_test: string | null;
-  }[] = [];
+  let findings: FindingRow[] = [];
 
   if (mission && !showForm) {
     const { data } = await supabase
       .from("findings")
-      .select("id, normalized_claim, user_facing_summary, state, is_demo, limitations, next_test")
+      .select("id, normalized_claim, user_facing_summary, state, is_demo, limitations, next_test, metadata")
       .eq("mission_id", mission.id)
       .order("created_at", { ascending: true });
     findings = data ?? [];
@@ -122,36 +108,7 @@ export default async function ResearchPage({
           </Card>
 
           {findings.map((f) => (
-            <Card key={f.id}>
-              <div className="flex items-start justify-between gap-3">
-                <p className="font-medium text-vs-fg">{f.normalized_claim}</p>
-                <div className="flex shrink-0 gap-1.5">
-                  {f.is_demo && (
-                    <span className="rounded-vs-sm bg-vs-danger/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-vs-danger">
-                      Demo
-                    </span>
-                  )}
-                  <span className="rounded-vs-sm bg-vs-bg-subtle px-2 py-0.5 text-xs uppercase tracking-wide text-vs-fg-muted">
-                    {STATE_LABEL[f.state] ?? f.state}
-                  </span>
-                </div>
-              </div>
-              <p className="mt-2 whitespace-pre-line text-sm text-vs-fg-muted">
-                {f.user_facing_summary}
-              </p>
-              {f.limitations && (
-                <p className="mt-3 text-xs text-vs-fg-muted">
-                  <span className="font-semibold">Limitation: </span>
-                  {f.limitations}
-                </p>
-              )}
-              {f.next_test && (
-                <p className="mt-1 text-xs text-vs-fg-muted">
-                  <span className="font-semibold">Next real test: </span>
-                  {f.next_test}
-                </p>
-              )}
-            </Card>
+            <FindingCard key={f.id} f={f} />
           ))}
         </div>
       )}

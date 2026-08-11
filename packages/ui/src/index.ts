@@ -4,4 +4,8 @@ export * from "./components/Input";
 export * from "./components/Select";
 export * from "./components/Label";
 export * from "./components/FieldError";
+export * from "./components/Badge";
+export * from "./components/StatTile";
+export * from "./components/Meter";
+export * from "./components/BarList";
 export * from "./utils/cn";

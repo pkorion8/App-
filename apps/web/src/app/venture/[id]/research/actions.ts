@@ -169,6 +169,7 @@ export async function startResearch(
       is_demo: f.isDemo,
       limitations: f.limitations,
       next_test: f.nextTest,
+      metadata: "metadata" in f ? (f.metadata as unknown as Record<string, unknown> | null) : null,
     })),
   );
 

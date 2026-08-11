@@ -173,6 +173,7 @@ export interface Database {
           is_demo: boolean;
           limitations: string | null;
           next_test: string | null;
+          metadata: Record<string, unknown> | null;
           created_at: string;
         };
         Insert: {
@@ -185,6 +186,7 @@ export interface Database {
           is_demo?: boolean;
           limitations?: string | null;
           next_test?: string | null;
+          metadata?: Record<string, unknown> | null;
           created_at?: string;
         };
         Update: never;

@@ -84,16 +84,46 @@ is an absence of evidence, not evidence of absence. New `market_context`
 jsonb column on `simulation_runs`, migration 0008, not yet run against the
 live DB (see below).
 
+**Research page got a real visual redesign, not just a data-completeness
+pass.** The product owner flagged this twice ("the ui how things are
+presented so messy and really bad" / "all messed up ... no proper
+presentations, cards"). Root cause: every live finding only ever produced
+one prose paragraph (`user_facing_summary`), so the UI had no choice but
+to render everything as a wall of bulleted text. Fixed by adding a
+`findings.metadata` jsonb column (migration 0009) that live sources also
+populate with the same numbers in structured form, plus 4 new tokenized
+`packages/ui` components (`StatTile`, `Badge`, `Meter`, `BarList`) built
+per the dataviz skill's method (form-before-color, validated status
+tokens, sequential-hue bars with secondary-encoded tags rather than a
+second competing hue). `apps/web/.../research/FindingCard.tsx` now
+dispatches on `metadata.kind` to render real stat tiles / a ranked bar
+chart / a meter instead of prose, for the 3 live sources (competitors,
+market, GitHub); anything without metadata (every DEMO placeholder, or
+pre-migration rows) still renders as plain text, so nothing regresses.
+Also added a real progress indicator (indeterminate bar + cycling
+"searching App Store… / pulling market data… " stage text) during the
+research run's multi-second multi-API call, replacing a bare "Starting…"
+label. A 2-slice pie chart was explicitly *not* used for the "N of M
+newcomers" stat — the dataviz skill's own form table calls that out
+("a single ratio against a limit → Meter, not a pie of 2 slices") — a
+Meter/progress-bar gives the same at-a-glance read without the
+readability cost. Verified by rendering the actual compiled Tailwind CSS
+against the real component markup with the product owner's own Nail
+Design/Japan data (screenshotted light + dark + mobile widths), since
+this sandbox has no way to log into the live app with real credentials.
+
 **Two things still need the product owner, not more code:**
-- `supabase/migrations/0007_competitor_snapshots.sql` and
-  `0008_simulation_market_context.sql` haven't been run against the live
-  DB yet (0001-0006 have, confirmed via a live diagnostic query after the
+- `supabase/migrations/0007_competitor_snapshots.sql`,
+  `0008_simulation_market_context.sql`, and
+  `0009_findings_metadata.sql` haven't been run against the live DB yet
+  (0001-0006 have, confirmed via a live diagnostic query after the
   product owner ran a consolidated fix for 3 tables that had gone
-  missing). Both are additive-only and safe to run any time: 0007 backs
-  the competitor growth-trend feature, 0008 backs Simulate reading real
-  Research data (see below) — until both run, those two features degrade
-  gracefully (no trend section, no market-context calibration) rather
-  than erroring, but won't actually work.
+  missing). All three are additive-only and safe to run any time: 0007
+  backs the competitor growth-trend feature, 0008 backs Simulate reading
+  real Research data, 0009 backs the new stat-tile/bar-chart Research UI
+  — until they run, those features degrade gracefully (no trend section,
+  no market-context calibration, findings render as plain text) rather
+  than erroring, but won't actually work at full depth.
 - Stripe test-mode account + 3 env vars for Billing to go live (see
   .env.example).
 

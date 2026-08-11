@@ -20,6 +20,7 @@ const config: Config = {
         "vs-primary-fg": withOpacity("--vs-color-primary-fg"),
         "vs-danger": withOpacity("--vs-color-danger"),
         "vs-success": withOpacity("--vs-color-success"),
+        "vs-warning": withOpacity("--vs-color-warning"),
       },
       borderRadius: {
         "vs-sm": "var(--vs-radius-sm)",

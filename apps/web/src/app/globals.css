@@ -8,3 +8,23 @@ body {
   background-color: rgb(var(--vs-color-bg));
   color: rgb(var(--vs-color-fg));
 }
+
+/* Indeterminate loading bar (research run, etc.) -- a sliding segment,
+   not a real percentage, since we don't know how long the live calls
+   underneath will take. */
+@keyframes vs-progress-indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(20%) scaleX(0.6);
+  }
+  100% {
+    transform: translateX(120%) scaleX(0.4);
+  }
+}
+
+.vs-progress-indeterminate {
+  animation: vs-progress-indeterminate 1.3s ease-in-out infinite;
+  transform-origin: left center;
+}

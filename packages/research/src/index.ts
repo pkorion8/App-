@@ -12,3 +12,4 @@ export * from "./live-findings";
 export * from "./sources/itunes-search";
 export * from "./parse-channel-input";
 export * from "./geography";
+export * from "./finding-metadata";

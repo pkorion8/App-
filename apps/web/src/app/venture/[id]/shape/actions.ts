@@ -24,6 +24,7 @@ export async function saveShape(
     valueProposition: formData.get("valueProposition") || undefined,
     mvpScope: formData.get("mvpScope") || undefined,
     differentiation: formData.get("differentiation") || undefined,
+    pricingModel: formData.get("pricingModel") || undefined,
   });
 
   if (!parsed.success) {
@@ -52,7 +53,7 @@ export async function saveShape(
     return { status: "error", message: "Couldn't find this venture." };
   }
 
-  const { targetUser, geography, problemStatement, valueProposition, mvpScope, differentiation } =
+  const { targetUser, geography, problemStatement, valueProposition, mvpScope, differentiation, pricingModel } =
     parsed.data;
 
   const ventureUpdate: { target_user: string; geography: string; status?: "shaped" } = {
@@ -82,6 +83,7 @@ export async function saveShape(
       value_proposition: valueProposition ?? null,
       mvp_scope: mvpScope ?? null,
       differentiation: differentiation ?? null,
+      pricing_model: pricingModel ?? null,
     },
     { onConflict: "venture_id" },
   );

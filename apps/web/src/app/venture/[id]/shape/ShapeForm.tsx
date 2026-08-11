@@ -7,6 +7,18 @@ import { saveShape, type SaveShapeState } from "./actions";
 
 const initialState: SaveShapeState = { status: "idle" };
 
+// Declared locally, not imported from @venture-sandbox/schemas -- a client
+// component importing from that package's barrel pulls in the whole
+// zod-based bundle (a real bug found and fixed once already, in
+// AddOutcomeForm.tsx). Values must stay in sync with PRICING_MODELS in
+// packages/schemas/src/shape.ts.
+const PRICING_MODEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "subscription", label: "Subscription (recurring)" },
+  { value: "one_time", label: "One-time purchase" },
+  { value: "commission", label: "Marketplace / commission" },
+  { value: "ad_supported", label: "Free, ad-supported" },
+];
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -28,6 +40,7 @@ export function ShapeForm({
     valueProposition: string;
     mvpScope: string;
     differentiation: string;
+    pricingModel: string;
   };
 }) {
   const boundAction = saveShape.bind(null, ventureId);
@@ -105,6 +118,22 @@ export function ShapeForm({
           defaultValue={defaults.differentiation}
           placeholder="If nothing yet, say so honestly -- that's a real finding too"
         />
+      </div>
+
+      <div>
+        <Label htmlFor="pricingModel">How will this make money?</Label>
+        <Select id="pricingModel" name="pricingModel" defaultValue={defaults.pricingModel}>
+          <option value="">Not decided yet</option>
+          {PRICING_MODEL_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </Select>
+        <p className="mt-1 text-xs text-vs-fg-muted">
+          Used to calibrate revenue math in Simulate -- a one-time-purchase product and a
+          subscription earn very differently from the same user count.
+        </p>
       </div>
 
       {state.status === "error" && state.message && <FieldError>{state.message}</FieldError>}

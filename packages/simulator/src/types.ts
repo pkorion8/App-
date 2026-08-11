@@ -15,6 +15,8 @@ export type SimulationStage =
 export type TechnicalRisk = "low" | "medium" | "high";
 export type MarketConfidence = "unknown" | "weak" | "mixed" | "strong";
 export type CompetitorTraction = "None" | "Weak" | "Moderate" | "Strong";
+/** A founder decision (Shape's job), not Research evidence -- kept separate from MarketContext for that reason. Changes which revenue formula the engine uses. */
+export type PricingModel = "subscription" | "one_time" | "commission" | "ad_supported";
 
 /**
  * What this run's starting conditions were calibrated against, carried
@@ -65,6 +67,8 @@ export interface SimulationState {
   history: SimulationHistoryPoint[];
   /** Real market signal this run was seeded with, if any -- see MarketContext. */
   marketContext: MarketContext;
+  /** The venture's Shape-decided pricing model, snapshotted at run creation -- changes which revenue formula advanceDay() uses. Defaults to "subscription" (the engine's original, still-default behavior). */
+  pricingModel: PricingModel;
 }
 
 export interface SimulationEvent {

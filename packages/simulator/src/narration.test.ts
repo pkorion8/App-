@@ -20,6 +20,7 @@ function baseState(overrides: Partial<SimulationState> = {}): SimulationState {
     marketConfidence: "mixed",
     history: [],
     marketContext: DEFAULT_MARKET_CONTEXT,
+    pricingModel: "subscription",
     ...overrides,
   };
 }

@@ -7,7 +7,7 @@ import {
   requiresDecision,
   resolveDecision,
 } from "./engine";
-import type { MarketContext, SimulationState } from "./types";
+import type { MarketContext, PricingModel, SimulationState } from "./types";
 
 const MAX_STEPS = 500;
 
@@ -239,6 +239,57 @@ describe("market context effects", () => {
       estimatedMonthlyCost: null,
     });
     expect(withCostEstimate.monthlyCost).toBe(withoutCostEstimate.monthlyCost + 500);
+  });
+
+  it("each pricing model produces a genuinely different revenue formula for identical simulated growth", () => {
+    const runFor = (pricingModel: PricingModel) =>
+      driveTo(createInitialState(10_000, DEFAULT_MARKET_CONTEXT, pricingModel), "first_users", {
+        build_event: "workaround",
+        mvp_ready: "launch_now",
+      });
+
+    const subscription = runFor("subscription");
+    const oneTime = runFor("one_time");
+    const commission = runFor("commission");
+    const adSupported = runFor("ad_supported");
+
+    // Pricing model is a revenue-formula choice only -- it must never
+    // change the deterministic growth math itself.
+    expect(oneTime.totalUsers).toBe(subscription.totalUsers);
+    expect(commission.totalUsers).toBe(subscription.totalUsers);
+    expect(adSupported.totalUsers).toBe(subscription.totalUsers);
+
+    const revenues = [
+      subscription.monthlyRevenue,
+      oneTime.monthlyRevenue,
+      commission.monthlyRevenue,
+      adSupported.monthlyRevenue,
+    ];
+    expect(new Set(revenues).size).toBe(revenues.length);
+  });
+
+  it("one-time-purchase revenue stays flat with a constant new-user rate, while subscription revenue keeps compounding with the growing user base", () => {
+    let subscriptionState = createInitialState(10_000, DEFAULT_MARKET_CONTEXT, "subscription");
+    let oneTimeState = createInitialState(10_000, DEFAULT_MARKET_CONTEXT, "one_time");
+    subscriptionState = driveTo(subscriptionState, "first_users", { build_event: "workaround", mvp_ready: "launch_now" });
+    oneTimeState = driveTo(oneTimeState, "first_users", { build_event: "workaround", mvp_ready: "launch_now" });
+
+    const oneTimeRevenueAtEntry = oneTimeState.monthlyRevenue;
+    const subscriptionRevenueAtEntry = subscriptionState.monthlyRevenue;
+
+    // Advance several more days with no decisions to take (quality/
+    // traction stay constant), so the daily new-user rate itself is flat.
+    for (let i = 0; i < 5; i++) {
+      subscriptionState = advanceDay(subscriptionState).state;
+      oneTimeState = advanceDay(oneTimeState).state;
+    }
+
+    expect(oneTimeState.totalUsers).toBe(subscriptionState.totalUsers); // pricing model never changes growth math
+    // One-time revenue is driven only by this period's (constant) new
+    // cohort, so it stays flat; subscription revenue is proportional to
+    // the ever-growing cumulative base, so it keeps climbing.
+    expect(oneTimeState.monthlyRevenue).toBe(oneTimeRevenueAtEntry);
+    expect(subscriptionState.monthlyRevenue).toBeGreaterThan(subscriptionRevenueAtEntry);
   });
 });
 

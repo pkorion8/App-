@@ -38,7 +38,7 @@ export default async function ShapePage({
 
   const { data: shape } = await supabase
     .from("venture_shapes")
-    .select("problem_statement, value_proposition, mvp_scope, differentiation")
+    .select("problem_statement, value_proposition, mvp_scope, differentiation, pricing_model")
     .eq("venture_id", venture.id)
     .maybeSingle();
 
@@ -63,6 +63,7 @@ export default async function ShapePage({
             valueProposition: shape?.value_proposition ?? "",
             mvpScope: shape?.mvp_scope ?? "",
             differentiation: shape?.differentiation ?? "",
+            pricingModel: shape?.pricing_model ?? "",
           }}
         />
       </Card>

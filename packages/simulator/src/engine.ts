@@ -2,6 +2,7 @@ import type {
   AdvanceDayResult,
   DecisionOption,
   MarketContext,
+  PricingModel,
   SimulationEvent,
   SimulationState,
 } from "./types";
@@ -78,9 +79,42 @@ function reachMultiplierFor(marketContext: MarketContext): number {
 // (that could just mean nothing indexed, not that it's harder).
 const TECH_EVIDENCE_THRESHOLD = 2;
 
+const ONE_TIME_PRICE_PER_CONVERTING_USER = 25;
+const COMMISSION_PRICE_PER_CONVERTING_USER = 4;
+const AD_REVENUE_PER_USER = 0.5;
+
+// A founder's real pricing decision (Shape), not Research evidence --
+// different models earn money in genuinely different ways from the same
+// user base, and the engine previously assumed every venture was a
+// subscription. Kept as pure functions of (totalUsers, dailyNewUsers) so
+// they stay deterministic and easy to reason about individually.
+function computeMonthlyRevenue(pricingModel: PricingModel, totalUsers: number, dailyNewUsers: number): number {
+  switch (pricingModel) {
+    case "one_time":
+      // A one-time purchase doesn't compound with the existing user base
+      // like a subscription does -- only this period's new cohort pays,
+      // at a higher single price point than a recurring subscription.
+      return Math.round(dailyNewUsers * 30 * CONVERSION_RATE * ONE_TIME_PRICE_PER_CONVERTING_USER);
+    case "commission":
+      // Real per-user economics without fabricating a transaction-volume
+      // mechanic that doesn't exist in this engine -- a lower per-user
+      // rate than direct subscription pricing, reflecting that a
+      // marketplace only takes a cut, not the full price.
+      return Math.round(totalUsers * CONVERSION_RATE * COMMISSION_PRICE_PER_CONVERTING_USER);
+    case "ad_supported":
+      // Every user generates some ad revenue, not just "converting"
+      // ones -- there's no purchase-conversion gate in this model.
+      return Math.round(totalUsers * AD_REVENUE_PER_USER);
+    case "subscription":
+    default:
+      return Math.round(totalUsers * CONVERSION_RATE * PRICE_PER_CONVERTING_USER);
+  }
+}
+
 export function createInitialState(
   budgetTotal: number,
   marketContext: MarketContext = DEFAULT_MARKET_CONTEXT,
+  pricingModel: PricingModel = "subscription",
 ): SimulationState {
   const hasTechEvidence =
     marketContext.activeRelatedReposFound !== null && marketContext.activeRelatedReposFound >= TECH_EVIDENCE_THRESHOLD;
@@ -105,6 +139,7 @@ export function createInitialState(
       { day: 0, cashRemaining: budgetTotal, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct },
     ],
     marketContext,
+    pricingModel,
   };
 }
 
@@ -192,7 +227,7 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       next.totalUsers = next.totalUsers + dailyNewUsers;
       const retentionRate = clamp(RETURNING_USER_FLOOR + next.productQualityPct / 200, 0, 0.9);
       next.returningUsers = Math.round(next.totalUsers * retentionRate);
-      next.monthlyRevenue = Math.round(next.totalUsers * CONVERSION_RATE * PRICE_PER_CONVERTING_USER);
+      next.monthlyRevenue = computeMonthlyRevenue(next.pricingModel, next.totalUsers, dailyNewUsers);
       // Real operating-cost floor, when Build Studio has actually
       // estimated one for this venture -- burn rate alone is a spend-down
       // mechanic tied to the starting simulation budget, not a stand-in

@@ -35,6 +35,13 @@ const STAGE_LABEL: Record<string, string> = {
   complete: "Complete",
 };
 
+const PRICING_MODEL_LABEL: Record<string, string> = {
+  subscription: "Subscription",
+  one_time: "One-time purchase",
+  commission: "Marketplace / commission",
+  ad_supported: "Free, ad-supported",
+};
+
 export default async function SimulatePage({
   params,
 }: {
@@ -131,6 +138,9 @@ export default async function SimulatePage({
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
                 Day {run.virtual_day} · {STAGE_LABEL[run.stage] ?? run.stage}
+              </p>
+              <p className="text-xs text-vs-fg-muted">
+                Revenue model: {PRICING_MODEL_LABEL[run.pricing_model] ?? run.pricing_model}
               </p>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">

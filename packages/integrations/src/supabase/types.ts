@@ -306,6 +306,7 @@ export interface Database {
           market_confidence: "unknown" | "weak" | "mixed" | "strong";
           history: Record<string, unknown>[];
           market_context: Record<string, unknown> | null;
+          pricing_model: "subscription" | "one_time" | "commission" | "ad_supported";
           created_at: string;
           updated_at: string;
         };
@@ -341,6 +342,7 @@ export interface Database {
           market_confidence?: "unknown" | "weak" | "mixed" | "strong";
           history?: Record<string, unknown>[];
           market_context?: Record<string, unknown> | null;
+          pricing_model?: "subscription" | "one_time" | "commission" | "ad_supported";
           created_at?: string;
           updated_at?: string;
         };
@@ -376,6 +378,7 @@ export interface Database {
           market_confidence?: "unknown" | "weak" | "mixed" | "strong";
           history?: Record<string, unknown>[];
           market_context?: Record<string, unknown> | null;
+          pricing_model?: "subscription" | "one_time" | "commission" | "ad_supported";
           created_at?: string;
           updated_at?: string;
         };
@@ -581,6 +584,7 @@ export interface Database {
           value_proposition: string | null;
           mvp_scope: string | null;
           differentiation: string | null;
+          pricing_model: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -592,6 +596,7 @@ export interface Database {
           value_proposition?: string | null;
           mvp_scope?: string | null;
           differentiation?: string | null;
+          pricing_model?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -603,6 +608,7 @@ export interface Database {
           value_proposition?: string | null;
           mvp_scope?: string | null;
           differentiation?: string | null;
+          pricing_model?: string | null;
           created_at?: string;
           updated_at?: string;
         };

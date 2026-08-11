@@ -173,8 +173,20 @@ export async function startSimulation(
     return { status: "error", message: "Couldn't find this venture." };
   }
 
-  const marketContext = await buildMarketContext(supabase, ventureId);
-  const initial = createInitialState(parsed.data.budgetTotal, marketContext);
+  const [marketContext, shapeResult] = await Promise.all([
+    buildMarketContext(supabase, ventureId),
+    supabase.from("venture_shapes").select("pricing_model").eq("venture_id", ventureId).maybeSingle(),
+  ]);
+  // A founder decision from Shape, not Research evidence -- "not decided
+  // yet" (null, including no Shape at all) falls back to "subscription",
+  // the engine's original default behavior, same neutral-default pattern
+  // as every MarketContext field.
+  const pricingModel = (shapeResult.data?.pricing_model ?? "subscription") as
+    | "subscription"
+    | "one_time"
+    | "commission"
+    | "ad_supported";
+  const initial = createInitialState(parsed.data.budgetTotal, marketContext, pricingModel);
 
   const { error } = await supabase.from("simulation_runs").insert({
     venture_id: ventureId,
@@ -196,6 +208,7 @@ export async function startSimulation(
       budget_total: parsed.data.budgetTotal,
       has_research: marketContext.hasResearch,
       competitor_traction: marketContext.competitorTraction,
+      pricing_model: pricingModel,
     },
   });
 

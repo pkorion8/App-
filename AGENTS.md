@@ -94,6 +94,54 @@ commit `10881c2`) -- those need a place to live as structured venture
 data first (e.g. extending the Shape module) before they can meaningfully
 feed the simulator, which is a real, larger piece of work, not a copy-
 paste of this round's pattern.
+
+**Pricing model is now that "place to live," done for real, not deferred.**
+Shape gained a new founder-decided field, `pricing_model`
+("subscription" / "one_time" / "commission" / "ad_supported" / not
+decided yet), stored on `venture_shapes` (migration `0010`, nullable --
+"not decided" is honest and common pre-Shape). `simulation_runs` gained
+its own `pricing_model` column (not nullable, defaults to `'subscription'`
+-- the engine's original, unchanged behavior for every run created before
+this existed). This is deliberately **not** part of `MarketContext`:
+pricing is a founder decision, not Research evidence, so it's a separate
+field on `SimulationState` (`createInitialState`'s new 3rd parameter),
+keeping that distinction real rather than blurring "what Research found"
+with "what the founder chose."
+
+The engine now has 4 real, distinct revenue formulas instead of one
+hardcoded subscription assumption for every venture:
+- `subscription` (unchanged, the original default): `totalUsers × 5% ×
+  $8`, compounds with the whole cumulative user base.
+- `one_time`: `dailyNewUsers × 30 × 5% × $25` -- driven only by each
+  period's new cohort, deliberately does **not** compound with the
+  existing base (a real purchase doesn't happen twice for the same
+  user). Caught a wrong assumption while writing the test for this: at
+  small user counts one_time revenue is *higher* than subscription's
+  (a few $25 one-time buyers beats a tiny recurring base) -- the flip
+  only happens once the subscription base has compounded for a while.
+  Fixed the test to assert the actual proven shape (one_time stays flat
+  under a constant new-user rate, subscription keeps climbing) instead
+  of a guessed magnitude comparison.
+- `commission`: same shape as subscription, lower per-user rate ($4) --
+  real marketplace economics (a cut of a transaction) without fabricating
+  a transaction-volume mechanic the engine doesn't have.
+- `ad_supported`: `totalUsers × $0.50`, no conversion-rate gate at all --
+  every user monetizes a little, not just "converting" ones.
+
+Wired end-to-end: `ShapeForm.tsx` (new Select, local option list per the
+established client-component-must-not-import-the-schemas-barrel pattern
+from `AddOutcomeForm.tsx`) → `shape/actions.ts` → `venture_shapes` →
+`simulate/actions.ts`'s `startSimulation` (reads it alongside
+`buildMarketContext`, defaults to `subscription` if Shape was never
+filled in) → `simulation_runs.pricing_model` → shown on the Simulate page
+next to the day/stage header ("Revenue model: ..."), so it's never an
+invisible parameter. 3 new tests (70 total) prove: all 4 models produce
+genuinely different revenue for identical growth, growth math itself
+never changes based on pricing model, and the one-time-vs-subscription
+compounding difference specifically.
+
+Migration `0010_pricing_model.sql` -- like `0007`-`0009`, not yet run
+against the live product-owner DB, additive-only, safe to run any time.
 - Added a `Spinner` component (`packages/ui`) and wired it into Build's
   generate button and Compare's compare button -- both are fast
   synchronous DB writes (no external API calls), so a spinner is honest;

@@ -1,5 +1,5 @@
 import { DEFAULT_MARKET_CONTEXT } from "./engine";
-import type { MarketContext, SimulationHistoryPoint, SimulationState } from "./types";
+import type { MarketContext, PricingModel, SimulationHistoryPoint, SimulationState } from "./types";
 
 /**
  * Snake_case DB row <-> camelCase engine state. Lives here (not in
@@ -23,6 +23,7 @@ export interface SimulationRunRow {
   market_confidence: string;
   history?: unknown;
   market_context?: unknown;
+  pricing_model?: string;
 }
 
 export function rowToSimulationState(row: SimulationRunRow): SimulationState {
@@ -50,6 +51,10 @@ export function rowToSimulationState(row: SimulationRunRow): SimulationState {
     marketContext: isMarketContext(row.market_context)
       ? { ...DEFAULT_MARKET_CONTEXT, ...row.market_context }
       : DEFAULT_MARKET_CONTEXT,
+    // "subscription" for rows written before this column existed --
+    // exactly the engine's original, still-default revenue formula, so
+    // old rows keep behaving the same as before this feature existed.
+    pricingModel: (row.pricing_model as PricingModel | undefined) ?? "subscription",
   };
 }
 
@@ -74,6 +79,7 @@ export function simulationStateToRow(state: SimulationState) {
     market_confidence: state.marketConfidence,
     history: state.history as unknown as Record<string, unknown>[],
     market_context: state.marketContext as unknown as Record<string, unknown>,
+    pricing_model: state.pricingModel,
     status: state.stage === "complete" ? ("complete" as const) : ("running" as const),
   };
 }

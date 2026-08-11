@@ -61,17 +61,39 @@ never forgotten:
   AppFigures/paid-provider dependency; genuinely zero free path exists
   (Apple's review feed empirically returns nothing, Google Play has no
   free review API at all).
-- **Growth trend over time** — the one item on the list that's actually
-  free to build, just not built yet: needs a scheduled job that
-  re-checks the same competitors weekly/monthly and stores history for
-  comparison, similar in shape to the existing creator-intelligence cron.
-  Worth prioritizing before the paid items once there's time.
+- **Growth trend over time** — now built (`packages/research/src/trend.ts`
+  + `research_competitor_snapshots` table, migration 0007, not yet run
+  against the live DB — see below). No new scheduled job needed: each
+  live App Store search's results are stored, and the next Research run
+  for the same venture compares against what was stored last time,
+  matched by Apple's stable numeric app id. First-ever run on a venture
+  has nothing to compare against yet, which is correct, not a bug.
+
+**Simulate previously ignored Research entirely** — fixed. `startSimulation`
+now looks up the venture's most recent Research run (via
+`research_missions` + `research_competitor_snapshots`) and passes a
+`MarketContext` into `createInitialState()`: real competitor traction
+(from live App Store data) makes user growth in the sim harder or easier
+(`Strong` traction = headwind, confirmed `None` = tailwind), and the venture's
+top real competitor's name shows up in the in-run market event instead of
+generic text. If Research has never been run, that's stated plainly (both
+in a "Market context" card on the Simulate page and as day-0 event
+narration) and growth math stays neutral — "no research done" is never
+treated the same as "research confirmed no competitors," since the first
+is an absence of evidence, not evidence of absence. New `market_context`
+jsonb column on `simulation_runs`, migration 0008, not yet run against the
+live DB (see below).
 
 **Two things still need the product owner, not more code:**
-- `supabase/migrations/0006_shape.sql` hasn't been run against the live
-  DB yet — Shape's code is safe to have deployed ahead of this (queries
-  degrade to "no shape data" rather than erroring), but Shape won't
-  actually work until it's run.
+- `supabase/migrations/0007_competitor_snapshots.sql` and
+  `0008_simulation_market_context.sql` haven't been run against the live
+  DB yet (0001-0006 have, confirmed via a live diagnostic query after the
+  product owner ran a consolidated fix for 3 tables that had gone
+  missing). Both are additive-only and safe to run any time: 0007 backs
+  the competitor growth-trend feature, 0008 backs Simulate reading real
+  Research data (see below) — until both run, those two features degrade
+  gracefully (no trend section, no market-context calibration) rather
+  than erroring, but won't actually work.
 - Stripe test-mode account + 3 env vars for Billing to go live (see
   .env.example).
 

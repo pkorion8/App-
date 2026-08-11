@@ -1,6 +1,7 @@
 import type {
   AdvanceDayResult,
   DecisionOption,
+  MarketContext,
   SimulationEvent,
   SimulationState,
 } from "./types";
@@ -25,7 +26,40 @@ const CONVERSION_RATE = 0.05;
 const MARKET_EVENT_TRIGGER_USERS = 80;
 const MONTH_1_DAY = 30;
 
-export function createInitialState(budgetTotal: number): SimulationState {
+export const DEFAULT_MARKET_CONTEXT: MarketContext = {
+  hasResearch: false,
+  competitorTraction: "None",
+  topCompetitorName: null,
+  summary:
+    "No research has been run for this venture yet — this simulation is running " +
+    "without real market context. Run Research first for starting conditions " +
+    "calibrated to actual competitors.",
+};
+
+// Real competitor traction (from Research's live App Store search) makes
+// user growth harder or easier here -- an established, high-traction field
+// is a real headwind; research that actually confirms no competitors is a
+// real tailwind. This is the one place market context changes the
+// deterministic math, not just the narration.
+//
+// Never having run Research at all is neutral (1.0), not a tailwind:
+// "no evidence of competitors" only means something once Research has
+// actually looked and found none -- absence of a search is not evidence.
+const TRACTION_GROWTH_MULTIPLIER: Record<MarketContext["competitorTraction"], number> = {
+  None: 1.15,
+  Weak: 1.05,
+  Moderate: 1.0,
+  Strong: 0.85,
+};
+
+function growthMultiplierFor(marketContext: MarketContext): number {
+  return marketContext.hasResearch ? TRACTION_GROWTH_MULTIPLIER[marketContext.competitorTraction] : 1.0;
+}
+
+export function createInitialState(
+  budgetTotal: number,
+  marketContext: MarketContext = DEFAULT_MARKET_CONTEXT,
+): SimulationState {
   return {
     stage: "resource_planning",
     virtualDay: 0,
@@ -43,6 +77,7 @@ export function createInitialState(budgetTotal: number): SimulationState {
     history: [
       { day: 0, cashRemaining: budgetTotal, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct: 50 },
     ],
+    marketContext,
   };
 }
 
@@ -76,6 +111,11 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       events.push({
         eventType: "build",
         description: "Build begins.",
+        effect: {},
+      });
+      events.push({
+        eventType: "market",
+        description: next.marketContext.summary,
         effect: {},
       });
       break;
@@ -118,7 +158,10 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       if (state.stage === "launch") {
         next.stage = "first_users";
       }
-      const dailyNewUsers = DAILY_NEW_USERS_BASE + Math.floor(next.productQualityPct / 20);
+      const growthMultiplier = growthMultiplierFor(next.marketContext);
+      const dailyNewUsers = Math.round(
+        (DAILY_NEW_USERS_BASE + Math.floor(next.productQualityPct / 20)) * growthMultiplier,
+      );
       next.totalUsers = next.totalUsers + dailyNewUsers;
       const retentionRate = clamp(RETURNING_USER_FLOOR + next.productQualityPct / 200, 0, 0.9);
       next.returningUsers = Math.round(next.totalUsers * retentionRate);
@@ -127,9 +170,15 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
 
       if (state.totalUsers < MARKET_EVENT_TRIGGER_USERS && next.totalUsers >= MARKET_EVENT_TRIGGER_USERS) {
         next.stage = "user_or_market_event";
+        const { topCompetitorName, competitorTraction } = next.marketContext;
+        const marketEventDescription =
+          topCompetitorName !== null
+            ? `Growth is picking up — and so is competitive attention. Research found ${topCompetitorName} ` +
+              `already has ${competitorTraction.toLowerCase()} traction in this market; expect them to notice too.`
+            : "Growth is picking up — and so is competitive attention. A comparable app just launched a similar feature.";
         events.push({
           eventType: "market",
-          description: "Growth is picking up — and so is competitive attention. A comparable app just launched a similar feature.",
+          description: marketEventDescription,
           effect: {},
         });
       } else if (next.virtualDay >= MONTH_1_DAY) {

@@ -145,6 +145,23 @@ export default async function SimulatePage({
             </div>
           </Card>
 
+          {runState && (
+            <Card className={runState.marketContext.hasResearch ? "" : "border-vs-danger/40 bg-vs-danger/5"}>
+              <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
+                Market context
+              </p>
+              <p className="text-sm text-vs-fg-muted">{runState.marketContext.summary}</p>
+              {!runState.marketContext.hasResearch && (
+                <Link
+                  href={`/venture/${venture.id}/research`}
+                  className="mt-2 inline-block text-sm text-vs-primary hover:underline"
+                >
+                  Run Research →
+                </Link>
+              )}
+            </Card>
+          )}
+
           {runState && runState.history.length >= 2 && (
             <Card>
               <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">

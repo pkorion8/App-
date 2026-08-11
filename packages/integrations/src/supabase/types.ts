@@ -303,6 +303,7 @@ export interface Database {
           monthly_cost: number;
           market_confidence: "unknown" | "weak" | "mixed" | "strong";
           history: Record<string, unknown>[];
+          market_context: Record<string, unknown> | null;
           created_at: string;
           updated_at: string;
         };
@@ -337,6 +338,7 @@ export interface Database {
           monthly_cost?: number;
           market_confidence?: "unknown" | "weak" | "mixed" | "strong";
           history?: Record<string, unknown>[];
+          market_context?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -371,6 +373,7 @@ export interface Database {
           monthly_cost?: number;
           market_confidence?: "unknown" | "weak" | "mixed" | "strong";
           history?: Record<string, unknown>[];
+          market_context?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };

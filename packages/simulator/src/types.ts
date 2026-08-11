@@ -14,6 +14,22 @@ export type SimulationStage =
 
 export type TechnicalRisk = "low" | "medium" | "high";
 export type MarketConfidence = "unknown" | "weak" | "mixed" | "strong";
+export type CompetitorTraction = "None" | "Weak" | "Moderate" | "Strong";
+
+/**
+ * What this run's starting conditions were calibrated against, carried
+ * over from the venture's own Research findings (real App Store
+ * competitor data) rather than the simulation starting blind. `hasResearch:
+ * false` is an honest, visible state -- not silently ignored -- so a run
+ * started before Research ever ran says so instead of pretending to have
+ * market context it doesn't.
+ */
+export interface MarketContext {
+  hasResearch: boolean;
+  competitorTraction: CompetitorTraction;
+  topCompetitorName: string | null;
+  summary: string;
+}
 
 /** One point-in-time snapshot of the metrics that are worth charting over the run. */
 export interface SimulationHistoryPoint {
@@ -41,6 +57,8 @@ export interface SimulationState {
   marketConfidence: MarketConfidence;
   /** Append-only day-by-day trail, oldest first -- what the Simulate page charts. */
   history: SimulationHistoryPoint[];
+  /** Real market signal this run was seeded with, if any -- see MarketContext. */
+  marketContext: MarketContext;
 }
 
 export interface SimulationEvent {

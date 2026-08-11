@@ -16,7 +16,7 @@ function guessStoreCountry(geography: string): string {
   return (resolveCountryCode(geography) ?? "US").toLowerCase();
 }
 
-function classifyTraction(ratingCounts: number[]): "Strong" | "Moderate" | "Weak" {
+export function classifyTraction(ratingCounts: number[]): "Strong" | "Moderate" | "Weak" {
   const max = Math.max(0, ...ratingCounts);
   if (max >= 1000) return "Strong";
   if (max >= 100) return "Moderate";

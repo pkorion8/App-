@@ -6,14 +6,83 @@ import { startSimulationSchema } from "@venture-sandbox/schemas";
 import {
   advanceDay,
   createInitialState,
+  DEFAULT_MARKET_CONTEXT,
   requiresDecision,
   resolveDecision,
   rowToSimulationState,
   simulationStateToRow,
+  type MarketContext,
   type SimulationEvent,
 } from "@venture-sandbox/simulator";
+import { classifyTraction } from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+/**
+ * Seeds a run's starting conditions from the venture's own Research
+ * findings instead of ignoring them -- real competitor traction (from the
+ * most recent live App Store search, stored per-app in
+ * research_competitor_snapshots) makes growth harder or easier, and the
+ * top competitor's name shows up in the market event later. If Research
+ * has never been run for this venture, that's stated plainly rather than
+ * silently defaulting.
+ */
+async function buildMarketContext(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  ventureId: string,
+): Promise<MarketContext> {
+  const { data: recentMission } = await supabase
+    .from("research_missions")
+    .select("created_at")
+    .eq("venture_id", ventureId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!recentMission) {
+    return DEFAULT_MARKET_CONTEXT;
+  }
+
+  const { data: snapshotRows } = await supabase
+    .from("research_competitor_snapshots")
+    .select("app_id, app_name, rating_count, checked_at")
+    .eq("venture_id", ventureId)
+    .order("checked_at", { ascending: false });
+
+  // Most recent snapshot per app, same dedup pattern as the research
+  // action that writes these rows.
+  const latestByAppId = new Map<number, { appName: string; ratingCount: number }>();
+  for (const row of snapshotRows ?? []) {
+    if (!latestByAppId.has(row.app_id)) {
+      latestByAppId.set(row.app_id, { appName: row.app_name, ratingCount: row.rating_count });
+    }
+  }
+
+  if (latestByAppId.size === 0) {
+    return {
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary:
+        "Research has been run for this venture, but its App Store search found no " +
+        "competitors — simulation proceeding without a competitive-pressure adjustment.",
+    };
+  }
+
+  const entries = [...latestByAppId.values()];
+  const competitorTraction = classifyTraction(entries.map((e) => e.ratingCount));
+  const top = entries.reduce((best, e) => (e.ratingCount > best.ratingCount ? e : best));
+
+  return {
+    hasResearch: true,
+    competitorTraction,
+    topCompetitorName: top.appName,
+    summary:
+      `Research found ${entries.length} competitor${entries.length === 1 ? "" : "s"} in the App Store, ` +
+      `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ` +
+      `${top.ratingCount.toLocaleString()} ratings). This simulation's growth conditions are calibrated to that.`,
+  };
+}
 
 export interface StartSimulationState {
   status: "idle" | "error";
@@ -47,7 +116,8 @@ export async function startSimulation(
     return { status: "error", message: "Couldn't find this venture." };
   }
 
-  const initial = createInitialState(parsed.data.budgetTotal);
+  const marketContext = await buildMarketContext(supabase, ventureId);
+  const initial = createInitialState(parsed.data.budgetTotal, marketContext);
 
   const { error } = await supabase.from("simulation_runs").insert({
     venture_id: ventureId,
@@ -65,7 +135,11 @@ export async function startSimulation(
     workspaceId: venture.workspace_id,
     entityType: "venture",
     entityId: ventureId,
-    metadata: { budget_total: parsed.data.budgetTotal },
+    metadata: {
+      budget_total: parsed.data.budgetTotal,
+      has_research: marketContext.hasResearch,
+      competitor_traction: marketContext.competitorTraction,
+    },
   });
 
   redirect(`/venture/${ventureId}/simulate`);

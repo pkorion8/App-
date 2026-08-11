@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MARKET_CONTEXT } from "./engine";
 import { getDelayedConsequenceNotes } from "./narration";
 import type { SimulationState } from "./types";
 
@@ -18,6 +19,7 @@ function baseState(overrides: Partial<SimulationState> = {}): SimulationState {
     monthlyCost: 200,
     marketConfidence: "mixed",
     history: [],
+    marketContext: DEFAULT_MARKET_CONTEXT,
     ...overrides,
   };
 }

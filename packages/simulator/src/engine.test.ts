@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { advanceDay, createInitialState, getDecisionOptions, requiresDecision, resolveDecision } from "./engine";
-import type { SimulationState } from "./types";
+import {
+  advanceDay,
+  createInitialState,
+  DEFAULT_MARKET_CONTEXT,
+  getDecisionOptions,
+  requiresDecision,
+  resolveDecision,
+} from "./engine";
+import type { MarketContext, SimulationState } from "./types";
 
 const MAX_STEPS = 500;
 
@@ -56,6 +63,83 @@ describe("createInitialState", () => {
     expect(state.history).toEqual([
       { day: 0, cashRemaining: 10_000, totalUsers: 0, monthlyRevenue: 0, buildProgressPct: 0, productQualityPct: 50 },
     ]);
+  });
+
+  it("defaults to an honest 'no research yet' market context when none is passed", () => {
+    const state = createInitialState(10_000);
+    expect(state.marketContext).toEqual(DEFAULT_MARKET_CONTEXT);
+    expect(state.marketContext.hasResearch).toBe(false);
+  });
+
+  it("carries a passed-in market context through unchanged", () => {
+    const marketContext: MarketContext = {
+      hasResearch: true,
+      competitorTraction: "Strong",
+      topCompetitorName: "Rival App",
+      summary: "test summary",
+    };
+    const state = createInitialState(10_000, marketContext);
+    expect(state.marketContext).toEqual(marketContext);
+  });
+});
+
+describe("market context effects", () => {
+  function driveToFirstUsers(marketContext?: MarketContext): SimulationState {
+    return driveTo(createInitialState(10_000, marketContext), "first_users", {
+      build_event: "workaround",
+      mvp_ready: "launch_now",
+    });
+  }
+
+  it("announces the venture's real market context as a day-0 event", () => {
+    const withResearch = advanceDay(
+      createInitialState(10_000, {
+        hasResearch: true,
+        competitorTraction: "Strong",
+        topCompetitorName: "Rival App",
+        summary: "Research found 3 competitors, strong traction overall.",
+      }),
+    );
+    expect(withResearch.events.some((e) => e.description.includes("Research found 3 competitors"))).toBe(true);
+
+    const withoutResearch = advanceDay(createInitialState(10_000));
+    expect(withoutResearch.events.some((e) => e.description.includes("No research has been run"))).toBe(true);
+  });
+
+  it("strong competitor traction slows user growth relative to no competitors found", () => {
+    const strong = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "Strong",
+      topCompetitorName: "Rival App",
+      summary: "strong",
+    });
+    const none = driveToFirstUsers({
+      hasResearch: true,
+      competitorTraction: "None",
+      topCompetitorName: null,
+      summary: "none",
+    });
+    expect(strong.totalUsers).toBeLessThan(none.totalUsers);
+  });
+
+  it("references the real competitor name in the market event once growth triggers it", () => {
+    let prev = driveTo(
+      createInitialState(10_000, {
+        hasResearch: true,
+        competitorTraction: "Moderate",
+        topCompetitorName: "Rival App",
+        summary: "moderate",
+      }),
+      "first_users",
+      { build_event: "workaround", mvp_ready: "launch_now" },
+    );
+    const events: string[] = [];
+    while (prev.stage !== "user_or_market_event") {
+      const result = advanceDay(prev);
+      prev = result.state;
+      events.push(...result.events.map((e) => e.description));
+    }
+    expect(events.some((d) => d.includes("Rival App"))).toBe(true);
   });
 });
 

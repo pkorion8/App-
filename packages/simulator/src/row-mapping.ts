@@ -1,4 +1,5 @@
-import type { SimulationHistoryPoint, SimulationState } from "./types";
+import { DEFAULT_MARKET_CONTEXT } from "./engine";
+import type { MarketContext, SimulationHistoryPoint, SimulationState } from "./types";
 
 /**
  * Snake_case DB row <-> camelCase engine state. Lives here (not in
@@ -21,6 +22,7 @@ export interface SimulationRunRow {
   monthly_cost: number;
   market_confidence: string;
   history?: unknown;
+  market_context?: unknown;
 }
 
 export function rowToSimulationState(row: SimulationRunRow): SimulationState {
@@ -39,7 +41,12 @@ export function rowToSimulationState(row: SimulationRunRow): SimulationState {
     monthlyCost: row.monthly_cost,
     marketConfidence: row.market_confidence as SimulationState["marketConfidence"],
     history: Array.isArray(row.history) ? (row.history as SimulationHistoryPoint[]) : [],
+    marketContext: isMarketContext(row.market_context) ? row.market_context : DEFAULT_MARKET_CONTEXT,
   };
+}
+
+function isMarketContext(value: unknown): value is MarketContext {
+  return typeof value === "object" && value !== null && "hasResearch" in value;
 }
 
 export function simulationStateToRow(state: SimulationState) {
@@ -58,6 +65,7 @@ export function simulationStateToRow(state: SimulationState) {
     monthly_cost: state.monthlyCost,
     market_confidence: state.marketConfidence,
     history: state.history as unknown as Record<string, unknown>[],
+    market_context: state.marketContext as unknown as Record<string, unknown>,
     status: state.stage === "complete" ? ("complete" as const) : ("running" as const),
   };
 }

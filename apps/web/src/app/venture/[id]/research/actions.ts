@@ -57,6 +57,31 @@ export async function startResearch(
     return { status: "error", message: "Couldn't find this venture." };
   }
 
+  // Every run fires 3 live calls against free, unauthenticated external
+  // APIs (App Store, World Bank, GitHub) -- a cooldown here isn't about
+  // this app's own load, it's protecting those APIs' shared IP-based rate
+  // limits from a spam-click loop that would degrade or block the source
+  // for every user, not just this one.
+  const { data: recentMission } = await supabase
+    .from("research_missions")
+    .select("created_at")
+    .eq("venture_id", ventureId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const RESEARCH_COOLDOWN_SECONDS = 30;
+  if (recentMission) {
+    const secondsSinceLast = (Date.now() - new Date(recentMission.created_at).getTime()) / 1000;
+    if (secondsSinceLast < RESEARCH_COOLDOWN_SECONDS) {
+      const waitSeconds = Math.ceil(RESEARCH_COOLDOWN_SECONDS - secondsSinceLast);
+      return {
+        status: "error",
+        message: `Research was just run for this venture — wait ${waitSeconds}s before running it again.`,
+      };
+    }
+  }
+
   const { targetUser, geography } = parsed.data;
 
   const { data: mission, error: missionError } = await supabase

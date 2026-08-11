@@ -63,6 +63,17 @@ see below) of the app producing "generic" results:
   dimension" (competitor traction, market size, tech signal side by side)
   -- that's the next queued step, using the same `findings.metadata`
   already available, not a new fetch/model.
+
+**Compare now does the real research-findings comparison** (the item
+above is done as of the very next commit): a new "Research highlights"
+card shows competitor traction, market population, and tech signal
+(active related repos) side by side per venture, reading the same
+`findings.metadata` the Research page's cards already render -- no new
+fetch, no new table. Reads only the venture's **latest** research
+mission now (previously it counted findings across every mission ever,
+inconsistent with the Research page's own latest-mission-only display --
+fixed as part of this same change). A venture with no research yet shows
+"Not researched yet" per field, never a fabricated placeholder.
 - Added a `Spinner` component (`packages/ui`) and wired it into Build's
   generate button and Compare's compare button -- both are fast
   synchronous DB writes (no external API calls), so a spinner is honest;

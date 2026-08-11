@@ -603,6 +603,28 @@ export interface Database {
         };
         Relationships: [];
       };
+      research_competitor_snapshots: {
+        Row: {
+          id: string;
+          venture_id: string;
+          workspace_id: string;
+          app_id: number;
+          app_name: string;
+          rating_count: number;
+          checked_at: string;
+        };
+        Insert: {
+          id?: string;
+          venture_id: string;
+          workspace_id: string;
+          app_id: number;
+          app_name: string;
+          rating_count: number;
+          checked_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

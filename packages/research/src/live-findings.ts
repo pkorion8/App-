@@ -3,7 +3,14 @@ import { searchAppStore } from "./sources/itunes-search";
 import { fetchWorldBankIndicators, type WorldBankIndicatorResult } from "./sources/world-bank";
 import { searchGitHubRepos } from "./sources/github";
 import { resolveCountryCode } from "./geography";
+import { compareSnapshots, type PreviousAppSnapshot, type TrendResult } from "./trend";
 import type { DemoFinding } from "./demo-findings";
+
+export interface CompetitorSnapshotToPersist {
+  appId: number;
+  name: string;
+  ratingCount: number;
+}
 
 function guessStoreCountry(geography: string): string {
   return (resolveCountryCode(geography) ?? "US").toLowerCase();
@@ -47,7 +54,12 @@ export async function researchAppStoreCompetitors(input: {
   ventureName: string;
   ideaText: string;
   geography: string;
-}): Promise<Omit<DemoFinding, "state"> & { state: FindingState } | null> {
+  /** Prior runs' snapshots for this venture, if any -- enables real trend detection without any new scheduled infrastructure. */
+  previousSnapshots?: PreviousAppSnapshot[];
+}): Promise<
+  | (Omit<DemoFinding, "state"> & { state: FindingState; snapshots: CompetitorSnapshotToPersist[] })
+  | null
+> {
   const country = guessStoreCountry(input.geography);
 
   let results;
@@ -69,6 +81,7 @@ export async function researchAppStoreCompetitors(input: {
         "Covers only the Apple App Store, only by name match, and only what Apple's " +
         "public listing search returns — not Google Play, and not download/revenue data.",
       nextTest: "Try a broader or differently-worded search on the App Store and Google Play directly.",
+      snapshots: [],
     };
   }
 
@@ -105,6 +118,16 @@ export async function researchAppStoreCompetitors(input: {
           .join(", ")} — worth watching as active new entrants, not just established players.`
       : `None of the ${results.length} matches launched within the last year — this looks like an established field rather than one with fresh entrants right now.`;
 
+  // Real trend detection, no fabrication: only apps present in BOTH this
+  // run and a previous run for this same venture get a direction at all.
+  // First-ever research on a venture always has zero trend results --
+  // that's correct, not a bug, since there's nothing yet to compare against.
+  const trendable = results
+    .filter((r): r is typeof r & { appId: number } => r.appId !== null)
+    .map((r) => ({ appId: r.appId, name: r.name, ratingCount: r.ratingCount }));
+  const trends = compareSnapshots(trendable, input.previousSnapshots ?? []);
+  const trendSection = formatTrendSection(trends);
+
   return {
     normalizedClaim: `Live App Store competitors for "${input.ventureName}"${
       newcomers.length > 0 ? ` (${newcomers.length} newcomer${newcomers.length === 1 ? "" : "s"})` : ""
@@ -113,7 +136,7 @@ export async function researchAppStoreCompetitors(input: {
       `Real App Store search (${input.geography}, Apple only): ${results.length} ` +
       `${results.length === 1 ? "app" : "apps"} found${results.length > shown.length ? `, top ${shown.length} shown by ratings volume` : ""}. ` +
       `Traction signal: ${traction} — based on ratings volume of the closest matches.\n\n` +
-      `${listLines}\n\n${newcomerSentence}${weakestNote ? `\n\n${weakestNote}` : ""}`,
+      `${listLines}\n\n${newcomerSentence}${weakestNote ? `\n\n${weakestNote}` : ""}${trendSection}`,
     state: "MIXED",
     limitations:
       "Apple App Store only (no Google Play), matched by name/keyword only, and rating " +
@@ -121,7 +144,20 @@ export async function researchAppStoreCompetitors(input: {
       "based on the app's original release date being within the last 12 months, not on repeated checks over time. " +
       "No revenue, subscription pricing, or review content is available from this free API.",
     nextTest: "Cross-check the top matches on Google Play and read their recent reviews directly.",
+    snapshots: trendable,
   };
+}
+
+function formatTrendSection(trends: TrendResult[]): string {
+  if (trends.length === 0) return "";
+  const lines = trends
+    .map((t) => {
+      const arrow = t.direction === "up" ? "↑" : t.direction === "down" ? "↓" : "→";
+      const deltaText = t.delta === 0 ? "no change" : `${t.delta > 0 ? "+" : ""}${t.delta.toLocaleString()} ratings`;
+      return `• ${t.name}: ${arrow} ${deltaText} over the last ${t.daysSincePrevious} day${t.daysSincePrevious === 1 ? "" : "s"} (${t.previousRatingCount.toLocaleString()} → ${t.currentRatingCount.toLocaleString()})`;
+    })
+    .join("\n");
+  return `\n\nTrend since this venture's last research run:\n\n${lines}`;
 }
 
 function formatIndicatorValue(indicator: WorldBankIndicatorResult): string {

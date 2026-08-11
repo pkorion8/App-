@@ -110,6 +110,24 @@ export async function startResearch(
     geography,
   });
 
+  // Most recent snapshot per app (by app_id) for this venture, so the App
+  // Store search below can show real trend since last research run --
+  // deduped client-side rather than with a DISTINCT ON query, since this
+  // is a small per-venture row count and keeps the query trivial.
+  const { data: snapshotRows } = await supabase
+    .from("research_competitor_snapshots")
+    .select("app_id, rating_count, checked_at")
+    .eq("venture_id", ventureId)
+    .order("checked_at", { ascending: false });
+
+  const previousSnapshots: { appId: number; ratingCount: number; checkedAt: string }[] = [];
+  const seenAppIds = new Set<number>();
+  for (const row of snapshotRows ?? []) {
+    if (seenAppIds.has(row.app_id)) continue;
+    seenAppIds.add(row.app_id);
+    previousSnapshots.push({ appId: row.app_id, ratingCount: row.rating_count, checkedAt: row.checked_at });
+  }
+
   // Slots 0, 4, and 5 try real, free sources first (App Store search,
   // World Bank Open Data, GitHub search); each falls back to its honest
   // DEMO placeholder if the live call fails or finds nothing. Slots 1-3
@@ -122,6 +140,7 @@ export async function startResearch(
       ventureName: venture.name,
       ideaText: venture.raw_idea_text,
       geography,
+      previousSnapshots,
     }),
     researchMarketIndicators({ geography }),
     researchGitHubActivity({ ventureName: venture.name }),
@@ -155,6 +174,18 @@ export async function startResearch(
 
   if (findingsError) {
     return { status: "error", message: findingsError.message };
+  }
+
+  if (liveCompetitorFinding && liveCompetitorFinding.snapshots.length > 0) {
+    await supabase.from("research_competitor_snapshots").insert(
+      liveCompetitorFinding.snapshots.map((s) => ({
+        venture_id: ventureId,
+        workspace_id: venture.workspace_id,
+        app_id: s.appId,
+        app_name: s.name,
+        rating_count: s.ratingCount,
+      })),
+    );
   }
 
   const liveFindingsCount = findingsToInsert.filter((f) => !f.isDemo).length;

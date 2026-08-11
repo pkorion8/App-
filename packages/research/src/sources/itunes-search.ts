@@ -9,6 +9,8 @@
  * search API — that stays a later source to add (scraping or a paid API).
  */
 export interface AppStoreResult {
+  /** Apple's numeric App Store id (iTunes "trackId") — a stable identifier for the same app across separate searches, unlike name/seller which can change. */
+  appId: number | null;
   name: string;
   seller: string;
   rating: number | null;
@@ -22,6 +24,7 @@ export interface AppStoreResult {
 }
 
 interface ITunesRawResult {
+  trackId?: number;
   trackName?: string;
   sellerName?: string;
   averageUserRating?: number;
@@ -58,6 +61,7 @@ export async function searchAppStore(
     return (data.results ?? [])
       .filter((r) => r.trackName)
       .map((r) => ({
+        appId: typeof r.trackId === "number" ? r.trackId : null,
         name: r.trackName ?? "Unknown",
         seller: r.sellerName ?? "Unknown",
         rating: typeof r.averageUserRating === "number" ? r.averageUserRating : null,

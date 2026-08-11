@@ -81,4 +81,31 @@ The tests were not executed during the takeover audit because local dependencies
 
 ## Future architecture boundary
 
-Any future probabilistic, category-specific, or AI-narrated simulator must preserve an auditable separation between state-transition authority and presentation. The current repository explicitly assigns state authority to deterministic code. This boundary is documented; no specific future simulator expansion is approved by this baseline.
+Any future probabilistic, category-specific, or AI-narrated simulator must preserve an auditable separation between state-transition authority and presentation. The current repository explicitly assigns state authority to deterministic code. The accepted expansion requirements below add state/context depth without authorizing fabricated certainty.
+
+## Flagship product requirement after the delta
+
+The Simulator is the flagship differentiator and must remain a persistent venture state machine, not a calculator or short wizard. It must not collapse into a three-click or five-second experience. Time compression is allowed, but bounded fast-forward is preferred over instant completion and decisions/events must remain meaningful.
+
+The conceptual journey includes setup, resource planning, build, blocker/event, readiness, pre-launch, launch, first users, activation/retention, user/market events, adaptation, week/month progression, outcome, checkpoint, rewind, and alternative timeline. The current V1 implements a subset with a short Month 1 endpoint.
+
+## Required future state depth
+
+In addition to current fields, simulator state should eventually represent time capacity, technical debt, awareness, reach/impressions, visits, signups, activated users, paying users, support load, market/competition, and uncertainty.
+
+Simulation must use actual shared venture context: category, geography, audience, competition, technology cost, monetization model and experiments, V1 scope, relevant evidence, and uncertainty. Current V1 uses only budget, selected pricing model, competitor traction/name, internet penetration, related GitHub activity, and Build cost.
+
+Earlier choices must cause traceable later consequences. The current onboarding and market-decision narration is a valid partial implementation of this rule.
+
+## Non-negotiable simulation trust rules
+
+- No universal success probability.
+- No unexplained numbers presented as predictive truth.
+- Missing evidence and uncertainty must remain visible.
+- Simulator inputs from Monetization Lab must be persisted and auditable.
+- Simulated outcomes must remain distinct from real Learn outcomes.
+- Returning to a run must be solved by database persistence; Temporal is not required for this.
+
+## Alternative timelines — partial/newly required
+
+Checkpoint persistence and duplicate-from-checkpoint rewind are implemented. Deliberate selection, labeling, and comparison of alternative timelines remain required and are not supported by the current UI.

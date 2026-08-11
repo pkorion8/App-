@@ -94,4 +94,55 @@ Build Studio and Monitor do not consume research findings.
 - Background venture-research jobs, retries, resumability, or queued mission states in practice.
 - Licensed competitor revenue, reviews, or monetization data.
 
-These are current absences, not newly approved requirements.
+These are current absences. The accepted target model below promotes several of them into product requirements while leaving implementation sequencing to the roadmap.
+
+## Research target model — newly required
+
+The evidence path is:
+
+**Answer → synthesis → finding → evidence → original source**
+
+Evidence records must preserve source, URL, date, freshness, claim type, contradictions, confidence, and availability state such as LIVE, PARTIAL, DEMO, or UNAVAILABLE. Claim types must distinguish fact, source claim, observation, inference, assumption, and hypothesis.
+
+The current schema does not preserve all of those fields, so this target is not implemented yet. Existing `state`, `is_demo`, limitations, metadata, and source-derived URLs are a partial foundation.
+
+Never fabricate revenue, downloads, market share, percentages, conversion, success probability, or competitor traction numbers. A percentage may be shown only when calculated from an identified retrieved sample. Missing evidence remains missing.
+
+## Required source breadth
+
+Research should eventually synthesize App Store and Google Play data; YouTube metadata, recent videos, appropriate transcripts, and useful comments; competitor sites and pricing; reviews; GitHub; Hugging Face/model hubs; official APIs, documentation, and changelogs; World Bank/government data; academic papers; Product Hunt/startup communities; and relevant web/community signals.
+
+Free/public sources are preferred where practical. Paid market-intelligence providers are optional enrichment, not launch dependencies. Each source must degrade honestly when unavailable.
+
+## Beginner Research and System View
+
+Beginner-facing synthesis must group intelligence into:
+
+- People & alternatives;
+- Can it be built?;
+- Market & money; and
+- Reasons to be careful.
+
+System View may expose source status, agent/workflow detail, contradictions, evidence weighting, and technical internals. Research progress must represent actual work rather than cosmetic timers.
+
+## Creator Intelligence — newly required direction
+
+Creator Intelligence is a strategic research source. The target is approximately 50–100+ curated channels, prioritizing roughly the prior 5–7 days, extracting what was built and why, tools/APIs/models, time and costs, creator-stated users/downloads/revenue, distribution, what worked/failed, and emerging workflows.
+
+Creator statements remain source claims until independently corroborated. Transcript retrieval must become a replaceable router supporting authorized/public/licensed sources, creator/user-supplied transcripts, future providers, and an experimental browser route only where appropriate. The platform must not warehouse unnecessary full copyrighted transcripts.
+
+Creator evidence should eventually feed Research, Compare, Shape, Technology, Simulator, and Build Studio. None of those downstream connections currently exists.
+
+## Review Intelligence — newly required
+
+Review acquisition must use replaceable adapters. Retrieved samples should be clustered into complaints, praise, requests, bugs, pricing/paywall issues, onboarding issues, and missing features. Cluster percentages are prohibited unless calculated from the actual retrieved sample. The current product has no working review adapter or review screen.
+
+## Technology & Ownership Intelligence — newly required
+
+For each venture, this intelligence must identify required capabilities, hosted APIs/free tiers, open-source and self-hosted alternatives, local/downloadable models, GitHub/Hugging Face options, licenses and commercial restrictions, maturity/activity/docs, lock-in, privacy, recurring cost, replacement difficulty, and browser/local/VPS/GPU/cloud implications.
+
+Recommendations must be separated into fastest MVP, lowest recurring cost, best long-term ownership, and balanced option. Fixed/reference assumptions must never be presented as researched recommendations. Current Build Studio does not satisfy this requirement.
+
+## Future multi-agent evidence synthesis
+
+Potential specialist roles include User Pain, Competitor, Similar Apps, Creator Signals, Technology, Market, Monetization, and Red Team. Fan-in should weigh source quality, independence, freshness, directness, corroboration, contradictions, and category/geographic relevance. Agreement counts alone must never determine truth. This remains future architecture.

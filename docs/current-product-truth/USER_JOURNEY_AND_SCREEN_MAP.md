@@ -63,3 +63,44 @@ Shape is recommended before Research or Simulate, but navigation and server acti
 ## Dead-link audit
 
 No hard-coded internal navigation link was found pointing to a missing page route. External creator-claim URLs are stored source data and cannot be guaranteed by the application.
+
+## Canonical journey — newly required
+
+The presentation and production journey must converge on:
+
+**Idea → Clarify → Understand → Shape → Monetize → Simulate → Build → Learn**
+
+The default venture-stage navigation is **Understand, Shape, Simulate, Build, Learn**. Monetization appears contextually between Shape and Simulate. The experience may offer Quick Launch/Vibe Coder, Guided Builder, Startup/Professional, and Learner/Student depth profiles, but all profiles must use the same venture engine and persisted context.
+
+The journey must not repeatedly ask for known venture data. Each screen should show an obvious next action while retaining calm navigation and beginner-facing language.
+
+## Presentation prototype screen map — newly required
+
+| Presentation experience | Current status | Required presentation behavior |
+| --- | --- | --- |
+| Home | Implemented, needs presentation QA | Coherent promise and entry into the journey. |
+| My Ideas | Implemented as Dashboard | Calm venture list and obvious idea-entry action. |
+| Explore | Unavailable | Presentation screen and working navigation required; exact content is not specified by the delta. |
+| Idea entry | Implemented inside Dashboard | Must feel like the first journey step rather than a disconnected form. |
+| Clarification | Partial in Research | Must reuse known context and lead into Understand. |
+| Research progress | Partial | Existing progress reflects the three calls but mission execution is synchronous; must not imply work that is not occurring. |
+| Research summary | Partial | Regroup into People & alternatives, Can it be built?, Market & money, Reasons to be careful. |
+| Competitors | Partial inside Research | Presentation-ready evidence view required. |
+| Reviews | Unavailable | Screen/state required; unavailable/demo must be explicit until an adapter returns real samples. |
+| Creator/YouTube intelligence | Partial at `/channels` | Must become venture-relevant rather than an unrelated platform page. |
+| Technology & Ownership | Unavailable as a researched view | Presentation screen required with honest reference/demo states. |
+| Evidence Explorer | Unavailable | Presentation screen required with source/status/detail paths. |
+| Shape Version 1 | Implemented, partially connected | Must visibly inherit and pass forward venture context. |
+| Compare | Partial | Presentation flow required; no winner score. |
+| Monetization Lab | Unavailable | First-class contextual module required between Shape and Simulate. |
+| Simulation setup through Month 1 | Partial | Current engine covers most named stages; presentation must expose a meaningful persistent journey, not instant completion. |
+| Build Studio | Partial | Presentation-ready builder-neutral output with provenance labels. |
+| Learn / Monitor | Partial | Must visibly distinguish simulated from real outcomes. |
+| System View | Unavailable | Presentation screen required for technical/evidence internals. |
+| Account, plans, methodology | Partial | Pricing/Billing exist; methodology screen is unavailable. Include where relevant and keep claims honest. |
+
+“Screen required” does not authorize fabricated live behavior. Representative states may be used only with clear demo/unavailable labeling.
+
+## Comparison journeys — newly required
+
+Compare must ultimately support Idea vs Idea, Your Idea vs Existing Products, and Competitor vs Competitor. The current code supports only Idea vs Idea. Equivalent dimensions should use real evidence and uncertainty; no single winner score is allowed.

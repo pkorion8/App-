@@ -128,4 +128,30 @@ Absent:
 
 ## Future architecture
 
-No new architecture is approved by this baseline. Future designs must be derived from an accepted delta and should preserve RLS tenancy, honest evidence provenance, deterministic simulation authority unless explicitly changed, and separation of simulated versus actual outcomes.
+Future designs must preserve RLS tenancy, honest evidence provenance, replaceable external adapters/model providers, deterministic simulation authority unless explicitly changed, and separation of simulated versus actual outcomes.
+
+## Accepted architecture decisions after the delta
+
+### Free-first infrastructure
+
+The product must remain compatible with a $0/very-low-cost starting strategy. Prefer free/public sources where practical; paid intelligence is optional enrichment rather than a launch dependency.
+
+GitHub is the permanent source of truth. Codex is the primary implementation engineer, ChatGPT the product/architecture/UX authority, Vercel the web deployment/preview target where available, and Supabase the database/auth/backend. Codespaces and local machines are development environments, not production hosting.
+
+### Temporal.io
+
+Do **not** add Temporal now merely for sophistication. Current persistence and request workflows do not justify it, and simulator resume is already a database concern.
+
+Keep workflow boundaries clean so an orchestrator can be introduced later. Strong future candidates are long-running research missions, multi-source retry/resume, specialist-agent fan-out/fan-in, automated monitoring, and simulator orchestration only if autonomous progression is later required.
+
+### Multi-model systems
+
+Multi-model access alone is not a product moat and is not required for launch. Value must come from orchestration, routing, persistent context, evidence, workflow automation, synthesis, and reduced manual cross-checking. The product must not become a generic three-chat interface or depend on every model provider. Provider choice remains replaceable.
+
+### Multi-agent systems
+
+Specialist research roles and evidence-weighted fan-in are future architecture, not current implementation. Agent agreement counts must not substitute for source quality, independence, freshness, directness, corroboration, contradictions, or venture relevance.
+
+### Prototype-to-production continuity
+
+The presentation prototype must use the same venture context and product model as production architecture. Demo fixtures and UI states are allowed only when visibly labeled and must not create a throwaway parallel domain model.

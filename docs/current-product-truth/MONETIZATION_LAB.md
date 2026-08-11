@@ -2,12 +2,12 @@
 
 ## Scope clarification
 
-There is no standalone Monetization Lab screen or module in the current repository. Monetization currently exists in two separate domains:
+Monetization Lab is now a **newly required first-class module**. There is no standalone screen, experiment data model, or downstream experiment integration in the current repository. Current monetization still exists in two separate partial domains:
 
 1. the founder's venture pricing choice and simulated revenue; and
 2. Venture Sandbox's own Free/Pro billing.
 
-This document names that current boundary. It does not invent a new Monetization Lab requirement.
+It sits naturally between Shape and Simulate without adding clutter to default top-level venture navigation.
 
 ## Venture monetization: implemented
 
@@ -53,8 +53,32 @@ These are implementation gaps, not automatically approved product requirements.
 
 ## Newly required
 
-None recorded yet. Any post-Claude monetization requirement must first be entered in `POST_CLAUDE_DELTA.md`.
+Monetization Lab must provide market-aware Monetization Intelligence rather than a generic paywall suggestion page.
+
+### Context inputs
+
+It may use region/country, category, audience, product function and usage frequency, competitor pricing/paywall patterns, pricing-related reviews, similar-app monetization, acquisition channel, AI/API and infrastructure costs, Shape pricing model, simulation behavior, and later real outcomes. Missing inputs must remain explicit rather than inferred as fact.
+
+### Experiment output
+
+It should produce context-aware experiments including monthly vs annual, subscription vs credits, free-result limits, trial vs no trial, first-value moment before paywall, regional pricing, one-time vs recurring, feature gating, and usage gating.
+
+Every experiment must persist:
+
+- hypothesis;
+- why it fits this venture;
+- supporting evidence;
+- assumptions and unknowns; and
+- the metric that determines the winner.
+
+Experiments must feed Simulator behavior. After launch, real experiment outcomes must feed Learn and later recalibrate simulations and recommendations.
+
+The inspiration pattern is historical experiments → pattern extraction → suggested experiment → real outcome → learning loop, applied at broader venture/market context rather than copied as a paywall-only product.
+
+### Trust boundary
+
+Competitor prices, patterns, reviews, and outcomes require evidence provenance. The module must not fabricate conversion, competitor revenue, or experiment lift. Founder-selected pricing intent, research evidence, simulator assumptions, and real results must remain distinguishable.
 
 ## Future architecture boundary
 
-Founder venture economics and Venture Sandbox SaaS billing must remain separate concepts and data flows. A future Monetization Lab, if explicitly required, should not overload workspace billing tables or treat competitor estimates as verified revenue. No detailed future design is approved in this baseline.
+Founder venture economics and Venture Sandbox SaaS billing remain separate concepts and data flows. Monetization experiments need venture-scoped persistence and must not overload workspace billing tables or treat competitor estimates as verified revenue. Specific schema, algorithms, and model providers remain implementation decisions.

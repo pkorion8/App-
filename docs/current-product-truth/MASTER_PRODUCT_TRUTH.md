@@ -84,3 +84,51 @@ Venture Sandbox lets a signed-in founder record an idea, shape it, collect a mix
 - `MONETIZATION_LAB.md`: founder pricing simulation and Venture Sandbox billing.
 - `TECHNICAL_ARCHITECTURE.md`: runtime, packages, database, security, deployment, and testing.
 - `CURRENT_ROADMAP.md`: current baseline, outstanding operational work, and delta-controlled next work.
+
+## Accepted product intent after the Post-Claude delta
+
+Venture Sandbox is an **AI Venture Intelligence Platform and Startup Flight Simulator** for people ranging from first-time idea holders and vibe/no-code builders to creators, students, freelancers, and serious founders.
+
+The governing product principle is:
+
+> Expert-level intelligence underneath. Beginner-level simplicity on top.
+
+Default UX must avoid startup jargon. Technical depth belongs behind progressive disclosure, Evidence Explorer, or System View.
+
+The canonical connected journey is:
+
+**Idea → Clarify → Understand → Shape → Monetize → Simulate → Build → Learn**
+
+Calm default venture navigation remains **Understand, Shape, Simulate, Build, Learn**. Monetization is first-class but should sit naturally between Shape and Simulate without adding top-level clutter. Quick Launch/Vibe Coder, Guided Builder, Startup/Professional, and Learner/Student are valid experience profiles over the same underlying venture context, not separate products.
+
+## Product continuity contract — newly required
+
+Every module must operate on one shared venture context. Data captured once must be reused downstream rather than requested again:
+
+- idea and category;
+- geography and audience;
+- problem, MVP scope, and differentiation;
+- pricing model and monetization experiments;
+- technical requirements and cost assumptions;
+- research evidence and uncertainty; and
+- simulated and, later, real outcomes.
+
+A feature counts as implemented only when the user can perform the action, required state persists, and required downstream behavior changes. Otherwise it must be labeled UI-only, partial, demo, credential-required, unavailable, or future. “Complete,” “fully connected,” and “live” are prohibited unless demonstrably true.
+
+## Immediate product objective — newly required
+
+The highest priority is a presentation-ready web prototype within the next couple of days. It must use the production product model, feel like one coherent product, include the important presentation screens, have working major CTAs and no dead navigation, share a consistent responsive visual system, and distinguish representative/demo data from live evidence.
+
+The presentation scope and implementation status are tracked in `USER_JOURNEY_AND_SCREEN_MAP.md` and `CURRENT_ROADMAP.md`.
+
+## Stable trust and UX rules — newly required
+
+- Never fabricate revenue, downloads, market share, percentages, conversion, success probability, or competitor traction numbers.
+- Missing evidence remains missing.
+- Preserve a path from answer to synthesis to finding to evidence to original source.
+- Avoid arbitrary scores, fake progress, unexplained numbers, enterprise clutter, dense navigation, and decorative complexity.
+- Prefer calm hierarchy, strong typography, progressive disclosure, useful charts, visual evidence summaries, clear states, and an obvious next action.
+
+## Future product architecture
+
+Research synthesis, review intelligence, Technology & Ownership Intelligence, Monetization Lab depth, broader Compare modes, automated Learn/Monitor, multi-agent roles, and replaceable model/provider routing are established future directions where not yet implemented. Their detailed requirements live in the focused documents. They do not change the current-code status table above.

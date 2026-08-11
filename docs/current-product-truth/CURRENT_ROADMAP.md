@@ -41,9 +41,9 @@ Future documentation work, after accepting the product delta:
 - record architecture decisions that materially change the current boundaries;
 - turn confirmed operational procedures into runbooks.
 
-## Existing gaps requiring prioritization, not assumed approval
+## Existing gaps identified before the delta
 
-The implementation audit identified these gaps. They are candidates for product prioritization, not automatically scheduled requirements:
+The implementation audit identified these gaps. The priority sections below now promote several of them into accepted work; any remainder still requires explicit prioritization:
 
 - reuse structured Shape context consistently downstream;
 - connect Creator Intelligence evidence to ventures;
@@ -59,20 +59,55 @@ The implementation audit identified these gaps. They are candidates for product 
 
 ## Newly required work
 
-None recorded yet. The product owner has stated that a post-Claude product delta will be supplied next. That delta must be captured in `POST_CLAUDE_DELTA.md` before this roadmap assigns it status or sequence.
+The Post-Claude delta has been accepted and is preserved in `POST_CLAUDE_DELTA.md`.
+
+## Priority 0 — presentation-ready working prototype
+
+Target: **within the next couple of days from the 2026-08-11 delta**.
+
+The first delivery is a coherent, responsive, externally presentable web experience using the production venture model. It must have working major links/CTAs, no dead navigation, a consistent calm visual system, honest live/demo/unavailable states, and a connected Idea → Clarify → Understand → Shape → Monetize → Simulate → Build → Learn story.
+
+Required presentation coverage:
+
+- Home, My Ideas, Explore, idea entry, and clarification;
+- research progress/summary, competitors, reviews, Creator/YouTube intelligence, Technology & Ownership, and Evidence Explorer;
+- Shape V1, Compare, and Monetization Lab;
+- simulation setup, build, launch, first users, retention, market event, and Month 1;
+- Build Studio and Learn/Monitor;
+- System View and relevant account/plans/methodology surfaces.
+
+Existing screens should be reused where truthful. Missing production-depth integrations may use representative states only when explicitly labeled demo, partial, credential-required, unavailable, or future. Presentation work must not claim state changes or downstream connections that do not exist.
+
+## Priority 1 — continuity and first-class Monetization
+
+- Establish one persisted venture context and reuse known values across modules.
+- Stop repeated audience/geography entry.
+- Add Monetization Lab experiments with evidence/assumption provenance and Simulator inputs.
+- Make Creator Intelligence venture-relevant.
+- Align venture navigation and next actions to the canonical journey.
+- Make Build recommendations distinguish evidence-backed, heuristic, and default/reference content.
+
+## Priority 2 — evidence and intelligence depth
+
+- Implement the answer → synthesis → finding → evidence → source model.
+- Add honest Review Intelligence and Technology & Ownership Intelligence through replaceable adapters.
+- Expand Compare toward its three required modes and equivalent evidence dimensions.
+- Connect creator evidence into downstream modules.
+- Add source freshness, contradictions, claim typing, and uncertainty.
+
+## Priority 3 — persistent simulation and learning loop
+
+- Deepen simulator state and venture-context inputs without a universal success score.
+- Add selectable/comparable alternative timelines.
+- Feed Monetization experiments into runs.
+- Preserve SIMULATED versus REAL outcome labeling.
+- Use real outcomes to recalibrate later recommendations only when supported by persisted evidence and explicit methodology.
+- Add automated monitoring candidates for competitors, creator signals, technology, and market changes.
 
 ## Future architecture
 
-No specific future architecture is scheduled in this baseline. Architecture work will follow accepted requirements, with current constraints documented in `TECHNICAL_ARCHITECTURE.md`.
+Temporal/orchestration, multi-agent specialist fan-out/fan-in, and multi-model routing remain future architecture rather than launch dependencies. Workflow boundaries should stay replaceable and free-first.
 
 ## Next decision gate
 
-Receive and classify the product-owner delta into:
-
-- retain current behavior;
-- change current behavior;
-- newly required;
-- deferred/rejected; and
-- open decision.
-
-Only after that reconciliation should application implementation begin.
+Before application implementation, translate Priority 0 into a screen-by-screen prototype plan that identifies which states are backed by current actions, which require new persisted behavior, and which are honest presentation-only demo/unavailable states. No application change is part of this documentation commit.

@@ -4,7 +4,33 @@ Read this whole file before touching code — it's the fastest way for any
 agent (Claude, GPT, Gemini, human) to pick this project up cold, and it's
 maintained specifically for that handoff, not just as a style guide.
 
-## Current status and plan (as of 2026-08-10)
+## Current status and plan (as of 2026-08-11)
+
+**Hardening pass done on top of the full breadth list**, ahead of the
+product owner having time to run the pending SQL / set up Stripe:
+- Security audit: fixed a real cross-tenant data-integrity gap
+  (rewindToCheckpoint/createComparison trusted a caller-supplied second
+  id without checking its workspace), empirically verified via the RLS
+  smoke test that no workspace member can self-upgrade billing_accounts
+  to Pro, added baseline security headers (X-Frame-Options etc.),
+  confirmed no dangerouslySetInnerHTML/eval anywhere and no open-redirect
+  in the magic-link callback.
+- Real unit test suite (Vitest, 38 tests, wired into CI): Simulator
+  engine + narration, Build Studio's generator, Research's geography
+  resolver / newcomer detection / heuristic claim extraction. Caught a
+  genuine infinite-loop bug while writing these (a bare `while (stage !==
+  X) advanceDay()` loop hangs forever if it passes through an unresolved
+  decision stage, since advanceDay() is a documented no-op there) — worth
+  knowing if anyone writes a similar helper later.
+- Per-page browser tab titles (previously every page shared one title).
+
+**Two things still need the product owner, not more code:**
+- `supabase/migrations/0006_shape.sql` hasn't been run against the live
+  DB yet — Shape's code is safe to have deployed ahead of this (queries
+  degrade to "no shape data" rather than erroring), but Shape won't
+  actually work until it's run.
+- Stripe test-mode account + 3 env vars for Billing to go live (see
+  .env.example).
 
 **Deadline: public beta launch by 2026-08-24 (14 days from repo start).**
 Execution strategy locked with the product owner: **breadth-first, V1 depth

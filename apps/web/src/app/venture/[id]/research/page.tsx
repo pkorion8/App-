@@ -136,7 +136,9 @@ export default async function ResearchPage({
                   </span>
                 </div>
               </div>
-              <p className="mt-2 text-sm text-vs-fg-muted">{f.user_facing_summary}</p>
+              <p className="mt-2 whitespace-pre-line text-sm text-vs-fg-muted">
+                {f.user_facing_summary}
+              </p>
               {f.limitations && (
                 <p className="mt-3 text-xs text-vs-fg-muted">
                   <span className="font-semibold">Limitation: </span>

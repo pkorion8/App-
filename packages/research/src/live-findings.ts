@@ -81,17 +81,17 @@ export async function researchAppStoreCompetitors(input: {
         ? new Date(r.lastUpdated).toISOString().slice(0, 10)
         : "unknown update date";
       const newcomerTag = isNewcomer(r.releaseDate) ? ", NEW in the last year" : "";
-      return `${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}${newcomerTag}`;
+      return `• ${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}${newcomerTag}`;
     })
-    .join("; ");
+    .join("\n");
 
   const newcomers = results.filter((r) => isNewcomer(r.releaseDate));
   const newcomerSentence =
     newcomers.length > 0
-      ? ` ${newcomers.length} of ${results.length} launched within the last year: ${newcomers
+      ? `${newcomers.length} of ${results.length} launched within the last year: ${newcomers
           .map((r) => r.name)
           .join(", ")} — worth watching as active new entrants, not just established players.`
-      : ` None of the ${results.length} matches launched within the last year — this looks like an established field rather than one with fresh entrants right now.`;
+      : `None of the ${results.length} matches launched within the last year — this looks like an established field rather than one with fresh entrants right now.`;
 
   return {
     normalizedClaim: `Live App Store competitors for "${input.ventureName}"${
@@ -100,8 +100,8 @@ export async function researchAppStoreCompetitors(input: {
     userFacingSummary:
       `Real App Store search (${input.geography}, Apple only): ${results.length} ` +
       `${results.length === 1 ? "app" : "apps"} found. ` +
-      `Traction signal: ${traction} — based on ratings volume of the closest matches. ${listLines}.` +
-      newcomerSentence,
+      `Traction signal: ${traction} — based on ratings volume of the closest matches.\n\n` +
+      `${listLines}\n\n${newcomerSentence}`,
     state: "MIXED",
     limitations:
       "Apple App Store only (no Google Play), matched by name/keyword only, and rating " +
@@ -144,12 +144,12 @@ export async function researchMarketIndicators(input: {
   if (indicators.length === 0) return null;
 
   const lines = indicators
-    .map((ind) => `${ind.label} (${ind.year}): ${formatIndicatorValue(ind)}`)
-    .join("; ");
+    .map((ind) => `• ${ind.label} (${ind.year}): ${formatIndicatorValue(ind)}`)
+    .join("\n");
 
   return {
     normalizedClaim: `World Bank market indicators for ${input.geography}`,
-    userFacingSummary: `Live World Bank data for ${input.geography}: ${lines}.`,
+    userFacingSummary: `Live World Bank data for ${input.geography}:\n\n${lines}`,
     state: "MIXED",
     limitations:
       "World Bank's most recently reported figures per indicator, which can lag a year or " +
@@ -209,15 +209,16 @@ export async function researchGitHubActivity(input: {
     .map((r) => {
       const updated = r.pushedAt ? new Date(r.pushedAt).toISOString().slice(0, 10) : "unknown";
       const desc = r.description ? ` — ${r.description}` : "";
-      return `${r.fullName} (${r.stars.toLocaleString()}★, last pushed ${updated})${desc}`;
+      return `• ${r.fullName} (${r.stars.toLocaleString()}★, last pushed ${updated})${desc}`;
     })
-    .join("; ");
+    .join("\n");
 
   return {
     normalizedClaim: `Related open-source projects for "${input.ventureName}"`,
     userFacingSummary:
       `Real GitHub search: ${results.length} related ${results.length === 1 ? "repo" : "repos"} found, ` +
-      `${activeCount} actively maintained (pushed to in the last ${ACTIVE_REPO_WINDOW_DAYS} days). ${listLines}.`,
+      `${activeCount} actively maintained (pushed to in the last ${ACTIVE_REPO_WINDOW_DAYS} days).\n\n` +
+      listLines,
     state: "MIXED",
     limitations:
       "Public GitHub repositories only, matched by name/keyword only. Star count is a rough " +

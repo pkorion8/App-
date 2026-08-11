@@ -21,31 +21,36 @@ async function loadVentureSummary(
     .maybeSingle();
   if (!venture) return null;
 
-  const { data: findings } = await supabase
-    .from("findings")
-    .select("is_demo")
-    .in(
-      "mission_id",
-      (
-        await supabase.from("research_missions").select("id").eq("venture_id", ventureId)
-      ).data?.map((m) => m.id) ?? [],
-    );
+  // Independent of each other once we know the venture exists -- run in
+  // parallel rather than as 3 sequential round trips (this function runs
+  // twice per page load, once per compared venture, so this halves what
+  // was ~6-8 sequential Postgres round trips down to ~4).
+  const [missionsResult, runResult, buildResult] = await Promise.all([
+    supabase.from("research_missions").select("id").eq("venture_id", ventureId),
+    supabase
+      .from("simulation_runs")
+      .select("stage, virtual_day, total_users, monthly_revenue, cash_remaining")
+      .eq("venture_id", ventureId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("build_packages")
+      .select("cost_estimate")
+      .eq("venture_id", ventureId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  const { data: run } = await supabase
-    .from("simulation_runs")
-    .select("stage, virtual_day, total_users, monthly_revenue, cash_remaining")
-    .eq("venture_id", ventureId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const missionIds = missionsResult.data?.map((m) => m.id) ?? [];
+  const { data: findings } =
+    missionIds.length > 0
+      ? await supabase.from("findings").select("is_demo").in("mission_id", missionIds)
+      : { data: [] };
 
-  const { data: build } = await supabase
-    .from("build_packages")
-    .select("cost_estimate")
-    .eq("venture_id", ventureId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const run = runResult.data;
+  const build = buildResult.data;
 
   const liveFindings = (findings ?? []).filter((f) => !f.is_demo).length;
   const buildCost = build?.cost_estimate as unknown as { totalMonthly?: number } | undefined;
@@ -81,20 +86,20 @@ export default async function ComparePage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const a = await loadVentureSummary(supabase, id);
-  if (!a) notFound();
-
   if (!otherId) {
-    const { data: others } = await supabase
-      .from("ventures")
-      .select("id, name")
-      .neq("id", id)
-      .order("created_at", { ascending: false });
+    // Only the venture's name is needed for this view -- skip the full
+    // findings/run/build fetch loadVentureSummary does, which would be
+    // wasted work here (none of it is rendered on the picker screen).
+    const [{ data: venture }, { data: others }] = await Promise.all([
+      supabase.from("ventures").select("id, name").eq("id", id).maybeSingle(),
+      supabase.from("ventures").select("id, name").neq("id", id).order("created_at", { ascending: false }),
+    ]);
+    if (!venture) notFound();
 
     return (
       <main className="mx-auto max-w-3xl p-6">
         <Link href={`/venture/${id}`} className="text-sm text-vs-fg-muted hover:underline">
-          ← {a.venture.name}
+          ← {venture.name}
         </Link>
         <h1 className="mt-4 text-xl font-semibold text-vs-fg">Compare</h1>
         <Card className="mt-4">
@@ -105,7 +110,11 @@ export default async function ComparePage({
     );
   }
 
-  const b = await loadVentureSummary(supabase, otherId);
+  const [a, b] = await Promise.all([
+    loadVentureSummary(supabase, id),
+    loadVentureSummary(supabase, otherId),
+  ]);
+  if (!a) notFound();
   if (!b) notFound();
 
   const rows: [string, string, string][] = [

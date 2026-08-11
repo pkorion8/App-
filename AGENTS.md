@@ -23,6 +23,23 @@ product owner having time to run the pending SQL / set up Stripe:
   decision stage, since advanceDay() is a documented no-op there) — worth
   knowing if anyone writes a similar helper later.
 - Per-page browser tab titles (previously every page shared one title).
+- Research gained a 6th live source: GitHub repo search (open-source
+  activity related to the idea) — the "Tech" half of Similar Apps/Tech.
+  Written against GitHub's stable API but genuinely untested live: this
+  sandbox's network egress scopes all api.github.com traffic to attached
+  repos only, so treat it like the YouTube transcript connector
+  (best-effort, verify once deployed, not yet watched succeed in prod).
+- Research now has a 30s per-venture cooldown between runs, protecting
+  the 3 free external APIs' shared rate limits from a spam-click loop.
+- Expanded logEvent coverage from 2 server actions to ~9, including all
+  3 Stripe webhook outcomes (a checkout completing with no workspace_id
+  now logs loudly instead of silently doing nothing).
+- Added error.tsx / not-found.tsx — previously any unhandled exception
+  or bad venture URL fell through to Next's generic unbranded crash page.
+- Compare page: fixed a real perf issue (4 sequential DB round trips
+  where 3 were independent and parallelizable; the venture-picker screen
+  was also running the full findings/run/build fetch just to read a
+  venture's name).
 
 **Two things still need the product owner, not more code:**
 - `supabase/migrations/0006_shape.sql` hasn't been run against the live

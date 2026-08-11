@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { generateBuildPackage } from "@venture-sandbox/build";
+import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function generateBuild(ventureId: string): Promise<void> {
@@ -33,6 +34,15 @@ export async function generateBuild(ventureId: string): Promise<void> {
     recommended_stack: pkg.recommendedStack as unknown as Record<string, unknown>,
     backlog: pkg.backlog as unknown as Record<string, unknown>[],
     cost_estimate: pkg.costEstimate as unknown as Record<string, unknown>,
+  });
+
+  logEvent({
+    event: "build_package.generated",
+    actorId: user.id,
+    workspaceId: venture.workspace_id,
+    entityType: "venture",
+    entityId: ventureId,
+    metadata: { total_monthly_cost: pkg.costEstimate.totalMonthly },
   });
 
   redirect(`/venture/${ventureId}/build`);

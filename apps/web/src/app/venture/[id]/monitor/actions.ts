@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addOutcomeSchema } from "@venture-sandbox/schemas";
+import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface AddOutcomeState {
@@ -60,6 +61,15 @@ export async function addOutcome(
   if (error) {
     return { status: "error", message: error.message };
   }
+
+  logEvent({
+    event: "venture_outcome.logged",
+    actorId: user.id,
+    workspaceId: venture.workspace_id,
+    entityType: "venture",
+    entityId: ventureId,
+    metadata: { metric_type: parsed.data.metricType },
+  });
 
   revalidatePath(`/venture/${ventureId}/monitor`);
   return { status: "idle" };

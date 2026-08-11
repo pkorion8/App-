@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { createSupabaseServiceClient } from "@venture-sandbox/integrations";
 import { createStripeClient } from "@venture-sandbox/integrations/stripe";
+import { logEvent } from "@venture-sandbox/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,23 @@ export async function POST(request: NextRequest) {
               typeof session.subscription === "string" ? session.subscription : null,
           })
           .eq("workspace_id", workspaceId);
+        logEvent({
+          event: "billing.upgraded_to_pro",
+          actorId: null,
+          workspaceId,
+          entityType: "billing_account",
+          entityId: workspaceId,
+        });
+      } else {
+        // No workspace_id on the session means the update above never ran --
+        // log loudly, since this would otherwise be a silent "customer paid,
+        // nothing happened" failure with no trace anywhere.
+        logEvent({
+          event: "billing.checkout_completed_missing_workspace_id",
+          actorId: null,
+          workspaceId: null,
+          metadata: { stripe_session_id: session.id },
+        });
       }
       break;
     }
@@ -75,6 +93,14 @@ export async function POST(request: NextRequest) {
           plan: status === "canceled" ? "free" : "pro",
         })
         .eq("stripe_subscription_id", subscription.id);
+      logEvent({
+        event: "billing.subscription_updated",
+        actorId: null,
+        workspaceId: null,
+        entityType: "stripe_subscription",
+        entityId: subscription.id,
+        metadata: { status },
+      });
       break;
     }
 
@@ -84,6 +110,13 @@ export async function POST(request: NextRequest) {
         .from("billing_accounts")
         .update({ plan: "free", status: "canceled" })
         .eq("stripe_subscription_id", subscription.id);
+      logEvent({
+        event: "billing.subscription_canceled",
+        actorId: null,
+        workspaceId: null,
+        entityType: "stripe_subscription",
+        entityId: subscription.id,
+      });
       break;
     }
 

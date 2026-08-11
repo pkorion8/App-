@@ -12,6 +12,7 @@ import {
   simulationStateToRow,
   type SimulationEvent,
 } from "@venture-sandbox/simulator";
+import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface StartSimulationState {
@@ -57,6 +58,15 @@ export async function startSimulation(
   if (error) {
     return { status: "error", message: error.message };
   }
+
+  logEvent({
+    event: "simulation.started",
+    actorId: user.id,
+    workspaceId: venture.workspace_id,
+    entityType: "venture",
+    entityId: ventureId,
+    metadata: { budget_total: parsed.data.budgetTotal },
+  });
 
   redirect(`/venture/${ventureId}/simulate`);
 }

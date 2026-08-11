@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { shapeSchema } from "@venture-sandbox/schemas";
+import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface SaveShapeState {
@@ -87,6 +88,15 @@ export async function saveShape(
   if (shapeError) {
     return { status: "error", message: shapeError.message };
   }
+
+  logEvent({
+    event: "venture.shaped",
+    actorId: user.id,
+    workspaceId: venture.workspace_id,
+    entityType: "venture",
+    entityId: ventureId,
+    metadata: { advanced_to_shaped: ventureUpdate.status === "shaped" },
+  });
 
   revalidatePath(`/venture/${ventureId}`);
   revalidatePath(`/venture/${ventureId}/shape`);

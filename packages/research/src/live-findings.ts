@@ -23,7 +23,7 @@ const NEWCOMER_WINDOW_DAYS = 365;
  * computable signal from the same search, not a guess. No historical
  * snapshot store needed: this is always relative to "now."
  */
-function isNewcomer(releaseDate: string | null): boolean {
+export function isNewcomer(releaseDate: string | null): boolean {
   if (!releaseDate) return false;
   const releasedAt = new Date(releaseDate).getTime();
   if (Number.isNaN(releasedAt)) return false;

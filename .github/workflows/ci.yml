@@ -26,6 +26,8 @@ jobs:
 
       - run: pnpm lint
 
+      - run: pnpm test
+
       # No Supabase env vars needed here: pages check isSupabaseConfigured()
       # and render a setup notice instead of throwing when unset, so the
       # build doesn't require real (or placeholder) credentials to succeed.

@@ -52,7 +52,7 @@ export async function researchAppStoreCompetitors(input: {
 
   let results;
   try {
-    results = await searchAppStore(input.ventureName, country, 6);
+    results = await searchAppStore(input.ventureName, country, 15);
   } catch {
     return null;
   }
@@ -73,17 +73,29 @@ export async function researchAppStoreCompetitors(input: {
   }
 
   const traction = classifyTraction(results.map((r) => r.ratingCount));
-  const top = results.slice(0, 4);
-  const listLines = top
-    .map((r) => {
-      const rating = r.rating !== null ? `${r.rating.toFixed(1)}★` : "no rating";
-      const updated = r.lastUpdated
-        ? new Date(r.lastUpdated).toISOString().slice(0, 10)
-        : "unknown update date";
-      const newcomerTag = isNewcomer(r.releaseDate) ? ", NEW in the last year" : "";
-      return `• ${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}${newcomerTag}`;
-    })
-    .join("\n");
+  // Sorted strongest-traction-first so both ends of the list are visible
+  // at a glance: the established leaders, and the weakest-traction match
+  // at the bottom -- a real, derived signal (lowest rating volume in this
+  // result set), not a guess at *why* it's weak, which isn't knowable
+  // from listing data alone.
+  const sorted = [...results].sort((a, b) => b.ratingCount - a.ratingCount);
+  const shown = sorted.slice(0, 10);
+  const formatEntry = (r: (typeof shown)[number]) => {
+    const rating = r.rating !== null ? `${r.rating.toFixed(1)}★` : "no rating";
+    const updated = r.lastUpdated
+      ? new Date(r.lastUpdated).toISOString().slice(0, 10)
+      : "unknown update date";
+    const newcomerTag = isNewcomer(r.releaseDate) ? ", NEW in the last year" : "";
+    return `• ${r.name} (${r.seller}) — ${rating}, ${r.ratingCount.toLocaleString()} ratings, ${r.price}, last updated ${updated}${newcomerTag}`;
+  };
+  const listLines = shown.map(formatEntry).join("\n");
+
+  const weakest = sorted[sorted.length - 1];
+  const weakestNote =
+    shown.length > 1 && weakest
+      ? `Weakest traction in this set: ${weakest.name} (${weakest.ratingCount.toLocaleString()} ratings) — ` +
+        `could mean an underserved angle, or just a newer/lower-effort listing. Worth a manual look before reading much into it.`
+      : "";
 
   const newcomers = results.filter((r) => isNewcomer(r.releaseDate));
   const newcomerSentence =
@@ -99,14 +111,15 @@ export async function researchAppStoreCompetitors(input: {
     }`,
     userFacingSummary:
       `Real App Store search (${input.geography}, Apple only): ${results.length} ` +
-      `${results.length === 1 ? "app" : "apps"} found. ` +
+      `${results.length === 1 ? "app" : "apps"} found${results.length > shown.length ? `, top ${shown.length} shown by ratings volume` : ""}. ` +
       `Traction signal: ${traction} — based on ratings volume of the closest matches.\n\n` +
-      `${listLines}\n\n${newcomerSentence}`,
+      `${listLines}\n\n${newcomerSentence}${weakestNote ? `\n\n${weakestNote}` : ""}`,
     state: "MIXED",
     limitations:
       "Apple App Store only (no Google Play), matched by name/keyword only, and rating " +
       "counts are a proxy for traction, not actual download or revenue figures. \"Newcomer\" is " +
-      "based on the app's original release date being within the last 12 months, not on repeated checks over time.",
+      "based on the app's original release date being within the last 12 months, not on repeated checks over time. " +
+      "No revenue, subscription pricing, or review content is available from this free API.",
     nextTest: "Cross-check the top matches on Google Play and read their recent reviews directly.",
   };
 }

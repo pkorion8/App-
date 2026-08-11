@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -8,6 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { GenerateButton } from "./GenerateButton";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Build" };
 
 const CATEGORY_LABEL: Record<string, string> = {
   setup: "Setup",

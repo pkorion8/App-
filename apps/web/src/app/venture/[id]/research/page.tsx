@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -9,6 +10,7 @@ import { ClarificationForm } from "./ClarificationForm";
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Research" };
 
 const STATE_LABEL: Record<string, string> = {
   SOLID: "Solid",

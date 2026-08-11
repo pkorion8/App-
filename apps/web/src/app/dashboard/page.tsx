@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -10,6 +11,7 @@ import { CreateVentureForm } from "./CreateVentureForm";
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Your ventures" };
 
 export default async function DashboardPage() {
   const configured = isSupabaseConfigured({

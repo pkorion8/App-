@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -7,6 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PickVentureForm } from "./PickVentureForm";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Compare" };
 
 async function loadVentureSummary(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,

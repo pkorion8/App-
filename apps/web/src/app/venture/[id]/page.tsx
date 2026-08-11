@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -8,6 +9,23 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 // See sign-in/page.tsx: without this, env-var-dependent content here can
 // get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const configured = isSupabaseConfigured({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  });
+  if (!configured) return { title: "Venture" };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: venture } = await supabase.from("ventures").select("name").eq("id", id).maybeSingle();
+  return { title: venture?.name ?? "Venture" };
+}
 
 export default async function VenturePage({
   params,

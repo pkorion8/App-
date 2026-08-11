@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { Card } from "@venture-sandbox/ui";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { SignInForm } from "./SignInForm";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 // Without this, Next prerenders this page once at build time and bakes in
 // whatever NEXT_PUBLIC_SUPABASE_* values (or lack of them) were present

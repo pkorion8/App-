@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -7,6 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AddChannelForm } from "./AddChannelForm";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Monitored channels" };
 
 function isResolvedId(channelId: string): boolean {
   return /^UC[\w-]{22}$/.test(channelId);

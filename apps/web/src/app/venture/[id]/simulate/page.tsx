@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -10,12 +11,14 @@ import {
 import { Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
 import { StartSimulationForm } from "./StartSimulationForm";
 import { RunControls } from "./RunControls";
 import { CheckpointPanel } from "./CheckpointPanel";
 import { HistoryChart } from "./HistoryChart";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Simulate" };
 
 const STAGE_LABEL: Record<string, string> = {
   setup: "Setting up",

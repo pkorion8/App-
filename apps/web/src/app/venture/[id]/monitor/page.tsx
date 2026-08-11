@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -8,6 +9,7 @@ import { AddOutcomeForm } from "./AddOutcomeForm";
 import { OutcomeChart } from "./OutcomeChart";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Monitor" };
 
 const METRIC_LABEL: Record<string, string> = {
   users: "Total users",

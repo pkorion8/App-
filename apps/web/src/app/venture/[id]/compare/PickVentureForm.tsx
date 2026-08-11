@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@venture-sandbox/ui";
+import { Button, Select } from "@venture-sandbox/ui";
 import { createComparison } from "./actions";
 
 export function PickVentureForm({
@@ -24,17 +24,17 @@ export function PickVentureForm({
 
   return (
     <div className="flex items-center gap-2">
-      <select
+      <Select
         value={selected}
         onChange={(e) => setSelected(e.target.value)}
-        className="rounded-vs-sm border border-vs-border bg-vs-bg px-3 py-2 text-sm text-vs-fg"
+        style={{ width: "auto" }}
       >
         {otherVentures.map((v) => (
           <option key={v.id} value={v.id}>
             {v.name}
           </option>
         ))}
-      </select>
+      </Select>
       <Button
         disabled={isPending || !selected}
         onClick={() => startTransition(() => createComparison(ventureId, selected))}

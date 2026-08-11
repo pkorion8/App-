@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button, Card } from "@venture-sandbox/ui";
+
+export const metadata: Metadata = { title: "Pricing" };
 
 const FREE_FEATURES = [
   "Unlimited ventures",

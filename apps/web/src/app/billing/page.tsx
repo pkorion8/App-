@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -8,6 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createCheckoutSession, createPortalSession } from "./actions";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Billing" };
 
 const ERROR_MESSAGE: Record<string, string> = {
   not_configured: "Billing isn't configured yet — Pro checkout isn't live.",

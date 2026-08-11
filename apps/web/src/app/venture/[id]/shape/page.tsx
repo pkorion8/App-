@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
@@ -7,6 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ShapeForm } from "./ShapeForm";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Shape" };
 
 export default async function ShapePage({
   params,

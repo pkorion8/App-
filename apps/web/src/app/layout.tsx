@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Venture Sandbox",
+  title: {
+    default: "Venture Sandbox",
+    template: "%s | Venture Sandbox",
+  },
   description: "Research, simulate, and build your venture idea.",
 };
 

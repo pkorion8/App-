@@ -41,6 +41,32 @@ product owner having time to run the pending SQL / set up Stripe:
   was also running the full findings/run/build fetch just to read a
   venture's name).
 
+**Research: three permanently-pending findings, by design, not oversight.**
+The product owner asked for revenue, subscription/monetization model,
+review sentiment ("why is an app good/bad"), top features, and growth
+trend on competitors. Three of those are now explicit finding slots
+(`packages/research/src/demo-findings.ts`, slots 6-8) that will show
+"Connection pending" on every single research run until one of these
+happens — not silently dropped, kept visible on purpose so the gap is
+never forgotten:
+- **Revenue & monetization model** — no free source publishes this,
+  anywhere. Cheapest real option: AppFigures' Optimize tier, ~$100-150/mo,
+  gives competitor revenue/download *estimates* (modeled, not real sales
+  data — no provider at any price has that) plus reviews and competitor
+  tracking. AppTweak Essential is ~$79-83/mo but weaker on revenue.
+  Sensor Tower was ruled out for now: no self-serve signup, sales-negotiated
+  contracts only, real median contract ~$74K/year ($2,500-$12,500/mo) —
+  enterprise pricing, not viable pre-revenue.
+- **Reviews & ratings sentiment** ("why good/bad", top features) — same
+  AppFigures/paid-provider dependency; genuinely zero free path exists
+  (Apple's review feed empirically returns nothing, Google Play has no
+  free review API at all).
+- **Growth trend over time** — the one item on the list that's actually
+  free to build, just not built yet: needs a scheduled job that
+  re-checks the same competitors weekly/monthly and stores history for
+  comparison, similar in shape to the existing creator-intelligence cron.
+  Worth prioritizing before the paid items once there's time.
+
 **Two things still need the product owner, not more code:**
 - `supabase/migrations/0006_shape.sql` hasn't been run against the live
   DB yet — Shape's code is safe to have deployed ahead of this (queries

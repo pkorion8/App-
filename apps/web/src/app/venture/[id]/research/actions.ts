@@ -114,6 +114,9 @@ export async function startResearch(
   // World Bank Open Data, GitHub search); each falls back to its honest
   // DEMO placeholder if the live call fails or finds nothing. Slots 1-3
   // stay DEMO until their sources (YouTube, Trends, etc.) are connected too.
+  // Slots 6-8 (revenue, reviews, growth trend) have no live-source branch
+  // at all and never will until either a paid provider or new scheduled-
+  // tracking infrastructure is in place -- see demo-findings.ts.
   const [liveCompetitorFinding, liveMarketIndicators, liveGitHubActivity] = await Promise.all([
     researchAppStoreCompetitors({
       ventureName: venture.name,

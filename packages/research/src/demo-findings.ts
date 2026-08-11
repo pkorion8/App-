@@ -19,6 +19,26 @@ const NO_SOURCE_LIMITATION =
   "No live data source is connected yet — this is a placeholder showing " +
   "where a researched, cited answer will appear once one is.";
 
+// These three specifically stay pending on purpose, not by oversight --
+// no free source for them exists anywhere (revenue, reviews), or the
+// data literally cannot exist without checking repeatedly over time
+// (trend). They're listed every single research run precisely so the
+// gap is never silently forgotten -- see AGENTS.md for the full
+// rationale and cost breakdown behind each one.
+const REVENUE_PENDING_LIMITATION =
+  "Connection pending — requires a paid provider (e.g. AppFigures' Optimize tier, " +
+  "roughly $100-150/mo) since no free source publishes competitor revenue or " +
+  "download estimates. Even paid providers only ever give a modeled estimate, " +
+  "never a competitor's real sales figures.";
+const REVIEWS_PENDING_LIMITATION =
+  "Connection pending — no free source exists for this at all. Apple's public " +
+  "review feed reliably returns zero entries (tested, not assumed) and Google " +
+  "Play has no free review API. Only paid review-aggregation tools have this.";
+const TREND_PENDING_LIMITATION =
+  "Connection pending — this needs the same competitors checked again over " +
+  "weeks/months and compared, which a single research run can never show. " +
+  "Free to build (no paid data needed), just not built yet.";
+
 /**
  * Placeholder findings for the 4 beginner research groups (spec §21.2
  * Slice 2), used until a real, credentialed source (App Store listings,
@@ -93,6 +113,36 @@ export function generateDemoFindings(input: DemoFindingInput): DemoFinding[] {
       state,
       limitations: NO_SOURCE_LIMITATION,
       nextTest: "Search GitHub for repositories matching the idea and check their recent activity.",
+    },
+    {
+      normalizedClaim: `Revenue & monetization model for "${ventureName}"`,
+      userFacingSummary:
+        `Connection pending. Once a paid provider is connected, this will show ` +
+        `competitors' estimated revenue, download volume, and pricing/subscription ` +
+        `model — not available from any free source that exists.`,
+      state,
+      limitations: REVENUE_PENDING_LIMITATION,
+      nextTest: "Connect a paid app-intelligence provider (e.g. AppFigures) when budget allows.",
+    },
+    {
+      normalizedClaim: `Reviews & ratings sentiment for "${ventureName}"`,
+      userFacingSummary:
+        `Connection pending. Once a paid provider is connected, this will show what ` +
+        `users actually say in reviews — what they like, what they complain about, ` +
+        `and why competitors succeed or struggle. No free source has this at all.`,
+      state,
+      limitations: REVIEWS_PENDING_LIMITATION,
+      nextTest: "Connect a paid review-aggregation provider when budget allows.",
+    },
+    {
+      normalizedClaim: `Growth trend for competitors in ${geography}`,
+      userFacingSummary:
+        `Connection pending. Once built, this will show whether the competitors found ` +
+        `above are trending up or down over time — a single research run only ever ` +
+        `sees one moment, never a trend.`,
+      state,
+      limitations: TREND_PENDING_LIMITATION,
+      nextTest: "Build a scheduled job that re-checks the same competitors weekly/monthly and compares.",
     },
   ];
 }

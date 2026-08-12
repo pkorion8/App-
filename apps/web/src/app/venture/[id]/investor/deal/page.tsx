@@ -1,0 +1,8 @@
+import Link from "next/link";
+import { Badge, Card } from "@venture-sandbox/ui";
+import { DealCalculator } from "./DealCalculator";
+
+export default async function DealLab({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ session?: string }> }) {
+  const { id } = await params; const { session } = await searchParams;
+  return <main className="mx-auto max-w-5xl p-6"><Badge status="warning">SIMULATED TERMS</Badge><h1 className="mt-3 text-3xl font-semibold text-vs-fg">Deal Lab & Cap Table</h1><p className="mt-2 max-w-3xl text-sm text-vs-fg-muted">Change assumptions and see deterministic ownership consequences. These are rehearsal terms, not a valuation recommendation or legal advice.</p><Card className="mt-6"><DealCalculator /></Card><div className="mt-4 grid gap-3 sm:grid-cols-3"><Card><h2 className="font-semibold text-vs-fg">Pre-money</h2><p className="mt-2 text-sm text-vs-fg-muted">The company value assumed immediately before the new investment.</p></Card><Card><h2 className="font-semibold text-vs-fg">Post-money</h2><p className="mt-2 text-sm text-vs-fg-muted">Pre-money plus the new investment in this simplified equity rehearsal.</p></Card><Card><h2 className="font-semibold text-vs-fg">Dilution</h2><p className="mt-2 text-sm text-vs-fg-muted">The reduction in the founder&apos;s percentage ownership after investor and employee-pool ownership is included.</p></Card></div><div className="mt-6 flex gap-4 text-sm"><Link className="font-medium text-vs-primary" href={`/venture/${id}/investor${session ? `?session=${session}` : ""}`}>← Investor World</Link><Link className="font-medium text-vs-primary" href={`/venture/${id}/build`}>Continue to Build →</Link></div></main>;
+}

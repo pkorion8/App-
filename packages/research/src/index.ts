@@ -14,3 +14,4 @@ export * from "./parse-channel-input";
 export * from "./geography";
 export * from "./finding-metadata";
 export * from "./search-keywords";
+export * from "./source-registry";

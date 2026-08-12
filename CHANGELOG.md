@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — Final prototype Pass 1
+
+- Added a persistent simulated Investor World with bounded investor profiles, contextual screening questions, meeting transcripts, and a conservative Claim Ledger.
+- Added simulated Diligence, Investment Committee, and deterministic Deal Lab / cap-table routes.
+- Added migration `0012_investor_world.sql` for workspace-scoped investor sessions, messages, claims, offers, and diligence items. The migration is created but not applied to production.
+- Added deterministic investor-domain logic for contextual questions, claim classification, ownership/dilution math, bounded counters, and stage progression.
+- Added a research source registry around the existing Apple/iTunes, World Bank, and GitHub integrations, while explicitly marking reviews, pricing, and regulatory intelligence unavailable where no source exists.
+- Upgraded persistent venture navigation to separate the primary Understand → Shape → Simulate → Build → Learn journey from contextual monetization and connected intelligence modules.
+- This is only the recovered Pass 1 foundation; advanced Simulator work, rewinds, seeded demo ventures, deeper Research/Evidence redesign, and Pass 2 remain outstanding.
+
 ## Unreleased — Sprint 1 product spine
 
 - Added the shared Understand → Shape → Simulate → Build → Learn venture journey and persistent venture context header.

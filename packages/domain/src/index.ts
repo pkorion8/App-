@@ -5,3 +5,4 @@ export * from "./research";
 export * from "./creator-intelligence";
 
 export * from "./monetization";
+export * from "./investor";

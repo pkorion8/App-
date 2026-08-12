@@ -52,7 +52,7 @@ function SubmitButton() {
   );
 }
 
-export function ClarificationForm({ ventureId }: { ventureId: string }) {
+export function ClarificationForm({ ventureId, targetUser, geography }: { ventureId: string; targetUser?: string | null; geography?: string | null }) {
   const boundAction = startResearch.bind(null, ventureId);
   const [state, formAction] = useFormState(boundAction, initialState);
 
@@ -65,12 +65,13 @@ export function ClarificationForm({ ventureId }: { ventureId: string }) {
           name="targetUser"
           placeholder="e.g. small salon owners, teenagers, freelance designers"
           required
+          defaultValue={targetUser ?? ""}
         />
         <FieldError>{state.fieldErrors?.targetUser}</FieldError>
       </div>
       <div>
         <Label htmlFor="geography">Where?</Label>
-        <Select id="geography" name="geography" required defaultValue="">
+        <Select id="geography" name="geography" required defaultValue={geography ?? ""}>
           <option value="" disabled>
             Choose a market
           </option>

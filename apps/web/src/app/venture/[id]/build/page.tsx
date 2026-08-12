@@ -87,7 +87,7 @@ export default async function BuildPage({
           <Card>
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Stack</p>
-              <Badge status="neutral">Same for every venture</Badge>
+              <Badge status="neutral">REFERENCE ASSUMPTION</Badge>
             </div>
             <p className="mt-1 text-xs text-vs-fg-muted">
               A sensible reference stack, not a personalized pick — the task list below is what&apos;s
@@ -136,7 +136,7 @@ export default async function BuildPage({
               <p className="text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">
                 Task list
               </p>
-              <Badge status="primary">Specific to this idea</Badge>
+              <Badge status="primary">IDEA-SPECIFIC HEURISTIC</Badge>
             </div>
             <ul className="mt-3 space-y-2">
               {backlog.map((item) => (

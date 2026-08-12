@@ -64,6 +64,10 @@ export interface Database {
             | "researching"
             | "shaped"
             | "simulating"
+            | "researched"
+            | "simulated"
+            | "build_ready"
+            | "learning"
             | "built"
             | "launched";
           created_at: string;
@@ -81,6 +85,10 @@ export interface Database {
             | "researching"
             | "shaped"
             | "simulating"
+            | "researched"
+            | "simulated"
+            | "build_ready"
+            | "learning"
             | "built"
             | "launched";
           created_at?: string;
@@ -98,6 +106,10 @@ export interface Database {
             | "researching"
             | "shaped"
             | "simulating"
+            | "researched"
+            | "simulated"
+            | "build_ready"
+            | "learning"
             | "built"
             | "launched";
           created_at?: string;
@@ -634,6 +646,12 @@ export interface Database {
           checked_at?: string;
         };
         Update: never;
+        Relationships: [];
+      };
+      monetization_experiments: {
+        Row: { id: string; venture_id: string; workspace_id: string; experiment_key: string; hypothesis: string; deciding_metric: string; pricing_model_override: string | null; selected: boolean; created_at: string; updated_at: string };
+        Insert: { id?: string; venture_id: string; workspace_id: string; experiment_key: string; hypothesis: string; deciding_metric: string; pricing_model_override?: string | null; selected?: boolean; created_at?: string; updated_at?: string };
+        Update: { experiment_key?: string; hypothesis?: string; deciding_metric?: string; pricing_model_override?: string | null; selected?: boolean; updated_at?: string };
         Relationships: [];
       };
     };

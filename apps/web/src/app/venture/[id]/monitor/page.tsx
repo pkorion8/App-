@@ -75,6 +75,11 @@ export default async function MonitorPage({
         Log what&apos;s actually happening after launch — real numbers, not the simulation&apos;s
         projections. Nothing here is estimated or auto-filled.
       </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Simulated outcome</p><p className="mt-2 text-sm text-vs-fg-muted">Model output stays in Simulate and is never merged into the observations below.</p><Link href={`/venture/${venture.id}/simulate`} className="mt-2 inline-block text-sm text-vs-primary">View simulation →</Link></Card>
+        <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Real outcome</p><p className="mt-2 text-sm text-vs-fg-muted">Only founder-entered observations appear here.</p></Card>
+      </div>
+      <Card className="mt-4 border-dashed"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Future recalibration · COMING</p><p className="mt-2 text-sm text-vs-fg-muted">Real users, revenue, cost, and retention could later update growth, conversion, and operating-cost assumptions. Recalibration is not implemented and no simulation changes automatically today.</p></Card>
 
       <Card className="mt-4">
         <AddOutcomeForm ventureId={venture.id} />

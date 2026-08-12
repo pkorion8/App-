@@ -14,6 +14,17 @@ DB_NAME="${RLS_TEST_DB:-vs_rls_smoke}"
 PSQL="psql -v ON_ERROR_STOP=1"
 MIGRATIONS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../supabase/migrations" && pwd)"
 
+echo "==> Stubbing Supabase database roles"
+$PSQL <<'SQL'
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated nologin;
+  end if;
+end
+$$;
+SQL
+
 echo "==> Recreating $DB_NAME"
 $PSQL -c "DROP DATABASE IF EXISTS $DB_NAME;"
 $PSQL -c "CREATE DATABASE $DB_NAME;"
@@ -43,7 +54,7 @@ insert into auth.users (email) values ('owner@example.com');
 insert into auth.users (email) values ('intruder@example.com');
 
 drop role if exists app_user;
-create role app_user nologin;
+create role app_user nologin in role authenticated;
 grant usage on schema public to app_user;
 grant select, insert, update on public.ventures to app_user;
 grant select, insert on public.audit_log to app_user;

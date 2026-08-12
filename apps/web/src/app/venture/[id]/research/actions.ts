@@ -56,6 +56,7 @@ export async function startResearch(
   if (ventureError || !venture) {
     return { status: "error", message: "Couldn't find this venture." };
   }
+  await supabase.from("ventures").update({ status: "researching" }).eq("id", ventureId);
 
   // Every run fires 3 live calls against free, unauthenticated external
   // APIs (App Store, World Bank, GitHub) -- a cooldown here isn't about
@@ -176,6 +177,7 @@ export async function startResearch(
   if (findingsError) {
     return { status: "error", message: findingsError.message };
   }
+  await supabase.from("ventures").update({ status: "researched" }).eq("id", ventureId);
 
   if (liveCompetitorFinding && liveCompetitorFinding.snapshots.length > 0) {
     await supabase.from("research_competitor_snapshots").insert(

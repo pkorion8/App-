@@ -35,6 +35,7 @@ export async function generateBuild(ventureId: string): Promise<void> {
     backlog: pkg.backlog as unknown as Record<string, unknown>[],
     cost_estimate: pkg.costEstimate as unknown as Record<string, unknown>,
   });
+  await supabase.from("ventures").update({ status: "build_ready" }).eq("id", ventureId);
 
   logEvent({
     event: "build_package.generated",

@@ -5,13 +5,18 @@ import { initializeDiligence, updateDiligenceItem } from "./actions";
 
 const statusFor = (state: string) => state === "ready" ? "success" : state === "missing" ? "warning" : "neutral";
 
+type DiligenceState = "ready" | "partial" | "missing" | "not_applicable";
+
 export default async function Diligence({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ session?: string }> }) {
   const { id } = await params;
   const { session } = await searchParams;
   const db = (await createSupabaseServerClient()) as any;
   const { data: items } = session ? await db.from("diligence_items").select("*").eq("investor_session_id", session).order("created_at", { ascending: true }) : { data: null };
-  const counts = { ready: 0, partial: 0, missing: 0, not_applicable: 0 } as Record<string, number>;
-  for (const item of items ?? []) counts[item.state] = (counts[item.state] ?? 0) + 1;
+  const counts: Record<DiligenceState, number> = { ready: 0, partial: 0, missing: 0, not_applicable: 0 };
+  for (const item of items ?? []) {
+    const state = item.state as DiligenceState;
+    if (state in counts) counts[state] += 1;
+  }
 
   return <main className="mx-auto max-w-5xl p-6">
     <Badge status="warning">SIMULATED DILIGENCE</Badge>

@@ -1,28 +1,56 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Button, FieldError, Input, Label } from "@venture-sandbox/ui";
 import { sendSignInLink, type SignInState } from "./actions";
 
 const initialState: SignInState = { status: "idle" };
 
-function SubmitButton() {
+function SubmitButton({ waitSeconds }: { waitSeconds: number }) {
   const { pending } = useFormStatus();
+  const blocked = pending || waitSeconds > 0;
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Sending..." : "Send sign-in link"}
+    <Button type="submit" disabled={blocked} className="w-full">
+      {pending
+        ? "Sending..."
+        : waitSeconds > 0
+          ? `Try again in ${waitSeconds}s`
+          : "Send sign-in link"}
     </Button>
   );
 }
 
 export function SignInForm() {
   const [state, formAction] = useFormState(sendSignInLink, initialState);
+  const [waitSeconds, setWaitSeconds] = useState(0);
+
+  useEffect(() => {
+    const next = state.retryAfterSeconds ?? 0;
+    setWaitSeconds(next);
+    if (next <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setWaitSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [state.retryAfterSeconds]);
 
   if (state.status === "sent") {
     return (
-      <p className="text-sm text-vs-success" role="status">
-        {state.message}
-      </p>
+      <div className="rounded-vs-md border border-vs-success/30 bg-vs-success/5 p-4" role="status">
+        <p className="text-sm font-medium text-vs-success">{state.message}</p>
+        <p className="mt-2 text-xs leading-5 text-vs-fg-muted">
+          Keep this page open, then click the newest Sim Venture sign-in email. If you do not see it, check spam or promotions.
+        </p>
+      </div>
     );
   }
 
@@ -38,11 +66,18 @@ export function SignInForm() {
           required
           autoComplete="email"
         />
-        {state.status === "error" && (
+        {state.status === "error" && state.retryAfterSeconds ? (
+          <div className="mt-2 rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
+            <p className="text-sm text-vs-fg">{state.message}</p>
+            <p className="mt-1 text-xs text-vs-fg-muted">
+              {waitSeconds > 0 ? `You can request another link in ${waitSeconds} seconds.` : "You can request another link now."}
+            </p>
+          </div>
+        ) : state.status === "error" ? (
           <FieldError>{state.message}</FieldError>
-        )}
+        ) : null}
       </div>
-      <SubmitButton />
+      <SubmitButton waitSeconds={waitSeconds} />
     </form>
   );
 }

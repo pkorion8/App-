@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
-import { Card } from "@venture-sandbox/ui";
+import { Badge, Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ClarificationForm } from "./ClarificationForm";
 import { FindingCard, type FindingRow } from "./FindingCard";
 
-// See sign-in/page.tsx: without this, env-var-dependent content here can
-// get baked in at build time instead of reflecting the live deployment.
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Research" };
 
@@ -27,29 +25,18 @@ export default async function ResearchPage({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   });
-
-  if (!configured) {
-    return <SupabaseSetupNotice />;
-  }
+  if (!configured) return <SupabaseSetupNotice />;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
 
   const { data: venture } = await supabase
     .from("ventures")
     .select("id, name, raw_idea_text, target_user, geography")
     .eq("id", id)
     .maybeSingle();
-
-  if (!venture) {
-    notFound();
-  }
+  if (!venture) notFound();
 
   const { data: mission } = await supabase
     .from("research_missions")
@@ -61,9 +48,7 @@ export default async function ResearchPage({
     .maybeSingle();
 
   const showForm = !mission || again === "1";
-
   let findings: FindingRow[] = [];
-
   if (mission && !showForm) {
     const { data } = await supabase
       .from("findings")
@@ -73,57 +58,98 @@ export default async function ResearchPage({
     findings = data ?? [];
   }
 
-  return (
-    <main className="mx-auto max-w-3xl p-6">
-      <Link
-        href={`/venture/${venture.id}`}
-        className="text-sm text-vs-fg-muted hover:underline"
-      >
-        ← {venture.name}
-      </Link>
+  const solid = findings.filter((f) => f.state === "SOLID");
+  const mixed = findings.filter((f) => f.state === "MIXED");
+  const unresolved = findings.filter((f) => f.state === "WEAK" || f.state === "UNKNOWN");
+  const live = findings.filter((f) => !f.is_demo);
+  const withSource = findings.filter((f) => {
+    const md = (f.metadata || {}) as Record<string, unknown>;
+    return typeof md.source === "string" || typeof md.sourceUrl === "string";
+  });
+  const coverage = findings.length ? Math.round(((solid.length + mixed.length * 0.5) / findings.length) * 100) : 0;
+  const traceability = findings.length ? Math.round((withSource.length / findings.length) * 100) : 0;
+  const strongest = solid.find((f) => !f.is_demo) ?? solid[0] ?? findings[0];
+  const biggestUnknown = unresolved[0] ?? findings.find((f) => f.limitations);
 
-      <h1 className="mt-4 text-xl font-semibold text-vs-fg">Research</h1>
+  const groups = [
+    { title: "Demand & people", kinds: ["demand", "audience", "problem", "people"], fallback: findings.slice(0, 2) },
+    { title: "Alternatives & competition", kinds: ["competition", "competitor", "itunes"], fallback: findings.slice(2, 4) },
+    { title: "Market & money", kinds: ["market", "pricing", "money"], fallback: findings.slice(4, 5).concat(findings.slice(6, 7)) },
+    { title: "Technology & feasibility", kinds: ["github", "technology", "technical"], fallback: findings.slice(5, 6) },
+    { title: "Risks & reasons to be careful", kinds: ["risk", "regulatory", "warning"], fallback: findings.slice(7) },
+  ].map((group) => {
+    const matches = findings.filter((f) => {
+      const md = (f.metadata || {}) as Record<string, unknown>;
+      const kind = typeof md.kind === "string" ? md.kind.toLowerCase() : "";
+      return group.kinds.some((candidate) => kind.includes(candidate));
+    });
+    return { title: group.title, items: matches.length ? matches : group.fallback };
+  });
+
+  return (
+    <main className="mx-auto max-w-6xl p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[.2em] text-vs-primary">Understand</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-vs-fg">Research intelligence</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-vs-fg-muted">Evidence first. Strong conclusions stay separate from weak signals, demo material and unresolved questions.</p>
+        </div>
+        <Link href={`/venture/${venture.id}/evidence`} className="text-sm font-medium text-vs-primary">Open Evidence Explorer →</Link>
+      </div>
 
       {showForm ? (
-        <Card className="mt-4">
-          <p className="mb-4 text-sm text-vs-fg-muted">We use the audience and market already saved in Shape. Review them here only if they need changing.</p>
+        <Card className="mt-6 max-w-3xl">
+          <p className="mb-4 text-sm text-vs-fg-muted">We use the audience and market already saved in Shape. Review them here before starting research.</p>
           <ClarificationForm ventureId={venture.id} targetUser={venture.target_user} geography={venture.geography} />
         </Card>
       ) : (
-        <div className="mt-4 space-y-4">
-          <Card className="bg-vs-bg-subtle">
-            <p className="text-sm text-vs-fg-muted">
-              Researched for <strong>{mission!.target_user}</strong> in{" "}
-              <strong>{mission!.geography}</strong>.{" "}
-              <Link
-                href={`/venture/${venture.id}/research?again=1`}
-                className="text-vs-primary hover:underline"
-              >
-                Run again
-              </Link>
-            </p>
+        <div className="mt-6 space-y-5">
+          <Card className="border-vs-primary/20 bg-vs-primary/5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div><Badge status="primary">LATEST MISSION</Badge><p className="mt-2 text-sm text-vs-fg">For <strong>{mission!.target_user}</strong> in <strong>{mission!.geography}</strong></p><p className="mt-1 text-xs text-vs-fg-muted">Completed {new Date(mission!.created_at).toLocaleDateString()}</p></div>
+              <Link href={`/venture/${venture.id}/research?again=1`} className="text-sm font-medium text-vs-primary">Run research again →</Link>
+            </div>
           </Card>
 
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <ResearchMetric label="Evidence coverage" value={`${coverage}%`} note="Strength-weighted coverage of recorded findings." />
+            <ResearchMetric label="Source traceability" value={`${traceability}%`} note={`${withSource.length} of ${findings.length} findings include source metadata.`} />
+            <ResearchMetric label="Agreement state" value={`${solid.length} strong`} note={`${mixed.length} mixed · ${unresolved.length} weak/unknown`} />
+            <ResearchMetric label="Live evidence" value={`${live.length}/${findings.length}`} note={`${findings.length - live.length} findings are demo/synthetic and kept separate.`} />
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Primary conclusion</p>
+              <p className="mt-2 text-lg font-semibold leading-7 text-vs-fg">{strongest?.normalized_claim ?? "No evidence-backed conclusion yet."}</p>
+              <p className="mt-2 text-sm leading-6 text-vs-fg-muted">{strongest?.user_facing_summary ?? "Run research to establish the first evidence-backed finding."}</p>
+            </Card>
+            <Card className="border-vs-warning/30">
+              <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Largest unresolved question</p>
+              <p className="mt-2 text-lg font-semibold leading-7 text-vs-fg">{biggestUnknown?.normalized_claim ?? "No unresolved question has been recorded."}</p>
+              <p className="mt-2 text-sm leading-6 text-vs-fg-muted">{biggestUnknown?.next_test || biggestUnknown?.limitations || "No next validation test is currently recorded."}</p>
+            </Card>
+          </section>
+
           <nav className="grid gap-2 sm:grid-cols-4" aria-label="Research modules">
-            <Link href={`/venture/${venture.id}/research`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Competitors</Link>
-            <Link href={`/venture/${venture.id}/reviews`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Reviews</Link>
-            <Link href={`/venture/${venture.id}/technology`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Technology &amp; ownership</Link>
-            <Link href={`/venture/${venture.id}/evidence`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg">Evidence explorer</Link>
+            <Link href={`/venture/${venture.id}/reviews`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Reviews</Link>
+            <Link href={`/venture/${venture.id}/technology`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Technology & ownership</Link>
+            <Link href={`/venture/${venture.id}/evidence`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Evidence explorer</Link>
+            <Link href={`/venture/${venture.id}/monetization`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Monetization lab</Link>
           </nav>
 
-          <h2 className="pt-2 text-lg font-semibold text-vs-fg">People &amp; alternatives</h2>
-
-          {findings.slice(0, 4).map((f) => (
-            <FindingCard key={f.id} f={f} />
+          {groups.filter((group) => group.items.length).map((group) => (
+            <section key={group.title}>
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold text-vs-fg">{group.title}</h2><span className="text-xs text-vs-fg-muted">{group.items.length} finding{group.items.length === 1 ? "" : "s"}</span></div>
+              <div className="space-y-3">{group.items.map((f) => <FindingCard key={`${group.title}-${f.id}`} f={f} />)}</div>
+            </section>
           ))}
-          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Can it be built?</h2>
-          {findings.slice(5, 6).map((f) => <FindingCard key={f.id} f={f} />)}
-          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Market &amp; money</h2>
-          {findings.slice(4, 5).concat(findings.slice(6, 7)).map((f) => <FindingCard key={f.id} f={f} />)}
-          <h2 className="pt-2 text-lg font-semibold text-vs-fg">Reasons to be careful</h2>
-          {findings.slice(7).map((f) => <FindingCard key={f.id} f={f} />)}
         </div>
       )}
     </main>
   );
+}
+
+function ResearchMetric({ label, value, note }: { label: string; value: string; note: string }) {
+  return <Card><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">{label}</p><p className="mt-2 text-2xl font-semibold text-vs-fg">{value}</p><p className="mt-1 text-xs leading-5 text-vs-fg-muted">{note}</p></Card>;
 }

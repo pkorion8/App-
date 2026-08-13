@@ -5,15 +5,13 @@ import { isSupabaseConfigured } from "@venture-sandbox/integrations";
 import { Badge, Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { VentureMemory } from "./VentureMemory";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const configured = isSupabaseConfigured({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  });
+  const configured = isSupabaseConfigured({ url: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY });
   if (!configured) return { title: "Venture" };
   const supabase = await createSupabaseServerClient();
   const { data: venture } = await supabase.from("ventures").select("name").eq("id", id).maybeSingle();
@@ -22,21 +20,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function VenturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const configured = isSupabaseConfigured({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  });
+  const configured = isSupabaseConfigured({ url: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY });
   if (!configured) return <SupabaseSetupNotice />;
 
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: venture } = await supabase
-    .from("ventures")
-    .select("id, name, raw_idea_text, target_user, geography, status, created_at")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: venture } = await supabase.from("ventures").select("id, name, raw_idea_text, target_user, geography, status, created_at").eq("id", id).maybeSingle();
   if (!venture) notFound();
 
   const [shapeResult, missionResult, runResult, monetizationResult, buildResult, outcomeResult] = await Promise.all([
@@ -62,10 +53,7 @@ export default async function VenturePage({ params }: { params: Promise<{ id: st
   let topFinding: string | null = null;
   let biggestUnknown: string | null = null;
   if (mission?.id) {
-    const { data: findings } = await supabase
-      .from("findings")
-      .select("normalized_claim, state, is_demo, limitations, next_test")
-      .eq("mission_id", mission.id);
+    const { data: findings } = await supabase.from("findings").select("normalized_claim, state, is_demo, limitations, next_test").eq("mission_id", mission.id);
     const list = findings ?? [];
     findingCount = list.length;
     solidCount = list.filter((f) => f.state === "SOLID").length;
@@ -93,24 +81,12 @@ export default async function VenturePage({ params }: { params: Promise<{ id: st
       <section className="rounded-[28px] border border-vs-border bg-vs-bg-subtle/60 p-5 shadow-sm sm:p-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge status="primary">VENTURE INTELLIGENCE</Badge>
-              <Badge status="neutral">{venture.status.replaceAll("_", " ")}</Badge>
-            </div>
+            <div className="flex flex-wrap items-center gap-2"><Badge status="primary">VENTURE INTELLIGENCE</Badge><Badge status="neutral">{venture.status.replaceAll("_", " ")}</Badge>{venture.name.startsWith("[DEMO]") && <Badge status="warning">DEMO FIXTURE</Badge>}</div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-vs-fg sm:text-4xl">{venture.name}</h1>
             <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-vs-fg-muted">{venture.raw_idea_text}</p>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs text-vs-fg-muted">
-              <span className="rounded-full border border-vs-border px-3 py-1.5">Audience: {venture.target_user || "not shaped"}</span>
-              <span className="rounded-full border border-vs-border px-3 py-1.5">Market: {venture.geography || "not chosen"}</span>
-              {shape?.pricing_model && <span className="rounded-full border border-vs-border px-3 py-1.5">Model: {shape.pricing_model.replaceAll("_", " ")}</span>}
-            </div>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-vs-fg-muted"><span className="rounded-full border border-vs-border px-3 py-1.5">Audience: {venture.target_user || "not shaped"}</span><span className="rounded-full border border-vs-border px-3 py-1.5">Market: {venture.geography || "not chosen"}</span>{shape?.pricing_model && <span className="rounded-full border border-vs-border px-3 py-1.5">Model: {shape.pricing_model.replaceAll("_", " ")}</span>}</div>
           </div>
-          <Card className="min-w-[280px] border-vs-primary/30 bg-vs-primary/5">
-            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-primary">Next best action</p>
-            <p className="mt-2 text-lg font-semibold text-vs-fg">{nextAction.label}</p>
-            <p className="mt-1 text-xs leading-5 text-vs-fg-muted">{nextAction.reason}</p>
-            <Link href={nextAction.href} className="mt-4 inline-flex rounded-vs-sm bg-vs-primary px-3 py-2 text-sm font-medium text-vs-primary-fg">Continue →</Link>
-          </Card>
+          <Card className="min-w-[280px] border-vs-primary/30 bg-vs-primary/5"><p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-primary">Next best action</p><p className="mt-2 text-lg font-semibold text-vs-fg">{nextAction.label}</p><p className="mt-1 text-xs leading-5 text-vs-fg-muted">{nextAction.reason}</p><Link href={nextAction.href} className="mt-4 inline-flex rounded-vs-sm bg-vs-primary px-3 py-2 text-sm font-medium text-vs-primary-fg">Continue →</Link></Card>
         </div>
       </section>
 
@@ -123,60 +99,25 @@ export default async function VenturePage({ params }: { params: Promise<{ id: st
 
       <section className="mt-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card>
-          <div className="flex items-center justify-between gap-3">
-            <div><p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Current intelligence</p><h2 className="mt-1 text-xl font-semibold text-vs-fg">What we know — and what we do not</h2></div>
-            <Link href={`/venture/${venture.id}/research`} className="text-sm font-medium text-vs-primary">Open research →</Link>
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-vs-md border border-vs-border p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Strongest current signal</p>
-              <p className="mt-2 text-sm leading-6 text-vs-fg">{topFinding || "No evidence-backed conclusion yet."}</p>
-            </div>
-            <div className="rounded-vs-md border border-vs-border p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Biggest unresolved question</p>
-              <p className="mt-2 text-sm leading-6 text-vs-fg">{biggestUnknown || "No unresolved question has been recorded yet."}</p>
-            </div>
-          </div>
-          {(shape?.problem_statement || shape?.value_proposition || shape?.differentiation) && (
-            <div className="mt-4 rounded-vs-md bg-vs-bg-subtle p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Current shape</p>
-              {shape?.problem_statement && <p className="mt-2 text-sm text-vs-fg"><strong>Problem:</strong> {shape.problem_statement}</p>}
-              {shape?.value_proposition && <p className="mt-2 text-sm text-vs-fg"><strong>Value:</strong> {shape.value_proposition}</p>}
-              {shape?.differentiation && <p className="mt-2 text-sm text-vs-fg"><strong>Difference:</strong> {shape.differentiation}</p>}
-            </div>
-          )}
+          <div className="flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Current intelligence</p><h2 className="mt-1 text-xl font-semibold text-vs-fg">What we know — and what we do not</h2></div><Link href={`/venture/${venture.id}/research`} className="text-sm font-medium text-vs-primary">Open research →</Link></div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2"><div className="rounded-vs-md border border-vs-border p-4"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Strongest current signal</p><p className="mt-2 text-sm leading-6 text-vs-fg">{topFinding || "No evidence-backed conclusion yet."}</p></div><div className="rounded-vs-md border border-vs-border p-4"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Biggest unresolved question</p><p className="mt-2 text-sm leading-6 text-vs-fg">{biggestUnknown || "No unresolved question has been recorded yet."}</p></div></div>
+          {(shape?.problem_statement || shape?.value_proposition || shape?.differentiation) && <div className="mt-4 rounded-vs-md bg-vs-bg-subtle p-4"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Current shape</p>{shape?.problem_statement && <p className="mt-2 text-sm text-vs-fg"><strong>Problem:</strong> {shape.problem_statement}</p>}{shape?.value_proposition && <p className="mt-2 text-sm text-vs-fg"><strong>Value:</strong> {shape.value_proposition}</p>}{shape?.differentiation && <p className="mt-2 text-sm text-vs-fg"><strong>Difference:</strong> {shape.differentiation}</p>}</div>}
         </Card>
 
         <Card>
-          <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Reality loop</p>
-          <h2 className="mt-1 text-xl font-semibold text-vs-fg">Simulation → real outcome</h2>
-          {run ? (
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <MiniStat label="Cash" value={`$${run.cash_remaining.toLocaleString()}`} />
-              <MiniStat label="Users" value={run.total_users.toLocaleString()} />
-              <MiniStat label="Revenue / mo" value={`$${run.monthly_revenue.toLocaleString()}`} />
-              <MiniStat label="Cost / mo" value={`$${run.monthly_cost.toLocaleString()}`} />
-            </div>
-          ) : <p className="mt-4 text-sm text-vs-fg-muted">No simulated expectation exists yet.</p>}
-          <div className="mt-4 border-t border-vs-border pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Latest real observations</p>
-            {outcomes.length ? <ul className="mt-2 space-y-2">{outcomes.map((o) => <li key={o.id} className="text-sm text-vs-fg"><span className="font-medium">{o.metric_type}</span>{typeof o.metric_value === "number" ? `: ${o.metric_value.toLocaleString()}` : ""}{o.note ? ` — ${o.note}` : ""}</li>)}</ul> : <p className="mt-2 text-sm text-vs-fg-muted">Nothing real has been logged yet. Simulated outcomes remain separate from reality.</p>}
-          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Reality loop</p><h2 className="mt-1 text-xl font-semibold text-vs-fg">Simulation → real outcome</h2>
+          {run ? <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><MiniStat label="Cash" value={`$${run.cash_remaining.toLocaleString()}`} /><MiniStat label="Users" value={run.total_users.toLocaleString()} /><MiniStat label="Revenue / mo" value={`$${run.monthly_revenue.toLocaleString()}`} /><MiniStat label="Cost / mo" value={`$${run.monthly_cost.toLocaleString()}`} /></div> : <p className="mt-4 text-sm text-vs-fg-muted">No simulated expectation exists yet.</p>}
+          <div className="mt-4 border-t border-vs-border pt-4"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Latest real observations</p>{outcomes.length ? <ul className="mt-2 space-y-2">{outcomes.map((o) => <li key={o.id} className="text-sm text-vs-fg"><span className="font-medium">{o.metric_type}</span>{typeof o.metric_value === "number" ? `: ${o.metric_value.toLocaleString()}` : ""}{o.note ? ` — ${o.note}` : ""}</li>)}</ul> : <p className="mt-2 text-sm text-vs-fg-muted">Nothing real has been logged yet. Simulated outcomes remain separate from reality.</p>}</div>
         </Card>
       </section>
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <ActionLink href={`/venture/${venture.id}/research`} title="Understand" detail="Demand, alternatives, market, technology and risk" />
-        <ActionLink href={`/venture/${venture.id}/simulate`} title="Simulate" detail="Run the venture through time and decisions" />
-        <ActionLink href={`/venture/${venture.id}/investor`} title="Investor World" detail="Rehearse screening, diligence and deal mechanics" />
-        <ActionLink href={`/venture/${venture.id}/system`} title="System View" detail="Inspect how evidence and assumptions connect" />
-      </section>
+      <VentureMemory ventureId={venture.id} />
+
+      <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><ActionLink href={`/venture/${venture.id}/research`} title="Understand" detail="Demand, alternatives, market, technology and risk" /><ActionLink href={`/venture/${venture.id}/simulate`} title="Simulate" detail="Run the venture through time and decisions" /><ActionLink href={`/venture/${venture.id}/investor`} title="Investor World" detail="Rehearse screening, diligence and deal mechanics" /><ActionLink href={`/venture/${venture.id}/system`} title="System View" detail="Inspect how evidence and assumptions connect" /></section>
     </main>
   );
 }
 
-function SignalCard({ label, value, note, href }: { label: string; value: string; note: string; href: string }) {
-  return <Link href={href}><Card className="h-full transition hover:-translate-y-0.5 hover:border-vs-primary/40"><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">{label}</p><p className="mt-2 text-xl font-semibold text-vs-fg">{value}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-vs-fg-muted">{note}</p></Card></Link>;
-}
+function SignalCard({ label, value, note, href }: { label: string; value: string; note: string; href: string }) { return <Link href={href}><Card className="h-full transition hover:-translate-y-0.5 hover:border-vs-primary/40"><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">{label}</p><p className="mt-2 text-xl font-semibold text-vs-fg">{value}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-vs-fg-muted">{note}</p></Card></Link>; }
 function MiniStat({ label, value }: { label: string; value: string }) { return <div className="rounded-vs-sm bg-vs-bg-subtle p-3"><p className="text-[10px] uppercase tracking-wide text-vs-fg-muted">{label}</p><p className="mt-1 font-semibold text-vs-fg">{value}</p></div>; }
 function ActionLink({ href, title, detail }: { href: string; title: string; detail: string }) { return <Link href={href} className="rounded-vs-md border border-vs-border p-4 transition hover:border-vs-primary/50 hover:bg-vs-primary/5"><p className="font-semibold text-vs-fg">{title}</p><p className="mt-1 text-xs leading-5 text-vs-fg-muted">{detail}</p></Link>; }

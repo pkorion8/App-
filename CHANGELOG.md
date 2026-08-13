@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased — Final prototype Pass 3
+
+- Added persisted Simulator branch lineage, a hard three-rewind limit for Standard runs, and Reality Mode with zero rewinds via migration `0013_simulation_branches_and_committee.sql`.
+- Added persisted Investment Committee reviews, editable Diligence state, simulated offers/counters, and accept/decline negotiation state while keeping all investor outcomes explicitly simulated.
+- Added two clearly labeled presentation demo ventures with demo findings, simulated timelines, decisions, and Investor World fixtures; demo records never present themselves as live evidence.
+- Expanded the Venture Library with persistent founder notes and saved resources, plus richer Learn metrics and reality-vs-simulation variance views via migration `0014_venture_memory_and_learning.sql`.
+- Expanded Monetization Lab, venture-specific Technology & Ownership guidance, and Build Studio while preserving evidence/heuristic/reference-assumption provenance.
+- Added a private Venture Scorecard and a light Intelligence Feed based only on already-connected research, App Store snapshots, and monitored creator claims.
+- Migrations `0013` and `0014` are created but are not applied to production by this code change.
+
+## Unreleased — Final prototype Pass 2
+
+- Upgraded Venture Home into an intelligence overview with evidence, simulation, monetization, build-readiness, strongest-signal, unresolved-question, and reality-loop summaries.
+- Strengthened Research and Evidence Explorer around coverage, provenance, source traceability, and explicit unknowns.
+- Upgraded the Simulator with 1× / 5× / 10× / 20× controls, observable consequence charts, decision history, timeline library, and checkpoint-based alternate-timeline UX.
+
 ## Unreleased — Final prototype Pass 1
 
 - Added a persistent simulated Investor World with bounded investor profiles, contextual screening questions, meeting transcripts, and a conservative Claim Ledger.
@@ -8,7 +24,6 @@
 - Added deterministic investor-domain logic for contextual questions, claim classification, ownership/dilution math, bounded counters, and stage progression.
 - Added a research source registry around the existing Apple/iTunes, World Bank, and GitHub integrations, while explicitly marking reviews, pricing, and regulatory intelligence unavailable where no source exists.
 - Upgraded persistent venture navigation to separate the primary Understand → Shape → Simulate → Build → Learn journey from contextual monetization and connected intelligence modules.
-- This is only the recovered Pass 1 foundation; advanced Simulator work, rewinds, seeded demo ventures, deeper Research/Evidence redesign, and Pass 2 remain outstanding.
 
 ## Unreleased — Sprint 1 product spine
 

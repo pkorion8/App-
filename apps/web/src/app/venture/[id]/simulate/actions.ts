@@ -18,17 +18,6 @@ import { classifyTraction } from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-/**
- * Seeds a run's starting conditions from the venture's own Research
- * findings instead of ignoring them. Beyond competitor traction (from the
- * most recent live App Store search, stored per-app in
- * research_competitor_snapshots), this also reads the same research run's
- * World Bank and GitHub findings (findings.metadata) for internet-access
- * reach and technical-territory evidence -- reusing the structured data
- * the Research page's cards already render, not a new data model. If
- * Research has never been run for this venture, that's stated plainly
- * rather than silently defaulting.
- */
 async function buildMarketContext(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   ventureId: string,
@@ -41,9 +30,7 @@ async function buildMarketContext(
     .limit(1)
     .maybeSingle();
 
-  if (!recentMission) {
-    return DEFAULT_MARKET_CONTEXT;
-  }
+  if (!recentMission) return DEFAULT_MARKET_CONTEXT;
 
   const [{ data: snapshotRows }, { data: findingRows }, { data: buildPackage }] = await Promise.all([
     supabase
@@ -61,28 +48,17 @@ async function buildMarketContext(
       .maybeSingle(),
   ]);
 
-  // Build Studio's real cost estimate, if one has been generated -- a
-  // number that already exists and was previously completely disconnected
-  // from the simulator's own (burn-rate-only) monthlyCost.
   const buildCost = buildPackage?.cost_estimate as unknown as { totalMonthly?: number } | undefined;
   const estimatedMonthlyCost = typeof buildCost?.totalMonthly === "number" ? buildCost.totalMonthly : null;
-  const costNote =
-    estimatedMonthlyCost !== null
-      ? ` Build Studio estimates $${estimatedMonthlyCost}/mo in real operating costs, added to this simulation's ongoing monthly cost once launched.`
-      : "";
+  const costNote = estimatedMonthlyCost !== null
+    ? ` Build Studio estimates $${estimatedMonthlyCost}/mo in real operating costs, added to this simulation's ongoing monthly cost once launched.`
+    : "";
 
-  // Most recent snapshot per app, same dedup pattern as the research
-  // action that writes these rows.
   const latestByAppId = new Map<number, { appName: string; ratingCount: number }>();
   for (const row of snapshotRows ?? []) {
-    if (!latestByAppId.has(row.app_id)) {
-      latestByAppId.set(row.app_id, { appName: row.app_name, ratingCount: row.rating_count });
-    }
+    if (!latestByAppId.has(row.app_id)) latestByAppId.set(row.app_id, { appName: row.app_name, ratingCount: row.rating_count });
   }
 
-  // Same findings.metadata the Research page's cards render -- read here
-  // too rather than re-fetching or re-deriving from live APIs, since this
-  // run's Research results are already the source of truth on file.
   let internetPenetrationPct: number | null = null;
   let activeRelatedReposFound: number | null = null;
   for (const row of findingRows ?? []) {
@@ -98,24 +74,19 @@ async function buildMarketContext(
     }
   }
 
-  const reachNote =
-    internetPenetrationPct !== null && internetPenetrationPct < 85
-      ? ` Internet access in this market is ${internetPenetrationPct.toFixed(0)}%, which tempers organic reach.`
-      : "";
-  const techNote =
-    activeRelatedReposFound !== null && activeRelatedReposFound >= 2
-      ? ` Research also found ${activeRelatedReposFound} actively-maintained related open-source projects — ` +
-        `less unproven technical territory than average, reflected in a lower starting technical risk.`
-      : "";
+  const reachNote = internetPenetrationPct !== null && internetPenetrationPct < 85
+    ? ` Internet access in this market is ${internetPenetrationPct.toFixed(0)}%, which tempers organic reach.`
+    : "";
+  const techNote = activeRelatedReposFound !== null && activeRelatedReposFound >= 2
+    ? ` Research also found ${activeRelatedReposFound} actively-maintained related open-source projects — less unproven technical territory than average, reflected in a lower starting technical risk.`
+    : "";
 
   if (latestByAppId.size === 0) {
     return {
       hasResearch: true,
       competitorTraction: "None",
       topCompetitorName: null,
-      summary:
-        "Research has been run for this venture, but its App Store search found no " +
-        `competitors — simulation proceeding without a competitive-pressure adjustment.${reachNote}${techNote}${costNote}`,
+      summary: "Research has been run for this venture, but its App Store search found no competitors — simulation proceeding without a competitive-pressure adjustment." + reachNote + techNote + costNote,
       internetPenetrationPct,
       activeRelatedReposFound,
       estimatedMonthlyCost,
@@ -132,9 +103,8 @@ async function buildMarketContext(
     topCompetitorName: top.appName,
     summary:
       `Research found ${entries.length} competitor${entries.length === 1 ? "" : "s"} in the App Store, ` +
-      `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ` +
-      `${top.ratingCount.toLocaleString()} ratings). This simulation's growth conditions are calibrated to that.` +
-      `${reachNote}${techNote}${costNote}`,
+      `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ${top.ratingCount.toLocaleString()} ratings). ` +
+      `This simulation's growth conditions are calibrated to that.${reachNote}${techNote}${costNote}`,
     internetPenetrationPct,
     activeRelatedReposFound,
     estimatedMonthlyCost,
@@ -151,52 +121,37 @@ export async function startSimulation(
   _prevState: StartSimulationState,
   formData: FormData,
 ): Promise<StartSimulationState> {
-  const parsed = startSimulationSchema.safeParse({
-    budgetTotal: formData.get("budgetTotal"),
-  });
-  if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0]?.message };
-  }
+  const parsed = startSimulationSchema.safeParse({ budgetTotal: formData.get("budgetTotal") });
+  if (!parsed.success) return { status: "error", message: parsed.error.issues[0]?.message };
 
+  const realityMode = formData.get("simulationMode") === "reality";
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: venture } = await supabase
-    .from("ventures")
-    .select("workspace_id")
-    .eq("id", ventureId)
-    .maybeSingle();
-  if (!venture) {
-    return { status: "error", message: "Couldn't find this venture." };
-  }
+  const { data: venture } = await supabase.from("ventures").select("workspace_id").eq("id", ventureId).maybeSingle();
+  if (!venture) return { status: "error", message: "Couldn't find this venture." };
 
   const [marketContext, shapeResult] = await Promise.all([
     buildMarketContext(supabase, ventureId),
     supabase.from("venture_shapes").select("pricing_model").eq("venture_id", ventureId).maybeSingle(),
   ]);
-  // A founder decision from Shape, not Research evidence -- "not decided
-  // yet" (null, including no Shape at all) falls back to "subscription",
-  // the engine's original default behavior, same neutral-default pattern
-  // as every MarketContext field.
   const pricingModel = (shapeResult.data?.pricing_model ?? "subscription") as
-    | "subscription"
-    | "one_time"
-    | "commission"
-    | "ad_supported";
+    | "subscription" | "one_time" | "commission" | "ad_supported";
   const initial = createInitialState(parsed.data.budgetTotal, marketContext, pricingModel);
-
-  const { error } = await supabase.from("simulation_runs").insert({
+  const db = supabase as any;
+  const { error } = await db.from("simulation_runs").insert({
     venture_id: ventureId,
     workspace_id: venture.workspace_id,
     ...simulationStateToRow(initial),
+    reality_mode: realityMode,
+    rewind_count: 0,
+    parent_run_id: null,
+    branch_origin_checkpoint_id: null,
+    branch_label: realityMode ? "Reality timeline" : "Primary timeline",
   });
 
-  if (error) {
-    return { status: "error", message: error.message };
-  }
+  if (error) return { status: "error", message: error.message };
   await supabase.from("ventures").update({ status: "simulating" }).eq("id", ventureId);
 
   logEvent({
@@ -210,6 +165,7 @@ export async function startSimulation(
       has_research: marketContext.hasResearch,
       competitor_traction: marketContext.competitorTraction,
       pricing_model: pricingModel,
+      reality_mode: realityMode,
     },
   });
 
@@ -218,31 +174,13 @@ export async function startSimulation(
 
 async function loadRun(ventureId: string, runId: string) {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
-
-  const { data: run } = await supabase
-    .from("simulation_runs")
-    .select("*")
-    .eq("id", runId)
-    .eq("venture_id", ventureId)
-    .maybeSingle();
+  const { data: run } = await supabase.from("simulation_runs").select("*").eq("id", runId).eq("venture_id", ventureId).maybeSingle();
   return { supabase, run };
 }
 
-/**
- * Advances up to `days` days in one call ("run next day" = 1, "run 3
- * days" = 3, "advance to next checkpoint" = a high cap that stops itself
- * the moment a decision is required or the run completes -- whichever
- * comes first, same loop, just a bigger ceiling).
- */
-export async function advanceSimDay(
-  ventureId: string,
-  runId: string,
-  days = 1,
-): Promise<void> {
+export async function advanceSimDay(ventureId: string, runId: string, days = 1): Promise<void> {
   const { supabase, run } = await loadRun(ventureId, runId);
   if (!run) return;
 
@@ -253,41 +191,25 @@ export async function advanceSimDay(
     if (requiresDecision(currentState) || currentState.stage === "complete") break;
     const result = advanceDay(currentState);
     currentState = result.state;
-    for (const e of result.events) {
-      allEvents.push({
-        virtualDay: result.state.virtualDay,
-        eventType: e.eventType,
-        description: e.description,
-        effect: e.effect,
-      });
-    }
+    for (const e of result.events) allEvents.push({ virtualDay: result.state.virtualDay, eventType: e.eventType, description: e.description, effect: e.effect });
   }
 
-  await supabase
-    .from("simulation_runs")
-    .update(simulationStateToRow(currentState))
-    .eq("id", runId);
-  if (currentState.stage === "complete") {
-    await supabase.from("ventures").update({ status: "simulated" }).eq("id", ventureId);
-  }
+  await supabase.from("simulation_runs").update(simulationStateToRow(currentState)).eq("id", runId);
+  if (currentState.stage === "complete") await supabase.from("ventures").update({ status: "simulated" }).eq("id", ventureId);
 
   if (allEvents.length > 0) {
-    await supabase.from("simulation_events").insert(
-      allEvents.map((e) => ({
-        simulation_run_id: runId,
-        workspace_id: run.workspace_id,
-        virtual_day: e.virtualDay,
-        event_type: e.eventType,
-        description: e.description,
-        effect: e.effect,
-      })),
-    );
+    await supabase.from("simulation_events").insert(allEvents.map((e) => ({
+      simulation_run_id: runId,
+      workspace_id: run.workspace_id,
+      virtual_day: e.virtualDay,
+      event_type: e.eventType,
+      description: e.description,
+      effect: e.effect,
+    })));
   }
-
   revalidatePath(`/venture/${ventureId}/simulate`);
 }
 
-/** "Advance to next checkpoint": run until blocked, capped so it can't hang. */
 export async function advanceToNextCheckpoint(ventureId: string, runId: string): Promise<void> {
   await advanceSimDay(ventureId, runId, 60);
 }
@@ -295,7 +217,6 @@ export async function advanceToNextCheckpoint(ventureId: string, runId: string):
 export async function saveCheckpoint(ventureId: string, runId: string, label: string): Promise<void> {
   const { supabase, run } = await loadRun(ventureId, runId);
   if (!run) return;
-
   await supabase.from("simulation_checkpoints").insert({
     simulation_run_id: runId,
     workspace_id: run.workspace_id,
@@ -303,76 +224,62 @@ export async function saveCheckpoint(ventureId: string, runId: string, label: st
     label: label || null,
     state_snapshot: simulationStateToRow(rowToSimulationState(run)),
   });
-
   revalidatePath(`/venture/${ventureId}/simulate`);
 }
 
 /**
- * "Try a different path": creates a brand-new simulation_run seeded from
- * a saved checkpoint's state, so the original run stays intact and both
- * can be looked at side by side (via Compare, or just switching between
- * them) -- duplicate-and-replay rather than a full branching tree, which
- * is the V1 scope this was explicitly agreed to.
+ * Creates a preserved alternate timeline from a checkpoint. Standard runs
+ * allow at most three rewinds along a timeline path; Reality Mode allows none.
  */
 export async function rewindToCheckpoint(ventureId: string, checkpointId: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
+  const db = supabase as any;
 
-  const { data: checkpoint } = await supabase
-    .from("simulation_checkpoints")
-    .select("workspace_id, state_snapshot")
+  const { data: checkpoint } = await db.from("simulation_checkpoints")
+    .select("workspace_id, state_snapshot, simulation_run_id, virtual_day, label")
     .eq("id", checkpointId)
     .maybeSingle();
   if (!checkpoint) return;
 
-  // ventureId comes from the caller (ultimately a route param), not from
-  // the checkpoint itself -- verify it actually belongs to the same
-  // workspace as the checkpoint before using it, so a member of workspace
-  // A can't seed a new simulation_run against a venture_id that belongs
-  // to workspace B while tagging it with workspace A's workspace_id.
-  const { data: venture } = await supabase
-    .from("ventures")
-    .select("workspace_id")
-    .eq("id", ventureId)
-    .maybeSingle();
-  if (!venture || venture.workspace_id !== checkpoint.workspace_id) return;
+  const [{ data: venture }, { data: sourceRun }] = await Promise.all([
+    db.from("ventures").select("workspace_id").eq("id", ventureId).maybeSingle(),
+    db.from("simulation_runs").select("id, venture_id, workspace_id, reality_mode, rewind_count").eq("id", checkpoint.simulation_run_id).maybeSingle(),
+  ]);
+  if (!venture || !sourceRun || venture.workspace_id !== checkpoint.workspace_id || sourceRun.venture_id !== ventureId) return;
+  if (sourceRun.reality_mode) return;
+  if ((sourceRun.rewind_count ?? 0) >= 3) return;
 
+  const nextRewindCount = (sourceRun.rewind_count ?? 0) + 1;
   const snapshot = checkpoint.state_snapshot as unknown as ReturnType<typeof simulationStateToRow>;
 
-  const { data: newRun } = await supabase
-    .from("simulation_runs")
-    .insert({
-      venture_id: ventureId,
-      workspace_id: checkpoint.workspace_id,
-      ...snapshot,
-    })
-    .select("id")
-    .single();
+  const { data: newRun } = await db.from("simulation_runs").insert({
+    venture_id: ventureId,
+    workspace_id: checkpoint.workspace_id,
+    ...snapshot,
+    parent_run_id: sourceRun.id,
+    branch_origin_checkpoint_id: checkpointId,
+    rewind_count: nextRewindCount,
+    reality_mode: false,
+    branch_label: `Alternate ${nextRewindCount} · from day ${checkpoint.virtual_day}`,
+  }).select("id").single();
 
   if (newRun) {
+    await db.from("simulation_runs").update({ rewind_count: nextRewindCount }).eq("id", sourceRun.id);
     redirect(`/venture/${ventureId}/simulate?run=${newRun.id}`);
   }
 }
 
-export async function submitSimDecision(
-  ventureId: string,
-  runId: string,
-  choiceId: string,
-): Promise<void> {
+export async function submitSimDecision(ventureId: string, runId: string, choiceId: string): Promise<void> {
   const { supabase, run } = await loadRun(ventureId, runId);
   if (!run) return;
-
   const currentState = rowToSimulationState(run);
   if (!requiresDecision(currentState)) return;
 
   const decisionType = currentState.stage;
   const { state: nextState, event } = resolveDecision(currentState, choiceId);
-
   await supabase.from("simulation_runs").update(simulationStateToRow(nextState)).eq("id", runId);
-
   await supabase.from("simulation_decisions").insert({
     simulation_run_id: runId,
     workspace_id: run.workspace_id,
@@ -381,6 +288,5 @@ export async function submitSimDecision(
     choice: choiceId,
     immediate_effect: event.description,
   });
-
   revalidatePath(`/venture/${ventureId}/simulate`);
 }

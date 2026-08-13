@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const METRIC_TYPES = ["users", "revenue", "cost", "retention", "other"] as const;
+export const METRIC_TYPES = ["users", "revenue", "cost", "retention", "conversion", "activation", "churn", "qualitative", "milestone", "other"] as const;
 
 export const addOutcomeSchema = z.object({
   metricType: z.enum(METRIC_TYPES),

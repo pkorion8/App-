@@ -14,8 +14,10 @@ const journey = [
 const intelligence = [
   ["Evidence", "evidence"],
   ["Technology", "technology"],
+  ["Feed", "feed"],
   ["Compare", "compare"],
   ["Investor World", "investor"],
+  ["Scorecard", "scorecard"],
   ["System", "system"],
 ] as const;
 

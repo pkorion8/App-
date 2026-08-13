@@ -6,26 +6,24 @@
 
 * { box-sizing: border-box; }
 
-html { background: rgb(var(--vs-color-bg)); }
-
+html,
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 82% -10%, rgb(var(--vs-color-primary) / 0.08), transparent 30rem),
-    rgb(var(--vs-color-bg));
+  background: #fff;
   color: rgb(var(--vs-color-fg));
   font-family: var(--vs-font-sans);
-  letter-spacing: -0.012em;
 }
 
-::selection { background: rgb(var(--vs-color-primary) / 0.2); }
+body { letter-spacing: -0.014em; }
+::selection { background: rgb(var(--vs-color-primary) / .22); }
 
-.vs-shell { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
-.vs-panel { border: 1px solid rgb(var(--vs-color-border) / .72); border-radius: var(--vs-radius-lg); background: rgb(var(--vs-color-surface)); box-shadow: var(--vs-shadow-card); }
-.vs-kicker { font-size: 11px; line-height: 1; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgb(var(--vs-color-fg-muted)); }
-.vs-display { letter-spacing: -.045em; line-height: .98; }
-.vs-brand-panel { color: white; background: rgb(var(--vs-color-primary)); border-radius: var(--vs-radius-lg); box-shadow: var(--vs-shadow-card); }
-.vs-dot-pattern { background-image: radial-gradient(circle, rgba(255,255,255,.7) 1.25px, transparent 1.4px); background-size: 22px 22px; }
+.vs-shell { width: min(1220px, calc(100% - 32px)); margin-inline: auto; }
+.vs-panel { border-radius: var(--vs-radius-lg); background: #fff; }
+.vs-soft-panel { border-radius: var(--vs-radius-lg); background: rgb(var(--vs-color-bg-subtle)); }
+.vs-kicker { font-size: 11px; line-height: 1; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--vs-color-fg-muted)); }
+.vs-display { letter-spacing: -.058em; line-height: .94; }
+.vs-brand-panel { color: rgb(var(--vs-color-primary-fg)); background: rgb(var(--vs-color-primary)); border-radius: var(--vs-radius-lg); }
+.vs-dot-pattern { background-image: radial-gradient(circle, rgba(8,20,13,.22) 1.15px, transparent 1.3px); background-size: 20px 20px; }
 
 @keyframes vs-progress-indeterminate {
   0% { transform: translateX(-100%) scaleX(0.4); }

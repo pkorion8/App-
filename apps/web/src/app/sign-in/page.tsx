@@ -20,7 +20,10 @@ export default function SignInPage() {
           <h1 className="text-2xl font-semibold text-vs-fg">Start with your idea</h1>
           <p className="mt-2 text-sm leading-6 text-vs-fg-muted">Enter your email and we&apos;ll send you a sign-in link. No password, business plan or technical knowledge needed.</p>
           <div className="mt-6"><SignInForm /></div>
-          <div className="mt-5 border-t border-vs-border pt-4"><p className="text-xs leading-5 text-vs-fg-muted">Not ready to create an account? <Link href="/demo" className="font-semibold text-vs-primary">See the public walkthrough first →</Link></p></div>
+          <div className="mt-5 border-t border-vs-border pt-4 space-y-2">
+            <p className="text-xs leading-5 text-vs-fg-muted">Want to inspect the complete product without authentication? <Link href="/review" className="font-semibold text-vs-primary">Open full review mode →</Link></p>
+            <p className="text-xs leading-5 text-vs-fg-muted">Just want the short story? <Link href="/demo" className="font-semibold text-vs-primary">See the guided walkthrough →</Link></p>
+          </div>
         </Card>
       </div>
     </main>

@@ -1,26 +1,32 @@
 /**
- * Design tokens (spec §16.1: tokenized component library, Tailwind-compatible).
- *
- * Values are consumed by apps/web's Tailwind config via CSS variables so
- * this file is the single source of truth for color/spacing/radius/type
- * decisions. Kept deliberately small for Slice 1 — extend as real screens
- * need more, don't pre-build a full scale nobody uses yet.
+ * Venture Lab visual system.
+ * Direction: quiet functional workspace + bold editorial brand moments.
+ * The product surface stays light and calm; green is the primary brand signal,
+ * while violet / amber / blue are reserved for data and state meaning.
  */
 :root {
-  --vs-color-bg: 255 255 255;
-  --vs-color-bg-subtle: 247 247 249;
-  --vs-color-fg: 23 23 28;
-  --vs-color-fg-muted: 100 100 110;
-  --vs-color-border: 226 226 232;
-  --vs-color-primary: 110 86 207;
+  --vs-color-bg: 244 246 243;
+  --vs-color-bg-subtle: 238 241 237;
+  --vs-color-fg: 17 21 19;
+  --vs-color-fg-muted: 101 109 104;
+  --vs-color-border: 224 229 224;
+  --vs-color-primary: 14 185 112;
   --vs-color-primary-fg: 255 255 255;
-  --vs-color-danger: 200 55 55;
-  --vs-color-success: 31 138 91;
-  --vs-color-warning: 176 92 6;
+  --vs-color-danger: 231 76 60;
+  --vs-color-success: 14 185 112;
+  --vs-color-warning: 236 160 39;
 
-  --vs-radius-sm: 6px;
-  --vs-radius-md: 10px;
-  --vs-radius-lg: 16px;
+  --vs-color-violet: 113 62 234;
+  --vs-color-blue: 45 116 255;
+  --vs-color-orange: 255 83 44;
+  --vs-color-ink: 9 11 10;
+  --vs-color-surface: 255 255 255;
+  --vs-color-surface-soft: 249 250 248;
+
+  --vs-radius-sm: 10px;
+  --vs-radius-md: 14px;
+  --vs-radius-lg: 22px;
+  --vs-radius-xl: 30px;
 
   --vs-space-1: 4px;
   --vs-space-2: 8px;
@@ -28,19 +34,25 @@
   --vs-space-4: 16px;
   --vs-space-6: 24px;
   --vs-space-8: 32px;
+  --vs-space-10: 40px;
+  --vs-space-12: 48px;
 
-  --vs-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --vs-font-sans: "Avenir Next", Avenir, "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --vs-shadow-card: 0 1px 2px rgba(17, 21, 19, 0.04), 0 16px 40px rgba(17, 21, 19, 0.05);
+  --vs-shadow-float: 0 24px 70px rgba(17, 21, 19, 0.12);
 }
 
 [data-theme="dark"] {
-  --vs-color-bg: 18 18 22;
-  --vs-color-bg-subtle: 26 26 32;
-  --vs-color-fg: 240 240 244;
-  --vs-color-fg-muted: 165 165 175;
-  --vs-color-border: 45 45 54;
-  --vs-color-primary: 146 125 232;
-  --vs-color-primary-fg: 18 18 22;
-  --vs-color-danger: 232 110 110;
-  --vs-color-success: 90 196 148;
-  --vs-color-warning: 232 168 82;
+  --vs-color-bg: 18 20 19;
+  --vs-color-bg-subtle: 25 28 26;
+  --vs-color-fg: 242 246 243;
+  --vs-color-fg-muted: 164 174 167;
+  --vs-color-border: 47 52 49;
+  --vs-color-primary: 39 205 132;
+  --vs-color-primary-fg: 7 20 13;
+  --vs-color-danger: 239 115 103;
+  --vs-color-success: 61 211 145;
+  --vs-color-warning: 245 184 79;
+  --vs-color-surface: 23 26 24;
+  --vs-color-surface-soft: 28 31 29;
 }

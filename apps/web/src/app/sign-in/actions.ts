@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export interface SignInState {
   status: "idle" | "sent" | "error";
   message?: string;
+  retryAfterSeconds?: number;
 }
 
 export async function sendSignInLink(
@@ -41,8 +42,20 @@ export async function sendSignInLink(
   });
 
   if (error) {
+    const cooldown = error.message.match(/after\s+(\d+)\s+seconds?/i);
+    if (cooldown) {
+      const retryAfterSeconds = Number(cooldown[1]);
+      return {
+        status: "error",
+        retryAfterSeconds,
+        message: "A sign-in email was requested recently. Please wait for the timer below, then try once more. The earlier email may already be in your inbox or spam folder.",
+      };
+    }
     return { status: "error", message: error.message };
   }
 
-  return { status: "sent", message: `Check ${email} for a sign-in link.` };
+  return {
+    status: "sent",
+    message: `Sign-in link sent to ${email}. Check your inbox and spam folder.`,
+  };
 }

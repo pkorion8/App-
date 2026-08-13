@@ -91,7 +91,7 @@ export async function seedDemoVentures() {
   const db = supabase as any;
 
   const { data: existing } = await db.from("ventures").select("id,name").eq("workspace_id", workspaceId).in("name", DEMOS.map((d) => d.name));
-  const existingByName = new Map((existing ?? []).map((v: any) => [v.name, v.id]));
+  const existingByName = new Map<string, string>((existing ?? []).map((v: any) => [String(v.name), String(v.id)]));
   let firstId: string | null = existingByName.get(DEMOS[0].name) ?? null;
 
   for (const demo of DEMOS) {
@@ -105,7 +105,7 @@ export async function seedDemoVentures() {
       status: "simulated",
     }).select("id").single();
     if (!venture) continue;
-    if (!firstId) firstId = venture.id;
+    if (!firstId) firstId = String(venture.id);
 
     await db.from("venture_shapes").insert({
       venture_id: venture.id,
@@ -138,7 +138,7 @@ export async function seedDemoVentures() {
         next_test: "Replace this demo claim with sourced research or a real-world validation test.",
         metadata: { kind: "demo", source: "Presentation demo fixture", evidenceType: "DEMO" },
       }))).select("id");
-      findingIds = (insertedFindings ?? []).map((f: any) => f.id);
+      findingIds = (insertedFindings ?? []).map((f: any) => String(f.id));
     }
 
     const history = [

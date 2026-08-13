@@ -10,7 +10,7 @@ function inferNeeds(text: string) {
     media: /\b(image|photo|video|audio|camera|music)\b/.test(t),
     payments: /\b(payment|subscription|marketplace|commission|checkout|purchase)\b/.test(t),
     realtime: /\b(chat|collaborat|live|real[- ]?time|sync)\b/.test(t),
-    mobile: /\bmobile|iphone|android|camera|notification|push)\b/.test(t),
+    mobile: /\b(mobile|iphone|android|camera|notification|push)\b/.test(t),
   };
 }
 

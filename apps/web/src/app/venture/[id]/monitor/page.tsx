@@ -2,133 +2,66 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
-import { Card } from "@venture-sandbox/ui";
+import { Badge, Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AddOutcomeForm } from "./AddOutcomeForm";
 import { OutcomeChart } from "./OutcomeChart";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Monitor" };
+export const metadata: Metadata = { title: "Learn" };
 
 const METRIC_LABEL: Record<string, string> = {
-  users: "Total users",
-  revenue: "Revenue ($/mo)",
-  cost: "Cost ($/mo)",
-  retention: "Retention (%)",
-  other: "Other",
+  users: "Total users", revenue: "Revenue ($/mo)", cost: "Cost ($/mo)", retention: "Retention (%)", conversion: "Conversion (%)", activation: "Activation (%)", churn: "Churn (%)", qualitative: "Qualitative signal", milestone: "Milestone completion", other: "Other",
 };
-
 const CURRENCY_METRICS = new Set(["revenue", "cost"]);
 
-export default async function MonitorPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function MonitorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-
-  const configured = isSupabaseConfigured({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  });
+  const configured = isSupabaseConfigured({ url: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY });
   if (!configured) return <SupabaseSetupNotice />;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
-
-  const { data: venture } = await supabase
-    .from("ventures")
-    .select("id, name")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: venture } = await supabase.from("ventures").select("id, name").eq("id", id).maybeSingle();
   if (!venture) notFound();
 
-  const { data: outcomesData } = await supabase
-    .from("venture_outcomes")
-    .select("id, reported_at, metric_type, metric_value, note")
-    .eq("venture_id", venture.id)
-    .order("reported_at", { ascending: true });
-
+  const [{ data: outcomesData }, { data: simulation }] = await Promise.all([
+    supabase.from("venture_outcomes").select("id, reported_at, metric_type, metric_value, note").eq("venture_id", venture.id).order("reported_at", { ascending: true }),
+    supabase.from("simulation_runs").select("id,virtual_day,total_users,monthly_revenue,monthly_cost,status").eq("venture_id", venture.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
   const outcomes = outcomesData ?? [];
-
   const byMetric = new Map<string, { id: string; reported_at: string; metric_value: number | null; note: string | null }[]>();
-  for (const o of outcomes) {
-    const list = byMetric.get(o.metric_type) ?? [];
-    list.push(o);
-    byMetric.set(o.metric_type, list);
-  }
-
-  const metricOrder = ["users", "revenue", "cost", "retention", "other"];
+  for (const o of outcomes) { const list = byMetric.get(o.metric_type) ?? []; list.push(o); byMetric.set(o.metric_type, list); }
+  const metricOrder = ["users", "revenue", "cost", "retention", "conversion", "activation", "churn", "milestone", "qualitative", "other"];
   const trackedMetrics = metricOrder.filter((m) => byMetric.has(m));
+  const latest = (metric: string) => { const values = byMetric.get(metric) ?? []; return [...values].reverse().find((o) => o.metric_value !== null)?.metric_value ?? null; };
+  const compareRows = simulation ? [
+    ["Users", simulation.total_users, latest("users")],
+    ["Revenue / mo", simulation.monthly_revenue, latest("revenue")],
+    ["Cost / mo", simulation.monthly_cost, latest("cost")],
+  ] as const : [];
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <Link href={`/venture/${venture.id}`} className="text-sm text-vs-fg-muted hover:underline">
-        ← {venture.name}
-      </Link>
-      <h1 className="mt-4 text-xl font-semibold text-vs-fg">Monitor</h1>
-      <p className="mt-1 text-sm text-vs-fg-muted">
-        Log what&apos;s actually happening after launch — real numbers, not the simulation&apos;s
-        projections. Nothing here is estimated or auto-filled.
-      </p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Simulated outcome</p><p className="mt-2 text-sm text-vs-fg-muted">Model output stays in Simulate and is never merged into the observations below.</p><Link href={`/venture/${venture.id}/simulate`} className="mt-2 inline-block text-sm text-vs-primary">View simulation →</Link></Card>
-        <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Real outcome</p><p className="mt-2 text-sm text-vs-fg-muted">Only founder-entered observations appear here.</p></Card>
-      </div>
-      <Card className="mt-4 border-dashed"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Future recalibration · COMING</p><p className="mt-2 text-sm text-vs-fg-muted">Real users, revenue, cost, and retention could later update growth, conversion, and operating-cost assumptions. Recalibration is not implemented and no simulation changes automatically today.</p></Card>
+    <main className="mx-auto max-w-5xl p-6">
+      <Link href={`/venture/${venture.id}`} className="text-sm text-vs-fg-muted hover:underline">← {venture.name}</Link>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-vs-primary">Learn</p><h1 className="mt-1 text-3xl font-semibold text-vs-fg">Reality vs the model</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-vs-fg-muted">Log what actually happens after launch. Real observations remain separate from simulated expectations, so variance can inform a future recalibration without rewriting history.</p></div><Badge status="success">REAL OBSERVATIONS ONLY</Badge></div>
 
-      <Card className="mt-4">
-        <AddOutcomeForm ventureId={venture.id} />
-      </Card>
+      <section className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Expectation vs observation</p>
+          {!simulation ? <p className="mt-3 text-sm text-vs-fg-muted">No simulation exists yet, so there is no modeled expectation to compare.</p> : <div className="mt-4 space-y-3">{compareRows.map(([label, simulated, real]) => { const variance = real === null ? null : real - simulated; return <div key={label} className="grid grid-cols-3 gap-3 rounded-vs-md border border-vs-border p-3 text-sm"><div><p className="text-[10px] uppercase text-vs-fg-muted">Metric</p><p className="mt-1 font-medium text-vs-fg">{label}</p></div><div><p className="text-[10px] uppercase text-vs-fg-muted">Simulated</p><p className="mt-1 font-medium text-vs-fg">{simulated.toLocaleString()}</p></div><div><p className="text-[10px] uppercase text-vs-fg-muted">Real / variance</p><p className="mt-1 font-medium text-vs-fg">{real === null ? "Not logged" : `${real.toLocaleString()} (${variance! >= 0 ? "+" : ""}${variance!.toLocaleString()})`}</p></div></div>; })}</div>}
+          <p className="mt-3 text-xs text-vs-fg-muted">Variance is descriptive only. It does not automatically change the simulator or claim causality.</p>
+        </Card>
+        <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Add a real observation</p><div className="mt-3"><AddOutcomeForm ventureId={venture.id} /></div></Card>
+      </section>
 
-      {trackedMetrics.length > 0 && (
-        <Card className="mt-4">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Trend</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {trackedMetrics.map((metric) => {
-              const points = (byMetric.get(metric) ?? [])
-                .filter((o) => o.metric_value !== null)
-                .map((o) => ({ reportedAt: o.reported_at, value: o.metric_value as number }));
-              return (
-                <OutcomeChart
-                  key={metric}
-                  title={METRIC_LABEL[metric] ?? metric}
-                  format={CURRENCY_METRICS.has(metric) ? "currency" : "number"}
-                  points={points}
-                />
-              );
-            })}
-          </div>
-        </Card>
-      )}
+      <Card className="mt-4 border-dashed"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Recalibration map · EXPLAINED, NOT AUTOMATIC</p><p className="mt-2 text-sm text-vs-fg-muted">Users/activation can challenge adoption assumptions; revenue/conversion can challenge monetization assumptions; cost can challenge operating-cost assumptions; retention/churn can challenge repeat-value assumptions. The system records these signals but does not silently rewrite a simulation today.</p></Card>
 
-      {outcomes.length > 0 ? (
-        <Card className="mt-4">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Log</p>
-          <ul className="space-y-1.5">
-            {[...outcomes].reverse().map((o) => (
-              <li key={o.id} className="text-sm text-vs-fg-muted">
-                <span className="font-medium text-vs-fg">
-                  {new Date(o.reported_at).toLocaleDateString()}
-                </span>{" "}
-                — {METRIC_LABEL[o.metric_type] ?? o.metric_type}: {o.metric_value ?? "—"}
-                {o.note ? ` (${o.note})` : ""}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : (
-        <Card className="mt-4">
-          <p className="text-sm text-vs-fg-muted">
-            No real-world numbers logged yet. Add the first one above once this venture has
-            something to report.
-          </p>
-        </Card>
-      )}
+      {trackedMetrics.length > 0 && <Card className="mt-4"><p className="mb-3 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Real-world trend</p><div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{trackedMetrics.map((metric) => { const points = (byMetric.get(metric) ?? []).filter((o) => o.metric_value !== null).map((o) => ({ reportedAt: o.reported_at, value: o.metric_value as number })); return <OutcomeChart key={metric} title={METRIC_LABEL[metric] ?? metric} format={CURRENCY_METRICS.has(metric) ? "currency" : "number"} points={points} />; })}</div></Card>}
+
+      {outcomes.length > 0 ? <Card className="mt-4"><p className="mb-2 text-sm font-semibold uppercase tracking-wide text-vs-fg-muted">Observation log</p><ul className="space-y-2">{[...outcomes].reverse().map((o) => <li key={o.id} className="rounded-vs-sm bg-vs-bg-subtle p-3 text-sm text-vs-fg-muted"><span className="font-medium text-vs-fg">{new Date(o.reported_at).toLocaleDateString()}</span> — {METRIC_LABEL[o.metric_type] ?? o.metric_type}: {o.metric_value ?? "—"}{o.note ? ` · ${o.note}` : ""}</li>)}</ul></Card> : <Card className="mt-4"><p className="text-sm text-vs-fg-muted">No real-world observations logged yet.</p></Card>}
     </main>
   );
 }

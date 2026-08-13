@@ -14,9 +14,8 @@ import { HistoryChart } from "./HistoryChart";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Simulate" };
 
-const STAGE_LABEL: Record<string, string> = {
-  setup: "Setting up", resource_planning: "Planning resources", build: "Building", build_event: "Build blocker", mvp_ready: "MVP ready", pre_launch: "Pre-launch", launch: "Launching", first_users: "First users", user_or_market_event: "Market event", adaptation: "Adapting", month_1: "Month 1 review", complete: "Complete",
-};
+type BranchMeta = { parent_run_id?: string | null; branch_origin_checkpoint_id?: string | null; rewind_count?: number; reality_mode?: boolean; branch_label?: string | null };
+const STAGE_LABEL: Record<string, string> = { setup: "Setting up", resource_planning: "Planning resources", build: "Building", build_event: "Build blocker", mvp_ready: "MVP ready", pre_launch: "Pre-launch", launch: "Launching", first_users: "First users", user_or_market_event: "Market event", adaptation: "Adapting", month_1: "Month 1 review", complete: "Complete" };
 const PRICING_MODEL_LABEL: Record<string, string> = { subscription: "Subscription", one_time: "One-time purchase", commission: "Marketplace / commission", ad_supported: "Free, ad-supported" };
 
 export default async function SimulatePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ run?: string }> }) {
@@ -34,6 +33,7 @@ export default async function SimulatePage({ params, searchParams }: { params: P
 
   const { data: runs } = await supabase.from("simulation_runs").select("*").eq("venture_id", venture.id).order("created_at", { ascending: false });
   const run = (requestedRunId ? runs?.find((candidate) => candidate.id === requestedRunId) : runs?.[0]) ?? null;
+  const branchRun = run ? (run as typeof run & BranchMeta) : null;
 
   let events: { id: string; virtual_day: number; description: string; event_type: string }[] = [];
   let decisions: { virtual_day: number; decision_type: string; choice: string }[] = [];
@@ -60,28 +60,28 @@ export default async function SimulatePage({ params, searchParams }: { params: P
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-vs-fg">Run the venture through time</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-vs-fg-muted">Advance through build, launch and market events. Decisions change deterministic state now and can create delayed consequences later.</p>
         </div>
-        {run && <Badge status={awaitingDecision ? "warning" : run.stage === "complete" ? "success" : "primary"}>{awaitingDecision ? "DECISION REQUIRED" : run.stage === "complete" ? "TIMELINE COMPLETE" : "RUNNING"}</Badge>}
+        {run && <div className="flex flex-wrap gap-2"><Badge status={awaitingDecision ? "warning" : run.stage === "complete" ? "success" : "primary"}>{awaitingDecision ? "DECISION REQUIRED" : run.stage === "complete" ? "TIMELINE COMPLETE" : "RUNNING"}</Badge>{branchRun?.reality_mode ? <Badge status="warning">REALITY MODE</Badge> : branchRun?.parent_run_id ? <Badge status="neutral">ALTERNATE TIMELINE</Badge> : <Badge status="neutral">PRIMARY TIMELINE</Badge>}</div>}
       </div>
 
       {!run ? (
         <Card className="mt-6 max-w-3xl border-vs-primary/20">
           <h2 className="text-xl font-semibold text-vs-fg">Start a new timeline</h2>
-          <p className="mb-4 mt-2 text-sm leading-6 text-vs-fg-muted">Set a starting budget. Research, pricing and build context are reused where available; missing evidence stays explicit.</p>
+          <p className="mb-4 mt-2 text-sm leading-6 text-vs-fg-muted">Set a starting budget and choose whether this run permits alternate timelines. Research, pricing and build context are reused where available.</p>
           <StartSimulationForm ventureId={venture.id} />
         </Card>
       ) : (
         <div className="mt-6 space-y-4">
           {(runs?.length ?? 0) > 1 && (
             <Card>
-              <div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Timeline library</p><p className="mt-1 text-sm text-vs-fg-muted">Original runs and checkpoint rewinds remain separate, so earlier history is not erased.</p></div><span className="text-xs text-vs-fg-muted">{runs!.length} timelines</span></div>
-              <div className="mt-3 flex flex-wrap gap-2">{runs!.map((item, index) => <Link key={item.id} href={`/venture/${venture.id}/simulate?run=${item.id}`} className={`rounded-full border px-3 py-1.5 text-sm ${item.id === run.id ? "border-vs-primary bg-vs-primary text-vs-primary-fg" : "border-vs-border text-vs-fg"}`}>Timeline {runs!.length-index} · Day {item.virtual_day}</Link>)}</div>
+              <div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Timeline library</p><p className="mt-1 text-sm text-vs-fg-muted">Original runs and rewound branches remain separate. Branch lineage is persisted rather than inferred from display order.</p></div><span className="text-xs text-vs-fg-muted">{runs!.length} timelines</span></div>
+              <div className="mt-3 flex flex-wrap gap-2">{runs!.map((item, index) => { const meta = item as typeof item & BranchMeta; return <Link key={item.id} href={`/venture/${venture.id}/simulate?run=${item.id}`} className={`rounded-full border px-3 py-1.5 text-sm ${item.id === run.id ? "border-vs-primary bg-vs-primary text-vs-primary-fg" : "border-vs-border text-vs-fg"}`}>{meta.branch_label || `Timeline ${runs!.length-index}`} · Day {item.virtual_day}{meta.reality_mode ? " · Reality" : meta.parent_run_id ? " · Branch" : ""}</Link>; })}</div>
             </Card>
           )}
 
           <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
             <Card className="overflow-hidden">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Virtual timeline</p><h2 className="mt-1 text-2xl font-semibold text-vs-fg">Day {run.virtual_day} · {STAGE_LABEL[run.stage] ?? run.stage}</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Virtual timeline</p><h2 className="mt-1 text-2xl font-semibold text-vs-fg">Day {run.virtual_day} · {STAGE_LABEL[run.stage] ?? run.stage}</h2><p className="mt-1 text-xs text-vs-fg-muted">{branchRun?.branch_label || "Primary timeline"}{branchRun?.parent_run_id ? " · branched from an earlier saved checkpoint" : ""}</p></div>
                 <span className="rounded-full border border-vs-border px-3 py-1.5 text-xs text-vs-fg-muted">{PRICING_MODEL_LABEL[run.pricing_model] ?? run.pricing_model}</span>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -104,7 +104,7 @@ export default async function SimulatePage({ params, searchParams }: { params: P
 
           {runState && runState.history.length >= 2 && (
             <Card>
-              <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Observable consequences</p><p className="mt-1 text-sm text-vs-fg-muted">State changes over virtual time, not a success score.</p></div></div>
+              <div className="mb-4"><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Observable consequences</p><p className="mt-1 text-sm text-vs-fg-muted">State changes over virtual time, not a success score.</p></div>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                 <HistoryChart title="Cash remaining" format="currency" points={runState.history.map((h) => ({ day: h.day, value: h.cashRemaining }))} />
                 <HistoryChart title="Total users" format="number" points={runState.history.map((h) => ({ day: h.day, value: h.totalUsers }))} />
@@ -114,11 +114,10 @@ export default async function SimulatePage({ params, searchParams }: { params: P
           )}
 
           <Card><RunControls ventureId={venture.id} runId={run.id} awaitingDecision={awaitingDecision} decisionOptions={getDecisionOptions(rowToSimulationState(run))} isComplete={run.stage === "complete"} /></Card>
-
           {delayedConsequenceNotes.length > 0 && <Card className="border-vs-primary/40 bg-vs-primary/5"><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-primary">Delayed consequences</p><ul className="mt-3 space-y-2">{delayedConsequenceNotes.map((note) => <li key={note} className="text-sm leading-6 text-vs-fg">{note}</li>)}</ul></Card>}
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card><CheckpointPanel ventureId={venture.id} runId={run.id} checkpoints={checkpoints} currentDay={run.virtual_day} /></Card>
+            <Card><CheckpointPanel ventureId={venture.id} runId={run.id} checkpoints={checkpoints} currentDay={run.virtual_day} realityMode={Boolean(branchRun?.reality_mode)} rewindCount={branchRun?.rewind_count ?? 0} /></Card>
             <Card>
               <div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Decision history</p><span className="text-xs text-vs-fg-muted">{decisions.length} decisions</span></div>
               {!decisions.length ? <p className="mt-3 text-sm text-vs-fg-muted">No founder decisions recorded yet.</p> : <ol className="mt-3 space-y-2">{decisions.slice(-8).reverse().map((d, index) => <li key={`${d.virtual_day}-${d.choice}-${index}`} className="rounded-vs-sm border border-vs-border p-3 text-sm"><span className="font-medium text-vs-fg">Day {d.virtual_day}</span><span className="text-vs-fg-muted"> · {d.decision_type.replaceAll("_", " ")} → {d.choice.replaceAll("_", " ")}</span></li>)}</ol>}

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — UI redesign pass
+
+- Reworked the visual system around a light modular SaaS workspace with a green editorial brand layer.
+- Redesigned the public landing page, dashboard, venture overview, and persistent venture navigation.
+- Updated shared Card, Button, Input, Select, and design-token primitives so Research, Simulator, Build, Compare, Investor World, Monetization, Evidence, and other existing surfaces inherit the new visual language without changing their product logic.
+- Preserved existing routes, Supabase flows, research/simulation logic, and venture data.
+
 ## Unreleased — Final prototype Pass 1
 
 - Added a persistent simulated Investor World with bounded investor profiles, contextual screening questions, meeting transcripts, and a conservative Claim Ledger.

@@ -40,6 +40,7 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
   function choose(next: "simple" | "pro") {
     setMode(next);
     window.localStorage.setItem("venture-ui-mode", next);
+    window.dispatchEvent(new CustomEvent("venture-mode-change", { detail: next }));
   }
 
   const journey = mode === "simple" ? simpleJourney : proJourney;
@@ -74,7 +75,7 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
         </nav>
       ) : (
         <div className="mt-2 border-t border-vs-border/70 pt-2 text-xs text-vs-fg-muted">
-          Need the detailed evidence, technology, investor or scorecard tools? Switch to <button type="button" onClick={() => choose("pro")} className="font-semibold text-vs-primary">Pro mode</button>.
+          Want the detailed evidence, technology, investor or scorecard tools? Switch to <button type="button" onClick={() => choose("pro")} className="font-semibold text-vs-primary">Pro mode</button>.
         </div>
       )}
     </div>

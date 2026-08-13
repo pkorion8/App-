@@ -14,7 +14,7 @@ export default function DemoPage() {
     <div className="min-h-screen bg-vs-bg">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link href="/" className="text-lg font-semibold text-vs-fg">Sim Venture</Link>
-        <div className="flex items-center gap-3"><Badge status="warning">PUBLIC DEMO</Badge><Link href="/sign-in"><Button size="sm">Try your own idea</Button></Link></div>
+        <div className="flex items-center gap-3"><Badge status="warning">PUBLIC DEMO</Badge><Link href="/sign-in"><Button className="px-3 py-1.5 text-xs">Try your own idea</Button></Link></div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-20">

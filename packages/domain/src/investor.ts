@@ -9,6 +9,14 @@ export type InvestorContext = {
   hasSimulation?: boolean;
 };
 
+export type InvestorAnswerEvaluation = {
+  outcome: "continue" | "challenge" | "end";
+  reason: "professional" | "too_vague" | "evasive" | "unsupported_traction" | "conduct";
+  reaction: string;
+  trust: "improving" | "uncertain" | "damaged";
+  clarity: "clear" | "uncertain" | "weak";
+};
+
 export const INVESTOR_PROFILES = [
   { key: "operator-angel", name: "Operator Angel", focus: "Founder judgment, customer pain and execution", check: "$25k–$150k simulated range" },
   { key: "technical-angel", name: "Technical Angel", focus: "Technical feasibility, defensibility and dependency risk", check: "$25k–$200k simulated range" },
@@ -36,6 +44,64 @@ export function classifyFounderClaim(answer: string, hasLinkedEvidence = false):
   if (hasLinkedEvidence) return "PARTIAL";
   if (/\b(i think|i believe|probably|maybe|assume|expect|we think|we believe)\b/i.test(text)) return "ASSUMPTION";
   return "NEW CLAIM";
+}
+
+export function evaluateInvestorAnswer(answer: string): InvestorAnswerEvaluation {
+  const text = answer.trim();
+  const lower = text.toLowerCase();
+
+  const conductPattern = /\b(stupid|idiot|dumb|shut up|fuck(?:ing)?|bullshit|none of your business|screw you|moron)\b/i;
+  if (conductPattern.test(text)) {
+    return {
+      outcome: "end",
+      reason: "conduct",
+      reaction: "I’m going to stop the meeting here. The way you’re addressing the conversation makes it difficult to have a productive investment discussion.",
+      trust: "damaged",
+      clarity: "weak",
+    };
+  }
+
+  const evasivePattern = /^(i don'?t know|no idea|whatever|doesn'?t matter|skip|next question|because i said so|trust me)[.! ]*$/i;
+  if (evasivePattern.test(lower)) {
+    return {
+      outcome: "challenge",
+      reason: "evasive",
+      reaction: "That doesn’t answer the question. I need you to either explain what you know, or be specific about what is still unknown and how you would find out.",
+      trust: "uncertain",
+      clarity: "weak",
+    };
+  }
+
+  if (text.length < 28 || text.split(/\s+/).length < 6) {
+    return {
+      outcome: "challenge",
+      reason: "too_vague",
+      reaction: "That answer is too thin for me to evaluate. Give me the evidence, reasoning, or decision behind it rather than only the conclusion.",
+      trust: "uncertain",
+      clarity: "weak",
+    };
+  }
+
+  const tractionWords = /\b(paying customers?|customers?|users?|revenue|mrr|arr|sales|downloads?)\b/i;
+  const numberClaim = /(?:\$|£|€)?\s?\d[\d,.]*\s?(?:k|m|million|thousand|%|per month|monthly)?/i;
+  const uncertaintyWords = /\b(simulated|model(?:ed)?|estimate(?:d)?|assum(?:e|ed|ption)|target|forecast|projection|hypothesis)\b/i;
+  if (tractionWords.test(text) && numberClaim.test(text) && !uncertaintyWords.test(text)) {
+    return {
+      outcome: "challenge",
+      reason: "unsupported_traction",
+      reaction: "You’ve made a specific traction or financial claim. I’m not going to treat that as fact without evidence. What source, customer record, analytics, contract, or other proof supports it?",
+      trust: "uncertain",
+      clarity: "uncertain",
+    };
+  }
+
+  return {
+    outcome: "continue",
+    reason: "professional",
+    reaction: "Understood. I’ll carry that answer forward, but I may come back to the assumptions behind it if later evidence conflicts.",
+    trust: "improving",
+    clarity: "clear",
+  };
 }
 
 export function nextInvestorStage(stage: InvestorStage): InvestorStage {

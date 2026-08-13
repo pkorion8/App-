@@ -1,32 +1,30 @@
 /**
- * Venture Lab visual system.
- * Direction: quiet functional workspace + bold editorial brand moments.
- * The product surface stays light and calm; green is the primary brand signal,
- * while violet / amber / blue are reserved for data and state meaning.
+ * Venture Lab visual system — approved reference direction.
+ * White canvas, soft neutral modules, black type, selective green accent.
  */
 :root {
-  --vs-color-bg: 244 246 243;
-  --vs-color-bg-subtle: 238 241 237;
-  --vs-color-fg: 17 21 19;
-  --vs-color-fg-muted: 101 109 104;
-  --vs-color-border: 224 229 224;
-  --vs-color-primary: 14 185 112;
-  --vs-color-primary-fg: 255 255 255;
-  --vs-color-danger: 231 76 60;
-  --vs-color-success: 14 185 112;
-  --vs-color-warning: 236 160 39;
+  --vs-color-bg: 255 255 255;
+  --vs-color-bg-subtle: 246 246 244;
+  --vs-color-fg: 16 16 16;
+  --vs-color-fg-muted: 111 111 108;
+  --vs-color-border: 235 235 231;
+  --vs-color-primary: 30 194 108;
+  --vs-color-primary-fg: 8 20 13;
+  --vs-color-danger: 224 72 62;
+  --vs-color-success: 30 194 108;
+  --vs-color-warning: 238 168 54;
 
-  --vs-color-violet: 113 62 234;
-  --vs-color-blue: 45 116 255;
-  --vs-color-orange: 255 83 44;
-  --vs-color-ink: 9 11 10;
+  --vs-color-violet: 120 78 226;
+  --vs-color-blue: 70 119 230;
+  --vs-color-orange: 245 107 61;
+  --vs-color-ink: 12 12 12;
   --vs-color-surface: 255 255 255;
-  --vs-color-surface-soft: 249 250 248;
+  --vs-color-surface-soft: 247 247 245;
 
-  --vs-radius-sm: 10px;
-  --vs-radius-md: 14px;
-  --vs-radius-lg: 22px;
-  --vs-radius-xl: 30px;
+  --vs-radius-sm: 12px;
+  --vs-radius-md: 18px;
+  --vs-radius-lg: 28px;
+  --vs-radius-xl: 36px;
 
   --vs-space-1: 4px;
   --vs-space-2: 8px;
@@ -37,22 +35,22 @@
   --vs-space-10: 40px;
   --vs-space-12: 48px;
 
-  --vs-font-sans: "Avenir Next", Avenir, "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --vs-shadow-card: 0 1px 2px rgba(17, 21, 19, 0.04), 0 16px 40px rgba(17, 21, 19, 0.05);
-  --vs-shadow-float: 0 24px 70px rgba(17, 21, 19, 0.12);
+  --vs-font-sans: Inter, "Helvetica Neue", Helvetica, Arial, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --vs-shadow-card: 0 1px 0 rgba(16,16,16,.02), 0 12px 32px rgba(16,16,16,.035);
+  --vs-shadow-float: 0 24px 64px rgba(16,16,16,.09);
 }
 
 [data-theme="dark"] {
-  --vs-color-bg: 18 20 19;
-  --vs-color-bg-subtle: 25 28 26;
-  --vs-color-fg: 242 246 243;
-  --vs-color-fg-muted: 164 174 167;
-  --vs-color-border: 47 52 49;
-  --vs-color-primary: 39 205 132;
-  --vs-color-primary-fg: 7 20 13;
-  --vs-color-danger: 239 115 103;
-  --vs-color-success: 61 211 145;
-  --vs-color-warning: 245 184 79;
-  --vs-color-surface: 23 26 24;
-  --vs-color-surface-soft: 28 31 29;
+  --vs-color-bg: 18 18 18;
+  --vs-color-bg-subtle: 27 27 26;
+  --vs-color-fg: 247 247 245;
+  --vs-color-fg-muted: 168 168 164;
+  --vs-color-border: 45 45 43;
+  --vs-color-primary: 42 210 126;
+  --vs-color-primary-fg: 8 20 13;
+  --vs-color-danger: 239 112 101;
+  --vs-color-success: 64 216 145;
+  --vs-color-warning: 245 187 85;
+  --vs-color-surface: 22 22 22;
+  --vs-color-surface-soft: 28 28 27;
 }

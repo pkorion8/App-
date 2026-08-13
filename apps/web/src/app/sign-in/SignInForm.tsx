@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Button, FieldError, Input, Label } from "@venture-sandbox/ui";
@@ -58,24 +59,18 @@ export function SignInForm() {
     <form action={formAction} className="space-y-4">
       <div>
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-          autoComplete="email"
-        />
+        <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
         {state.status === "error" && state.retryAfterSeconds ? (
           <div className="mt-2 rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
             <p className="text-sm text-vs-fg">{state.message}</p>
-            <p className="mt-1 text-xs text-vs-fg-muted">
-              {waitSeconds > 0 ? `You can request another link in ${waitSeconds} seconds.` : "You can request another link now."}
-            </p>
+            <p className="mt-1 text-xs text-vs-fg-muted">{waitSeconds > 0 ? `You can request another link in ${waitSeconds} seconds.` : "You can request another link now."}</p>
           </div>
-        ) : state.status === "error" ? (
-          <FieldError>{state.message}</FieldError>
-        ) : null}
+        ) : state.status === "error" && state.rateLimited ? (
+          <div className="mt-2 rounded-vs-md border border-vs-warning/30 bg-vs-warning/5 p-4">
+            <p className="text-sm font-medium text-vs-fg">{state.message}</p>
+            <Link href="/review" className="mt-3 inline-flex text-sm font-semibold text-vs-primary">Open full product review →</Link>
+          </div>
+        ) : state.status === "error" ? <FieldError>{state.message}</FieldError> : null}
       </div>
       <SubmitButton waitSeconds={waitSeconds} />
     </form>

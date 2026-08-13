@@ -14,7 +14,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between p-6">
         <Link href="/" className="text-lg font-semibold text-vs-fg">Sim Venture</Link>
-        <nav className="flex items-center gap-3 text-sm text-vs-fg-muted"><Link href="/demo" className="hover:text-vs-fg">Demo</Link><Link href="/pricing" className="hover:text-vs-fg">Pricing</Link><Link href="/sign-in"><Button size="sm">Sign in</Button></Link></nav>
+        <nav className="flex items-center gap-3 text-sm text-vs-fg-muted"><Link href="/demo" className="hover:text-vs-fg">Demo</Link><Link href="/pricing" className="hover:text-vs-fg">Pricing</Link><Link href="/sign-in"><Button className="px-3 py-1.5 text-xs">Sign in</Button></Link></nav>
       </header>
 
       <main>

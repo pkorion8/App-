@@ -85,7 +85,7 @@ export function createMonetizationExperiments(c: MonetizationContext): Monetizat
       key: "ad-supported", title: "Ad-supported free product", pricingModelOverride: "ad_supported",
       hypothesis: "Advertising could remove a consumer paywall only if usage volume and attention are high enough to support the added complexity.",
       fit: `A stress test for ${audience}; not a recommendation without scale and ad-yield evidence.`,
-      evidence: [cost, "No ad-yield evidence is connected."], unknowns: "Impressions, fill rate, geography, ad yield, privacy constraints, and product-quality impact are unknown.", metric: "Net ad revenue per active user versus incremental cost", invalidates: "Usage volume is too low or ads damage activation/retention more than they fund operations.",
+      evidence: [cost, pricing, "No ad-yield evidence is connected."], unknowns: "Impressions, fill rate, geography, ad yield, privacy constraints, and product-quality impact are unknown.", metric: "Net ad revenue per active user versus incremental cost", invalidates: "Usage volume is too low or ads damage activation/retention more than they fund operations.",
     },
   ];
 }

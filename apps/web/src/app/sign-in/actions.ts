@@ -8,6 +8,7 @@ export interface SignInState {
   status: "idle" | "sent" | "error";
   message?: string;
   retryAfterSeconds?: number;
+  rateLimited?: boolean;
 }
 
 export async function sendSignInLink(
@@ -28,7 +29,7 @@ export async function sendSignInLink(
   ) {
     return {
       status: "error",
-      message: "Supabase isn't connected yet. See .env.example.",
+      message: "Sign-in is temporarily unavailable because the authentication service is not configured.",
     };
   }
 
@@ -48,10 +49,18 @@ export async function sendSignInLink(
       return {
         status: "error",
         retryAfterSeconds,
+        rateLimited: true,
         message: "A sign-in email was requested recently. Please wait for the timer below, then try once more. The earlier email may already be in your inbox or spam folder.",
       };
     }
-    return { status: "error", message: error.message };
+    if (/rate limit|too many requests|email.*limit/i.test(error.message)) {
+      return {
+        status: "error",
+        rateLimited: true,
+        message: "The temporary email service has reached its sending limit. You can still review the complete product without signing in.",
+      };
+    }
+    return { status: "error", message: "We could not send the sign-in email right now. Please try again later." };
   }
 
   return {

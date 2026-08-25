@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
+import { SOURCE_REGISTRY } from "@venture-sandbox/research";
 import { Badge, Card } from "@venture-sandbox/ui";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -69,6 +70,8 @@ export default async function ResearchPage({ params, searchParams }: { params: P
         </div>
       </VentureModeSection>
 
+      <SourceStatus />
+
       {showForm ? (
         <Card className="mt-6 max-w-3xl">
           <VentureModeSection mode="simple"><p className="mb-4 text-sm text-vs-fg-muted">Tell us who you think would use this and where you want to start. If you are unsure, use your best guess—we can change it later.</p></VentureModeSection>
@@ -98,6 +101,25 @@ export default async function ResearchPage({ params, searchParams }: { params: P
         </div>
       )}
     </main>
+  );
+}
+
+function SourceStatus() {
+  return (
+    <Card className="mt-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Connected research sources</p><p className="mt-1 text-sm text-vs-fg">Live where possible; unavailable sources stay explicitly unavailable.</p></div>
+        <span className="text-xs text-vs-fg-muted">No invented reviews, pricing or regulatory conclusions.</span>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {SOURCE_REGISTRY.map((source) => (
+          <div key={`${source.category}-${source.provider}`} className="rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3">
+            <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold text-vs-fg">{source.provider}</p><Badge status={source.access === "live" ? "success" : source.access === "partial" ? "warning" : "neutral"}>{source.access.toUpperCase()}</Badge></div>
+            <p className="mt-2 text-xs leading-5 text-vs-fg-muted">{source.limitations}</p>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 

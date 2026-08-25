@@ -7,7 +7,6 @@ import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import { CreateVentureForm } from "./CreateVentureForm";
-import { seedDemoVentures } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Your ventures" };
@@ -38,10 +37,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       {idea && <Card className="mt-6 border-vs-primary/30 bg-vs-primary/5"><div className="flex flex-col items-start gap-3 sm:flex-row"><Badge status="success">FROM EXPLORE</Badge><div className="min-w-0"><h2 className="font-semibold text-vs-fg">Continue with the idea you just researched</h2><p className="mt-1 text-sm text-vs-fg-muted">The form below is prefilled from your live Explore search. Adjust it before creating the venture if needed.</p></div></div></Card>}
 
-      <Card className="mt-6 border-vs-primary/20 bg-vs-primary/5">
-        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Badge status="warning">DEMO</Badge><h2 className="font-semibold text-vs-fg">Want to see how it works first?</h2></div><p className="mt-2 max-w-2xl text-sm leading-6 text-vs-fg-muted">Load two sample ideas that already contain research, a simulated journey and an investor-practice example. Everything in these examples is clearly marked as demo or simulated.</p></div><form action={seedDemoVentures} className="sm:shrink-0"><Button type="submit">Try the 2 sample ventures</Button></form></div>
-      </Card>
-
       <div className="mt-8 grid gap-6 lg:grid-cols-[.8fr_1.4fr]">
         <Card><h2 className="text-lg font-semibold text-vs-fg">Start with your idea</h2><p className="mb-4 mt-1 text-sm text-vs-fg-muted">No business plan or technical knowledge needed. A rough idea is enough.</p><CreateVentureForm defaultName={name} defaultIdea={idea} /></Card>
         <div className="min-w-0 space-y-3">
@@ -49,7 +44,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {ventures && ventures.length > 0 ? ventures.map((venture) => {
             const isDemo = venture.name.startsWith("[DEMO]");
             return <Link key={venture.id} href={`/venture/${venture.id}`} className="block"><Card className="transition-colors hover:border-vs-primary"><div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="break-words font-medium text-vs-fg">{venture.name}</p>{isDemo && <Badge status="warning">DEMO</Badge>}</div><p className="mt-1 line-clamp-2 break-words text-sm text-vs-fg-muted">{venture.raw_idea_text}</p></div><span className="self-start rounded-full border border-vs-border px-2 py-1 text-[10px] font-semibold uppercase text-vs-fg-muted">{venture.status.replaceAll("_", " ")}</span></div>{(venture.target_user || venture.geography) && <p className="mt-3 break-words text-xs text-vs-fg-muted">{venture.target_user || "Who it is for: not decided"} · {venture.geography || "Market: not decided"}</p>}</Card></Link>;
-          }) : <Card className="text-sm text-vs-fg-muted">You have not added an idea yet. Start with a rough idea on the left, or try the sample ventures above.</Card>}
+          }) : <Card className="text-sm text-vs-fg-muted">You have not added an idea yet. Start with a rough idea on the left, or research the market first in Explore / Search.</Card>}
         </div>
       </div>
     </main>

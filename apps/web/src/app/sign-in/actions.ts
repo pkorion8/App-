@@ -10,11 +10,24 @@ export interface SignInState {
   retryAfterSeconds?: number;
 }
 
+function safeNextPath(value: FormDataEntryValue | null): string {
+  const next = String(value ?? "").trim();
+  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  return next;
+}
+
+function publicOrigin(requestOrigin: string | null): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+  return (requestOrigin ?? "http://localhost:3000").replace(/\/$/, "");
+}
+
 export async function sendSignInLink(
   _prevState: SignInState,
   formData: FormData,
 ): Promise<SignInState> {
   const email = String(formData.get("email") ?? "").trim();
+  const next = safeNextPath(formData.get("next"));
 
   if (!email || !email.includes("@")) {
     return { status: "error", message: "Enter a valid email address." };
@@ -34,11 +47,13 @@ export async function sendSignInLink(
 
   const supabase = await createSupabaseServerClient();
   const requestHeaders = await headers();
-  const origin = requestHeaders.get("origin") ?? "http://localhost:3000";
+  const origin = publicOrigin(requestHeaders.get("origin"));
+  const callbackUrl = new URL("/auth/callback", origin);
+  callbackUrl.searchParams.set("redirect", next);
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${origin}/auth/callback` },
+    options: { emailRedirectTo: callbackUrl.toString() },
   });
 
   if (error) {
@@ -51,7 +66,10 @@ export async function sendSignInLink(
         message: "A sign-in email was requested recently. Please wait for the timer below, then try once more. The earlier email may already be in your inbox or spam folder.",
       };
     }
-    return { status: "error", message: error.message };
+    return {
+      status: "error",
+      message: "We could not send the sign-in link right now. Please try again shortly.",
+    };
   }
 
   return {

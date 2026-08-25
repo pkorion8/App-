@@ -5,13 +5,9 @@ import {
   resolveSupabaseEnv,
   type Database,
 } from "@venture-sandbox/integrations";
+import { safeInternalDestination } from "@/lib/safe-internal-destination";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/venture", "/billing", "/channels"];
-
-function safeInternalDestination(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
-}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

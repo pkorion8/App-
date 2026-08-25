@@ -55,20 +55,23 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Live search results</p><h2 className="mt-1 text-2xl font-semibold text-vs-fg">{results.length} App Store matches for “{query}”</h2></div>
-            <p className="text-xs text-vs-fg-muted">Ratings are traction signals only — not downloads, revenue or market size.</p>
+            <div className="flex flex-wrap items-center gap-3"><p className="text-xs text-vs-fg-muted">Ratings are traction signals only — not downloads, revenue or market size.</p><Link className="rounded-vs-sm bg-vs-fg px-3 py-2 text-xs font-semibold text-vs-bg" href={`/dashboard?name=${encodeURIComponent(query)}&idea=${encodeURIComponent(query)}`}>Create this venture →</Link></div>
           </div>
 
           {results.length === 0 ? (
             <Card className="mt-4"><p className="font-semibold text-vs-fg">No close matches surfaced.</p><p className="mt-2 text-sm text-vs-fg-muted">That may mean weak direct competition or simply that the search phrase is too narrow. Try a broader phrase.</p></Card>
           ) : (
             <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {results.map((app) => (
-                <Card key={`${app.appId ?? app.name}-${app.seller}`}>
-                  <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-vs-fg">{app.name}</h3><p className="mt-1 text-xs text-vs-fg-muted">{app.seller}</p></div><Badge status="neutral">{app.genre}</Badge></div>
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-xs"><div><p className="text-vs-fg-muted">Rating</p><p className="mt-1 font-semibold text-vs-fg">{app.rating === null ? "—" : `${app.rating.toFixed(1)}★`}</p></div><div><p className="text-vs-fg-muted">Ratings</p><p className="mt-1 font-semibold text-vs-fg">{app.ratingCount.toLocaleString()}</p></div><div><p className="text-vs-fg-muted">Price</p><p className="mt-1 font-semibold text-vs-fg">{app.price}</p></div></div>
-                  <div className="mt-4 flex flex-wrap gap-3 text-xs"><a className="font-semibold text-vs-primary hover:underline" href={app.url} target="_blank" rel="noreferrer">Open App Store ↗</a><Link className="font-semibold text-vs-fg hover:underline" href="/dashboard">Create venture →</Link></div>
-                </Card>
-              ))}
+              {results.map((app) => {
+                const idea = `${query}. One live App Store example found during exploration is ${app.name} by ${app.seller}.`;
+                return (
+                  <Card key={`${app.appId ?? app.name}-${app.seller}`}>
+                    <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-vs-fg">{app.name}</h3><p className="mt-1 text-xs text-vs-fg-muted">{app.seller}</p></div><Badge status="neutral">{app.genre}</Badge></div>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs"><div><p className="text-vs-fg-muted">Rating</p><p className="mt-1 font-semibold text-vs-fg">{app.rating === null ? "—" : `${app.rating.toFixed(1)}★`}</p></div><div><p className="text-vs-fg-muted">Ratings</p><p className="mt-1 font-semibold text-vs-fg">{app.ratingCount.toLocaleString()}</p></div><div><p className="text-vs-fg-muted">Price</p><p className="mt-1 font-semibold text-vs-fg">{app.price}</p></div></div>
+                    <div className="mt-4 flex flex-wrap gap-3 text-xs"><a className="font-semibold text-vs-primary hover:underline" href={app.url} target="_blank" rel="noreferrer">Open App Store ↗</a><Link className="font-semibold text-vs-fg hover:underline" href={`/dashboard?name=${encodeURIComponent(query)}&idea=${encodeURIComponent(idea)}`}>Create venture →</Link></div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </section>

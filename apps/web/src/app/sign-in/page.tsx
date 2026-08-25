@@ -3,22 +3,18 @@ import Link from "next/link";
 import { Badge, Card } from "@venture-sandbox/ui";
 import { isSupabaseConfigured } from "@venture-sandbox/integrations";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
+import { safeInternalDestination } from "@/lib/safe-internal-destination";
 import { SignInForm } from "./SignInForm";
 
 export const metadata: Metadata = { title: "Sign in · Sim Venture" };
 export const dynamic = "force-dynamic";
-
-function safeNext(value?: string): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
-}
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   const { error, next } = await searchParams;
   const configured = isSupabaseConfigured({ url: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY });
   if (!configured) return <SupabaseSetupNotice />;
 
-  const destination = safeNext(next);
+  const destination = safeInternalDestination(next);
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">

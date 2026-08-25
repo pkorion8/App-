@@ -13,6 +13,19 @@ import { FindingCard, type FindingRow } from "./FindingCard";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Research" };
 
+const CONNECTED_EXTERNAL_KINDS = new Set(["competitors", "market", "github"]);
+
+function hasConnectedExternalSource(finding: FindingRow): boolean {
+  if (finding.is_demo) return false;
+  const metadata = (finding.metadata || {}) as Record<string, unknown>;
+  const kind = typeof metadata.kind === "string" ? metadata.kind.toLowerCase() : "";
+  return (
+    CONNECTED_EXTERNAL_KINDS.has(kind) ||
+    typeof metadata.source === "string" ||
+    typeof metadata.sourceUrl === "string"
+  );
+}
+
 export default async function ResearchPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ again?: string }> }) {
   const { id } = await params;
   const { again } = await searchParams;
@@ -36,10 +49,10 @@ export default async function ResearchPage({ params, searchParams }: { params: P
   const solid = findings.filter((f) => f.state === "SOLID");
   const mixed = findings.filter((f) => f.state === "MIXED");
   const unresolved = findings.filter((f) => f.state === "WEAK" || f.state === "UNKNOWN");
-  const live = findings.filter((f) => !f.is_demo);
-  const withSource = findings.filter((f) => { const md = (f.metadata || {}) as Record<string, unknown>; return typeof md.source === "string" || typeof md.sourceUrl === "string"; });
+  const externallySourced = findings.filter(hasConnectedExternalSource);
+  const sourceTraceable = findings.filter(hasConnectedExternalSource);
   const coverage = findings.length ? Math.round(((solid.length + mixed.length * 0.5) / findings.length) * 100) : 0;
-  const traceability = findings.length ? Math.round((withSource.length / findings.length) * 100) : 0;
+  const traceability = findings.length ? Math.round((sourceTraceable.length / findings.length) * 100) : 0;
   const strongest = solid.find((f) => !f.is_demo) ?? solid[0] ?? findings[0];
   const biggestUnknown = unresolved[0] ?? findings.find((f) => f.limitations);
 
@@ -93,7 +106,7 @@ export default async function ResearchPage({ params, searchParams }: { params: P
 
           <VentureModeSection mode="pro" className="space-y-5">
             <Card className="border-vs-primary/20 bg-vs-primary/5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><Badge status="primary">LATEST MISSION</Badge><p className="mt-2 text-sm text-vs-fg">For <strong>{mission!.target_user}</strong> in <strong>{mission!.geography}</strong></p><p className="mt-1 text-xs text-vs-fg-muted">Completed {new Date(mission!.created_at).toLocaleDateString()}</p></div><Link href={`/venture/${venture.id}/research?again=1`} className="text-sm font-medium text-vs-primary">Run research again →</Link></div></Card>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><ResearchMetric label="Evidence coverage" value={`${coverage}%`} note="Strength-weighted coverage of recorded findings." /><ResearchMetric label="Source traceability" value={`${traceability}%`} note={`${withSource.length} of ${findings.length} findings include source metadata.`} /><ResearchMetric label="Agreement state" value={`${solid.length} strong`} note={`${mixed.length} mixed · ${unresolved.length} weak/unknown`} /><ResearchMetric label="Live evidence" value={`${live.length}/${findings.length}`} note={`${findings.length - live.length} findings are demo/synthetic and kept separate.`} /></section>
+            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><ResearchMetric label="Evidence coverage" value={`${coverage}%`} note="Strength-weighted coverage of recorded findings; not a success score." /><ResearchMetric label="Source traceability" value={`${traceability}%`} note={`${sourceTraceable.length} of ${findings.length} findings are tied to a connected external source.`} /><ResearchMetric label="Agreement state" value={`${solid.length} strong`} note={`${mixed.length} mixed · ${unresolved.length} weak/unknown`} /><ResearchMetric label="Externally sourced" value={`${externallySourced.length}/${findings.length}`} note={`${findings.length - externallySourced.length} findings are demo, synthetic, heuristic, or otherwise not backed by a connected external source.`} /></section>
             <section className="grid gap-4 lg:grid-cols-2"><Card><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Primary conclusion</p><p className="mt-2 text-lg font-semibold leading-7 text-vs-fg">{strongest?.normalized_claim ?? "No evidence-backed conclusion yet."}</p><p className="mt-2 text-sm leading-6 text-vs-fg-muted">{strongest?.user_facing_summary ?? "Run research to establish the first evidence-backed finding."}</p></Card><Card className="border-vs-warning/30"><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Largest unresolved question</p><p className="mt-2 text-lg font-semibold leading-7 text-vs-fg">{biggestUnknown?.normalized_claim ?? "No unresolved question has been recorded."}</p><p className="mt-2 text-sm leading-6 text-vs-fg-muted">{biggestUnknown?.next_test || biggestUnknown?.limitations || "No next validation test is currently recorded."}</p></Card></section>
             <nav className="grid gap-2 sm:grid-cols-4" aria-label="Research modules"><Link href={`/venture/${venture.id}/reviews`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Reviews</Link><Link href={`/venture/${venture.id}/technology`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Technology & ownership</Link><Link href={`/venture/${venture.id}/evidence`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Evidence explorer</Link><Link href={`/venture/${venture.id}/monetization`} className="rounded-vs-md border border-vs-border p-3 text-sm font-medium text-vs-fg hover:border-vs-primary/40">Monetization lab</Link></nav>
             {groups.filter((group) => group.items.length).map((group) => <section key={group.title}><div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold text-vs-fg">{group.title}</h2><span className="text-xs text-vs-fg-muted">{group.items.length} finding{group.items.length === 1 ? "" : "s"}</span></div><div className="space-y-3">{group.items.map((f) => <FindingCard key={`${group.title}-${f.id}`} f={f} />)}</div></section>)}

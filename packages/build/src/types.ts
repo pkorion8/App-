@@ -13,7 +13,7 @@ export interface BacklogItem {
 
 export interface CostLineItem {
   name: string;
-  monthlyCost: number;
+  monthlyCost: number | null;
   note: string;
 }
 
@@ -28,7 +28,7 @@ export interface RecommendedStack {
 
 export interface CostEstimate {
   items: CostLineItem[];
-  totalMonthly: number;
+  totalMonthly: number | null;
 }
 
 export interface BuildPackage {

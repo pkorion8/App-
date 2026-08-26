@@ -33,6 +33,11 @@ jobs:
       # build doesn't require real (or placeholder) credentials to succeed.
       - run: pnpm build
 
+      # Boot the actual production Next.js build and verify launch-critical
+      # public/setup-safe routes render without production secrets, live-source
+      # calls, or seeded venture data.
+      - run: bash tests/integration/production_http_smoke.sh
+
   db:
     runs-on: ubuntu-latest
     services:

@@ -14,7 +14,7 @@ import {
   type MarketContext,
   type SimulationEvent,
 } from "@venture-sandbox/simulator";
-import { classifyTraction } from "@venture-sandbox/research";
+import { classifyRatingVolume } from "@venture-sandbox/research";
 import { logEvent } from "@venture-sandbox/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -51,7 +51,7 @@ async function buildMarketContext(
   const buildCost = buildPackage?.cost_estimate as unknown as { totalMonthly?: number } | undefined;
   const estimatedMonthlyCost = typeof buildCost?.totalMonthly === "number" ? buildCost.totalMonthly : null;
   const costNote = estimatedMonthlyCost !== null
-    ? ` Build Studio estimates $${estimatedMonthlyCost}/mo in real operating costs, added to this simulation's ongoing monthly cost once launched.`
+    ? ` Build Studio estimates $${estimatedMonthlyCost}/mo in operating costs, added to this simulation's ongoing monthly cost once launched.`
     : "";
 
   const latestByAppId = new Map<number, { appName: string; ratingCount: number }>();
@@ -75,18 +75,18 @@ async function buildMarketContext(
   }
 
   const reachNote = internetPenetrationPct !== null && internetPenetrationPct < 85
-    ? ` Internet access in this market is ${internetPenetrationPct.toFixed(0)}%, which tempers organic reach.`
+    ? ` Internet access in this geography is ${internetPenetrationPct.toFixed(0)}%; the simulator treats that only as a reach constraint, not as demand evidence.`
     : "";
   const techNote = activeRelatedReposFound !== null && activeRelatedReposFound >= 2
-    ? ` Research also found ${activeRelatedReposFound} actively-maintained related open-source projects — less unproven technical territory than average, reflected in a lower starting technical risk.`
+    ? ` Research also found ${activeRelatedReposFound} actively-maintained related open-source projects; the simulator uses that only as a technical-territory signal, not commercial proof.`
     : "";
 
   if (latestByAppId.size === 0) {
     return {
       hasResearch: true,
-      competitorTraction: "None",
+      ratingVolumeBand: "None",
       topCompetitorName: null,
-      summary: "Research has been run for this venture, but its App Store search found no competitors — simulation proceeding without a competitive-pressure adjustment." + reachNote + techNote + costNote,
+      summary: "Research has been run for this venture, but its App Store search returned no usable competitor matches. That is not proof of no competition or low demand, so the simulation applies no competitor-based growth adjustment." + reachNote + techNote + costNote,
       internetPenetrationPct,
       activeRelatedReposFound,
       estimatedMonthlyCost,
@@ -94,17 +94,17 @@ async function buildMarketContext(
   }
 
   const entries = [...latestByAppId.values()];
-  const competitorTraction = classifyTraction(entries.map((e) => e.ratingCount));
+  const ratingVolumeBand = classifyRatingVolume(entries.map((e) => e.ratingCount));
   const top = entries.reduce((best, e) => (e.ratingCount > best.ratingCount ? e : best));
 
   return {
     hasResearch: true,
-    competitorTraction,
+    ratingVolumeBand,
     topCompetitorName: top.appName,
     summary:
-      `Research found ${entries.length} competitor${entries.length === 1 ? "" : "s"} in the App Store, ` +
-      `with ${competitorTraction.toLowerCase()} traction overall (top: ${top.appName}, ${top.ratingCount.toLocaleString()} ratings). ` +
-      `This simulation's growth conditions are calibrated to that.${reachNote}${techNote}${costNote}`,
+      `Research found ${entries.length} App Store competitor${entries.length === 1 ? "" : "s"}. ` +
+      `The observed rating-volume band is ${ratingVolumeBand.toLowerCase()} (largest listing: ${top.appName}, ${top.ratingCount.toLocaleString()} ratings). ` +
+      `Rating counts are descriptive evidence only — not downloads, revenue, market share, success, or traction — and do not change simulated growth.${reachNote}${techNote}${costNote}`,
     internetPenetrationPct,
     activeRelatedReposFound,
     estimatedMonthlyCost,
@@ -163,7 +163,7 @@ export async function startSimulation(
     metadata: {
       budget_total: parsed.data.budgetTotal,
       has_research: marketContext.hasResearch,
-      competitor_traction: marketContext.competitorTraction,
+      rating_volume_band: marketContext.ratingVolumeBand ?? null,
       pricing_model: pricingModel,
       reality_mode: realityMode,
     },

@@ -8,17 +8,38 @@ export interface SupabaseEnvInput {
   anonKey: string | undefined;
 }
 
+function normalizeSupabaseUrl(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAnonKey(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 export function isSupabaseConfigured(env: SupabaseEnvInput): boolean {
-  return Boolean(env.url && env.anonKey);
+  return Boolean(normalizeSupabaseUrl(env.url) && normalizeAnonKey(env.anonKey));
 }
 
 export function resolveSupabaseEnv(env: SupabaseEnvInput): SupabaseEnv {
-  if (!isSupabaseConfigured(env)) {
+  const url = normalizeSupabaseUrl(env.url);
+  const anonKey = normalizeAnonKey(env.anonKey);
+
+  if (!url || !anonKey) {
     throw new Error(
-      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and " +
-        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (see .env.example) to a Supabase " +
-        "project's values before signing in.",
+      "Supabase is not configured correctly. Set NEXT_PUBLIC_SUPABASE_URL to a valid http(s) origin and " +
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to a non-empty project key (see .env.example) before signing in.",
     );
   }
-  return { url: env.url as string, anonKey: env.anonKey as string };
+
+  return { url, anonKey };
 }

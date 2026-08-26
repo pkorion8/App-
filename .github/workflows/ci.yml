@@ -55,4 +55,5 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash tests/integration/no_production_fixture_seeds.sh
       - run: bash tests/integration/no_synthetic_research_persistence.sh
+      - run: bash tests/integration/no_simulated_investor_interest.sh
       - run: bash tests/integration/rls_smoke_test.sh

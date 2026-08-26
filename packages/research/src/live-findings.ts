@@ -22,11 +22,11 @@ function guessStoreCountry(geography: string): string {
   return (resolveCountryCode(geography) ?? "US").toLowerCase();
 }
 
-export function classifyTraction(ratingCounts: number[]): "Strong" | "Moderate" | "Weak" {
+export function classifyRatingVolume(ratingCounts: number[]): "High" | "Medium" | "Low" {
   const max = Math.max(0, ...ratingCounts);
-  if (max >= 1000) return "Strong";
-  if (max >= 100) return "Moderate";
-  return "Weak";
+  if (max >= 1000) return "High";
+  if (max >= 100) return "Medium";
+  return "Low";
 }
 
 const NEWCOMER_WINDOW_DAYS = 365;
@@ -105,12 +105,10 @@ export async function researchAppStoreCompetitors(input: {
     };
   }
 
-  const traction = classifyTraction(results.map((r) => r.ratingCount));
-  // Sorted strongest-traction-first so both ends of the list are visible
-  // at a glance: the established leaders, and the weakest-traction match
-  // at the bottom -- a real, derived signal (lowest rating volume in this
-  // result set), not a guess at *why* it's weak, which isn't knowable
-  // from listing data alone.
+  const ratingVolumeBand = classifyRatingVolume(results.map((r) => r.ratingCount));
+  // Sort by observed rating count so both ends of the result set are easy to
+  // inspect. Rating count is descriptive listing evidence only; it is not a
+  // proxy for downloads, revenue, market share, product success, or traction.
   const sorted = [...results].sort((a, b) => b.ratingCount - a.ratingCount);
   const shown = sorted.slice(0, 10);
   const formatEntry = (r: (typeof shown)[number]) => {
@@ -124,10 +122,10 @@ export async function researchAppStoreCompetitors(input: {
   const listLines = shown.map(formatEntry).join("\n");
 
   const weakest = sorted[sorted.length - 1];
-  const weakestNote =
+  const lowestVolumeNote =
     shown.length > 1 && weakest
-      ? `Weakest traction in this set: ${weakest.name} (${weakest.ratingCount.toLocaleString()} ratings) — ` +
-        `could mean an underserved angle, or just a newer/lower-effort listing. Worth a manual look before reading much into it.`
+      ? `Lowest rating volume in this set: ${weakest.name} (${weakest.ratingCount.toLocaleString()} ratings). ` +
+        `That alone does not establish whether the app is newer, smaller, less successful, or serving an underserved angle.`
       : "";
 
   const newcomers = results.filter((r) => isNewcomer(r.releaseDate));
@@ -151,7 +149,7 @@ export async function researchAppStoreCompetitors(input: {
   const metadata: CompetitorFindingMetadata = {
     kind: "competitors",
     totalFound: results.length,
-    traction,
+    ratingVolumeBand,
     newcomerCount: newcomers.length,
     weakest: weakest ? { name: weakest.name, ratingCount: weakest.ratingCount } : null,
     apps: shown.map((r) => ({
@@ -179,13 +177,12 @@ export async function researchAppStoreCompetitors(input: {
     }`,
     userFacingSummary:
       `Real App Store search (${input.geography}, Apple only): ${results.length} ` +
-      `${results.length === 1 ? "app" : "apps"} found${results.length > shown.length ? `, top ${shown.length} shown by ratings volume` : ""}. ` +
-      `Traction signal: ${traction} — based on ratings volume of the closest matches.\n\n` +
-      `${listLines}\n\n${newcomerSentence}${weakestNote ? `\n\n${weakestNote}` : ""}${trendSection}`,
+      `${results.length === 1 ? "app" : "apps"} found${results.length > shown.length ? `, top ${shown.length} shown by rating volume` : ""}. ` +
+      `Rating-volume band: ${ratingVolumeBand} — based only on the largest public App Store rating count in this result set.\n\n` +
+      `${listLines}\n\n${newcomerSentence}${lowestVolumeNote ? `\n\n${lowestVolumeNote}` : ""}${trendSection}`,
     state: "MIXED",
     limitations:
-      "Apple App Store only (no Google Play), matched by name/keyword only, and rating " +
-      "counts are a proxy for traction, not actual download or revenue figures. \"Newcomer\" is " +
+      "Apple App Store only (no Google Play), matched by name/keyword only. Rating counts are listing evidence only and do not establish downloads, revenue, market share, product success, or traction. \"Newcomer\" is " +
       "based on the app's original release date being within the last 12 months, not on repeated checks over time. " +
       "No revenue, subscription pricing, or review content is available from this free API.",
     nextTest: "Cross-check the top matches on Google Play and read their recent reviews directly.",

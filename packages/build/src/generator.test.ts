@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { generateBuildPackage } from "./generator";
 
 describe("generateBuildPackage", () => {
-  it("detects AI + image + payments features and prices them in", () => {
+  it("detects AI + image + payments dependencies without inventing prices", () => {
     const pkg = generateBuildPackage({
-      ventureName: "Nail Design Try-On",
-      ideaText: "An AI app that generates nail art designs and lets users buy the look as a subscription.",
+      ventureName: "Design Try-On",
+      ideaText: "An AI app that generates visual designs and lets users buy the result as a subscription.",
     });
 
     expect(pkg.recommendedStack.notableApis).toEqual(
@@ -17,18 +17,19 @@ describe("generateBuildPackage", () => {
     );
     expect(pkg.costEstimate.items.some((i) => i.name === "LLM API usage")).toBe(true);
     expect(pkg.costEstimate.items.some((i) => i.name === "Image generation API")).toBe(true);
-    expect(pkg.costEstimate.totalMonthly).toBeGreaterThan(0);
+    expect(pkg.costEstimate.totalMonthly).toBeNull();
+    expect(pkg.costEstimate.items.every((i) => i.monthlyCost === null)).toBe(true);
   });
 
-  it("stays at near-zero cost for an idea with none of the detected features", () => {
+  it("keeps provider pricing unpriced when no live pricing source is connected", () => {
     const pkg = generateBuildPackage({
-      ventureName: "Bread Delivery",
-      ideaText: "A simple list of local bakeries and their delivery hours.",
+      ventureName: "Local Directory",
+      ideaText: "A simple list of local businesses and their opening hours.",
     });
 
     expect(pkg.recommendedStack.notableApis).toEqual([]);
-    // Hosting/DB/auth free tier + ~$1/mo domain, nothing else.
-    expect(pkg.costEstimate.totalMonthly).toBe(1);
+    expect(pkg.costEstimate.totalMonthly).toBeNull();
+    expect(pkg.costEstimate.items.every((i) => i.monthlyCost === null)).toBe(true);
   });
 
   it("detects realtime needs for a chat-shaped idea", () => {
@@ -50,12 +51,18 @@ describe("generateBuildPackage", () => {
     ]);
   });
 
-  it("totalMonthly always equals the sum of its own line items", () => {
+  it("labels pricing as unconnected instead of presenting stale vendor numbers", () => {
     const pkg = generateBuildPackage({
       ventureName: "Everything App",
       ideaText: "AI chat assistant with image generation and paid subscriptions.",
     });
-    const sum = pkg.costEstimate.items.reduce((s, i) => s + i.monthlyCost, 0);
-    expect(pkg.costEstimate.totalMonthly).toBe(sum);
+
+    expect(pkg.costEstimate.totalMonthly).toBeNull();
+    expect(pkg.costEstimate.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ monthlyCost: null, note: expect.stringMatching(/not (connected|live-fetched)/i) }),
+      ]),
+    );
+    expect(pkg.recommendedStack.builderOptions.map((o) => o.costNote).join(" ")).not.toMatch(/\$\d+/);
   });
 });

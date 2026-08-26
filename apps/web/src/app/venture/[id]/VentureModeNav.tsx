@@ -55,16 +55,16 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
           {mode === "simple" ? "Simple mode · one clear job at each stage" : "Pro mode · full venture intelligence and advanced tools"}
         </p>
         <div className="inline-flex rounded-full border border-vs-border bg-vs-bg-subtle p-1" aria-label="Experience mode">
-          <button type="button" onClick={() => choose("simple")} className={`rounded-full px-3 py-1 text-xs font-semibold ${mode === "simple" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Simple</button>
-          <button type="button" onClick={() => choose("pro")} className={`rounded-full px-3 py-1 text-xs font-semibold ${mode === "pro" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Pro</button>
+          <button type="button" onClick={() => choose("simple")} className={`min-h-9 rounded-full px-3 py-1 text-xs font-semibold ${mode === "simple" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Simple</button>
+          <button type="button" onClick={() => choose("pro")} className={`min-h-9 rounded-full px-3 py-1 text-xs font-semibold ${mode === "pro" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Pro</button>
         </div>
       </div>
 
-      <nav aria-label="Venture journey" className="flex gap-2 overflow-x-auto pb-1">
+      <nav aria-label="Venture journey" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {journey.map((item, index) => {
           const active = pathname.includes(`/venture/${ventureId}/${item.route}`);
           return (
-            <Link key={item.route} href={`/venture/${ventureId}/${item.route}`} className={`group flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${active ? item.active : "border-transparent bg-vs-bg text-vs-fg-muted hover:border-vs-border hover:bg-vs-bg-subtle hover:text-vs-fg"}`}>
+            <Link key={item.route} href={`/venture/${ventureId}/${item.route}`} className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${active ? item.active : "border-transparent bg-vs-bg text-vs-fg-muted hover:border-vs-border hover:bg-vs-bg-subtle hover:text-vs-fg"}`}>
               <span className={`grid h-7 w-7 place-items-center rounded-lg text-sm ${active ? "bg-white/75 shadow-sm" : "bg-vs-bg-subtle"}`}>{item.icon}</span>
               <span className="flex flex-col leading-tight"><span>{mode === "simple" ? item.simple : item.pro}</span><span className="mt-0.5 text-[10px] font-medium opacity-60">Stage {index + 1}</span></span>
               {active && <span className={`ml-1 h-2 w-2 rounded-full ${item.dot}`} aria-hidden />}
@@ -74,23 +74,23 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
       </nav>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-vs-border/70 pt-2">
-        <Link href={`/venture/${ventureId}/compare`} className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${pathname.includes(`/venture/${ventureId}/compare`) ? "bg-slate-900 text-white" : "border border-vs-border bg-vs-bg text-vs-fg hover:bg-vs-bg-subtle"}`}><span>⇄</span>Compare with another idea</Link>
-        <Link href="/explore" className="flex items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>⌕</span>Explore more ideas</Link>
-        {mode === "simple" && <Link href={`/venture/${ventureId}/investor`} className="flex items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>◎</span>Practice investor meeting</Link>}
+        <Link href={`/venture/${ventureId}/compare`} className={`flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${pathname.includes(`/venture/${ventureId}/compare`) ? "bg-slate-900 text-white" : "border border-vs-border bg-vs-bg text-vs-fg hover:bg-vs-bg-subtle"}`}><span>⇄</span>Compare with another idea</Link>
+        <Link href="/explore" className="flex min-h-10 items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>⌕</span>Explore more ideas</Link>
+        {mode === "simple" && <Link href={`/venture/${ventureId}/investor`} className="flex min-h-10 items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>◎</span>Practice investor meeting</Link>}
       </div>
 
       {mode === "pro" ? (
-        <nav aria-label="Venture intelligence" className="mt-2 flex gap-1 overflow-x-auto border-t border-vs-border/70 pt-2">
+        <nav aria-label="Venture intelligence" className="mt-2 flex gap-1 overflow-x-auto border-t border-vs-border/70 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="shrink-0 px-2 py-2 text-[10px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Deep tools</span>
           {intelligence.map(([label, route, icon]) => {
             const active = pathname.includes(`/venture/${ventureId}/${route}`);
-            return <Link key={route} href={`/venture/${ventureId}/${route}`} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${active ? "bg-slate-900 text-white" : "text-vs-fg-muted hover:bg-vs-bg-subtle hover:text-vs-fg"}`}><span>{icon}</span>{label}</Link>;
+            return <Link key={route} href={`/venture/${ventureId}/${route}`} className={`flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${active ? "bg-slate-900 text-white" : "text-vs-fg-muted hover:bg-vs-bg-subtle hover:text-vs-fg"}`}><span>{icon}</span>{label}</Link>;
           })}
         </nav>
       ) : (
-        <div className="mt-2 flex items-center justify-between gap-3 border-t border-vs-border/70 pt-2 text-xs text-vs-fg-muted">
+        <div className="mt-2 flex flex-col items-start gap-2 border-t border-vs-border/70 pt-2 text-xs text-vs-fg-muted sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <span>Need evidence sources, technology details or scorecards?</span>
-          <button type="button" onClick={() => choose("pro")} className="shrink-0 rounded-full bg-vs-bg-subtle px-3 py-1.5 font-semibold text-vs-primary">Open Pro tools</button>
+          <button type="button" onClick={() => choose("pro")} className="min-h-10 w-full shrink-0 rounded-full bg-vs-bg-subtle px-3 py-1.5 text-center font-semibold text-vs-primary sm:w-auto">Open Pro tools</button>
         </div>
       )}
     </div>

@@ -29,42 +29,41 @@ const MONTH_1_DAY = 30;
 
 export const DEFAULT_MARKET_CONTEXT: MarketContext = {
   hasResearch: false,
-  competitorTraction: "None",
+  ratingVolumeBand: "None",
   topCompetitorName: null,
   summary:
     "No research has been run for this venture yet — this simulation is running " +
-    "without real market context. Run Research first for starting conditions " +
-    "calibrated to actual competitors.",
+    "without real market context. Run Research first for source-backed context.",
   internetPenetrationPct: null,
   activeRelatedReposFound: null,
   estimatedMonthlyCost: null,
 };
 
-// Real competitor traction (from Research's live App Store search) makes
-// user growth harder or easier here -- an established, high-traction field
-// is a real headwind; research that actually confirms no competitors is a
-// real tailwind. This is the one place market context changes the
-// deterministic math, not just the narration.
-//
-// Never having run Research at all is neutral (1.0), not a tailwind:
-// "no evidence of competitors" only means something once Research has
-// actually looked and found none -- absence of a search is not evidence.
-const TRACTION_GROWTH_MULTIPLIER: Record<MarketContext["competitorTraction"], number> = {
+/**
+ * Backward compatibility only for simulation rows created before the launch
+ * source-truth migration. New runs never write competitorTraction, because
+ * App Store rating counts do not establish traction or competitive pressure.
+ * Preserving the old multiplier here avoids changing an already-created
+ * timeline if a founder resumes it after deployment.
+ */
+const LEGACY_TRACTION_GROWTH_MULTIPLIER = {
   None: 1.15,
   Weak: 1.05,
   Moderate: 1.0,
   Strong: 0.85,
-};
+} as const;
 
 function growthMultiplierFor(marketContext: MarketContext): number {
-  return marketContext.hasResearch ? TRACTION_GROWTH_MULTIPLIER[marketContext.competitorTraction] : 1.0;
+  return marketContext.competitorTraction
+    ? LEGACY_TRACTION_GROWTH_MULTIPLIER[marketContext.competitorTraction]
+    : 1.0;
 }
 
 // World Bank internet-access % for the venture's geography -- a real,
-// separate evidence source from competitor traction. Below ~50% meaningfully
-// shrinks the realistically reachable digital audience for a typical
-// consumer app; above ~85% is treated as no meaningful constraint. Missing
-// evidence (null) is neutral, same principle as everywhere else here.
+// separate evidence source from App Store rating volume. Below ~50% shrinks
+// the simulator's modeled digitally reachable audience; above ~85% is
+// treated as no meaningful reach constraint. This is a simulation rule, not
+// a claim about demand. Missing evidence (null) is neutral.
 function reachMultiplierFor(marketContext: MarketContext): number {
   const pct = marketContext.internetPenetrationPct;
   if (pct === null) return 1.0;
@@ -91,19 +90,10 @@ const AD_REVENUE_PER_USER = 0.5;
 function computeMonthlyRevenue(pricingModel: PricingModel, totalUsers: number, dailyNewUsers: number): number {
   switch (pricingModel) {
     case "one_time":
-      // A one-time purchase doesn't compound with the existing user base
-      // like a subscription does -- only this period's new cohort pays,
-      // at a higher single price point than a recurring subscription.
       return Math.round(dailyNewUsers * 30 * CONVERSION_RATE * ONE_TIME_PRICE_PER_CONVERTING_USER);
     case "commission":
-      // Real per-user economics without fabricating a transaction-volume
-      // mechanic that doesn't exist in this engine -- a lower per-user
-      // rate than direct subscription pricing, reflecting that a
-      // marketplace only takes a cut, not the full price.
       return Math.round(totalUsers * CONVERSION_RATE * COMMISSION_PRICE_PER_CONVERTING_USER);
     case "ad_supported":
-      // Every user generates some ad revenue, not just "converting"
-      // ones -- there's no purchase-conversion gate in this model.
       return Math.round(totalUsers * AD_REVENUE_PER_USER);
     case "subscription":
     default:
@@ -228,21 +218,17 @@ export function advanceDay(state: SimulationState): AdvanceDayResult {
       const retentionRate = clamp(RETURNING_USER_FLOOR + next.productQualityPct / 200, 0, 0.9);
       next.returningUsers = Math.round(next.totalUsers * retentionRate);
       next.monthlyRevenue = computeMonthlyRevenue(next.pricingModel, next.totalUsers, dailyNewUsers);
-      // Real operating-cost floor, when Build Studio has actually
-      // estimated one for this venture -- burn rate alone is a spend-down
-      // mechanic tied to the starting simulation budget, not a stand-in
-      // for real hosting/API costs the founder will actually pay post-
-      // launch. Additive, not a replacement: burn still happens regardless.
       next.monthlyCost = Math.round(dailyBurn * 30) + (next.marketContext.estimatedMonthlyCost ?? 0);
 
       if (state.totalUsers < MARKET_EVENT_TRIGGER_USERS && next.totalUsers >= MARKET_EVENT_TRIGGER_USERS) {
         next.stage = "user_or_market_event";
-        const { topCompetitorName, competitorTraction } = next.marketContext;
+        const { topCompetitorName, ratingVolumeBand } = next.marketContext;
         const marketEventDescription =
           topCompetitorName !== null
-            ? `Growth is picking up — and so is competitive attention. Research found ${topCompetitorName} ` +
-              `already has ${competitorTraction.toLowerCase()} traction in this market; expect them to notice too.`
-            : "Growth is picking up — and so is competitive attention. A comparable app just launched a similar feature.";
+            ? `Growth is picking up. Research found ${topCompetitorName} among the App Store results` +
+              `${ratingVolumeBand && ratingVolumeBand !== "None" ? ` in a ${ratingVolumeBand.toLowerCase()} rating-volume set` : ""}. ` +
+              "That rating volume is context only; this competitive-attention event is simulated, not evidence that the competitor noticed or will respond."
+            : "Growth is picking up. The simulator introduces a competitive-attention event here; it is a modeled scenario, not evidence that a real competitor has acted.";
         events.push({
           eventType: "market",
           description: marketEventDescription,

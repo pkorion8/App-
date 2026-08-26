@@ -38,6 +38,10 @@ jobs:
       # calls, or seeded venture data.
       - run: bash tests/integration/production_http_smoke.sh
 
+      # Keep production-required/optional integration variables documented and
+      # protect server-only cron credentials from accidental browser exposure.
+      - run: bash tests/integration/deployment_env_contract.sh
+
   db:
     runs-on: ubuntu-latest
     services:

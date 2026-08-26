@@ -5,7 +5,7 @@ describe("generateBuildPackage", () => {
   it("detects AI + image + payments dependencies without inventing prices", () => {
     const pkg = generateBuildPackage({
       ventureName: "Design Try-On",
-      ideaText: "An AI app that generates visual designs and lets users buy the result as a subscription.",
+      ideaText: "An AI app that generates image designs and lets users buy the result as a subscription.",
     });
 
     expect(pkg.recommendedStack.notableApis).toEqual(

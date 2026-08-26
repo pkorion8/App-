@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { clarificationSchema } from "@venture-sandbox/schemas";
 import {
-  generateDemoFindings,
   researchAppStoreCompetitors,
   researchGitHubActivity,
   researchMarketIndicators,
@@ -56,13 +55,10 @@ export async function startResearch(
   if (ventureError || !venture) {
     return { status: "error", message: "Couldn't find this venture." };
   }
-  await supabase.from("ventures").update({ status: "researching" }).eq("id", ventureId);
 
-  // Every run fires 3 live calls against free, unauthenticated external
-  // APIs (App Store, World Bank, GitHub) -- a cooldown here isn't about
-  // this app's own load, it's protecting those APIs' shared IP-based rate
-  // limits from a spam-click loop that would degrade or block the source
-  // for every user, not just this one.
+  // Every run fires live calls against free external APIs. The cooldown is
+  // deliberately per venture so a spam-click loop cannot burn shared
+  // provider rate limits for other users.
   const { data: recentMission } = await supabase
     .from("research_missions")
     .select("created_at")
@@ -85,6 +81,18 @@ export async function startResearch(
 
   const { targetUser, geography } = parsed.data;
 
+  // Persist the clarification the user just confirmed so the rest of the
+  // venture flow (Shape, Compare, Simulator, Build) uses the same audience
+  // and geography instead of leaving Research as an isolated branch.
+  const { error: ventureUpdateError } = await supabase
+    .from("ventures")
+    .update({ target_user: targetUser, geography, status: "researching" })
+    .eq("id", ventureId);
+
+  if (ventureUpdateError) {
+    return { status: "error", message: ventureUpdateError.message };
+  }
+
   const { data: mission, error: missionError } = await supabase
     .from("research_missions")
     .insert({
@@ -98,23 +106,17 @@ export async function startResearch(
     .single();
 
   if (missionError || !mission) {
+    await supabase.from("ventures").update({ status: "draft" }).eq("id", ventureId);
     return {
       status: "error",
       message: missionError?.message ?? "Couldn't start research.",
     };
   }
 
-  const demoFindings = generateDemoFindings({
-    ventureName: venture.name,
-    ideaText: venture.raw_idea_text,
-    targetUser,
-    geography,
-  });
-
   // Most recent snapshot per app (by app_id) for this venture, so the App
-  // Store search below can show real trend since last research run --
-  // deduped client-side rather than with a DISTINCT ON query, since this
-  // is a small per-venture row count and keeps the query trivial.
+  // Store search below can show the change in public rating count since the
+  // previous research run. Rating-count movement is not downloads, revenue,
+  // market share, or verified traction.
   const { data: snapshotRows } = await supabase
     .from("research_competitor_snapshots")
     .select("app_id, rating_count, checked_at")
@@ -129,13 +131,10 @@ export async function startResearch(
     previousSnapshots.push({ appId: row.app_id, ratingCount: row.rating_count, checkedAt: row.checked_at });
   }
 
-  // Slots 0, 4, and 5 try real, free sources first (App Store search,
-  // World Bank Open Data, GitHub search); each falls back to its honest
-  // DEMO placeholder if the live call fails or finds nothing. Slots 1-3
-  // stay DEMO until their sources (YouTube, Trends, etc.) are connected too.
-  // Slots 6-8 (revenue, reviews, growth trend) have no live-source branch
-  // at all and never will until either a paid provider or new scheduled-
-  // tracking infrastructure is in place -- see demo-findings.ts.
+  // Only persist findings returned by connected live sources. If a source
+  // fails, returns no match, or is not connected, it contributes no finding;
+  // the Research UI exposes source availability separately through the
+  // source registry. We intentionally do not manufacture fallback/demo rows.
   const [liveCompetitorFinding, liveMarketIndicators, liveGitHubActivity] = await Promise.all([
     researchAppStoreCompetitors({
       ventureName: venture.name,
@@ -147,36 +146,31 @@ export async function startResearch(
     researchGitHubActivity({ ventureName: venture.name, ideaText: venture.raw_idea_text }),
   ]);
 
-  const findingsToInsert = demoFindings.map((f, i) => {
-    if (i === 0 && liveCompetitorFinding) {
-      return { ...liveCompetitorFinding, isDemo: false };
-    }
-    if (i === 4 && liveMarketIndicators) {
-      return { ...liveMarketIndicators, isDemo: false };
-    }
-    if (i === 5 && liveGitHubActivity) {
-      return { ...liveGitHubActivity, isDemo: false };
-    }
-    return { ...f, isDemo: true };
-  });
+  const findingsToInsert = [liveCompetitorFinding, liveMarketIndicators, liveGitHubActivity]
+    .filter((finding): finding is NonNullable<typeof finding> => Boolean(finding))
+    .map((finding) => ({ ...finding, isDemo: false as const }));
 
-  const { error: findingsError } = await supabase.from("findings").insert(
-    findingsToInsert.map((f) => ({
-      mission_id: mission.id,
-      workspace_id: venture.workspace_id,
-      normalized_claim: f.normalizedClaim,
-      user_facing_summary: f.userFacingSummary,
-      state: f.state,
-      is_demo: f.isDemo,
-      limitations: f.limitations,
-      next_test: f.nextTest,
-      metadata: "metadata" in f ? (f.metadata as unknown as Record<string, unknown> | null) : null,
-    })),
-  );
+  if (findingsToInsert.length > 0) {
+    const { error: findingsError } = await supabase.from("findings").insert(
+      findingsToInsert.map((f) => ({
+        mission_id: mission.id,
+        workspace_id: venture.workspace_id,
+        normalized_claim: f.normalizedClaim,
+        user_facing_summary: f.userFacingSummary,
+        state: f.state,
+        is_demo: false,
+        limitations: f.limitations,
+        next_test: f.nextTest,
+        metadata: "metadata" in f ? (f.metadata as unknown as Record<string, unknown> | null) : null,
+      })),
+    );
 
-  if (findingsError) {
-    return { status: "error", message: findingsError.message };
+    if (findingsError) {
+      await supabase.from("ventures").update({ status: "draft" }).eq("id", ventureId);
+      return { status: "error", message: findingsError.message };
+    }
   }
+
   await supabase.from("ventures").update({ status: "researched" }).eq("id", ventureId);
 
   if (liveCompetitorFinding && liveCompetitorFinding.snapshots.length > 0) {
@@ -191,8 +185,6 @@ export async function startResearch(
     );
   }
 
-  const liveFindingsCount = findingsToInsert.filter((f) => !f.isDemo).length;
-
   await supabase.from("audit_log").insert({
     actor_id: user.id,
     workspace_id: venture.workspace_id,
@@ -202,7 +194,7 @@ export async function startResearch(
     metadata: {
       venture_id: venture.id,
       total_findings: findingsToInsert.length,
-      live_findings: liveFindingsCount,
+      live_findings: findingsToInsert.length,
     },
   });
 
@@ -214,7 +206,7 @@ export async function startResearch(
     entityId: mission.id,
     metadata: {
       total_findings: findingsToInsert.length,
-      live_findings: liveFindingsCount,
+      live_findings: findingsToInsert.length,
     },
   });
 

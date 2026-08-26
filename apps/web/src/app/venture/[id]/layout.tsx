@@ -13,10 +13,10 @@ export default async function VentureLayout({ children, params }: { children: Re
   const { data: venture } = await supabase.from("ventures").select("id, name, status, target_user, geography").eq("id", id).maybeSingle();
   if (!venture) notFound();
   return <>
-    <header className="sticky top-0 z-30 border-b border-vs-border bg-vs-bg/90 shadow-sm backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link href="/dashboard" className="text-sm text-vs-fg-muted hover:text-vs-fg">← My Ventures</Link>
-        <Link href={`/venture/${id}`} className="min-w-0 flex-1 border-l border-vs-border pl-4"><span className="block truncate font-semibold text-vs-fg">{venture.name}</span><span className="block truncate text-xs text-vs-fg-muted">{venture.target_user || "Who it is for: not decided yet"} · {venture.geography || "Launch market: not decided yet"}</span></Link>
+    <header className="z-30 border-b border-vs-border bg-vs-bg/90 shadow-sm backdrop-blur-xl sm:sticky sm:top-0">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
+        <Link href="/dashboard" className="shrink-0 text-xs text-vs-fg-muted hover:text-vs-fg sm:text-sm">← My Ventures</Link>
+        <Link href={`/venture/${id}`} className="min-w-0 flex-1 border-l border-vs-border pl-3 sm:pl-4"><span className="block truncate font-semibold text-vs-fg">{venture.name}</span><span className="block truncate text-xs text-vs-fg-muted">{venture.target_user || "Who it is for: not decided yet"} · {venture.geography || "Launch market: not decided yet"}</span></Link>
         <span className="hidden rounded-full border border-vs-border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-vs-fg-muted sm:inline">{venture.status.replaceAll("_", " ")}</span>
       </div>
       <VentureModeNav ventureId={id} />

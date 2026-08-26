@@ -206,10 +206,10 @@ export default async function ComparePage({
           <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Research highlights</p>
           <p className="mt-1 text-xs text-vs-fg-muted">Only non-demo metadata from each venture&apos;s own latest research run is used here.</p>
 
-          <p className="mt-3 text-xs font-medium text-vs-fg-muted">Competitor traction signal</p>
+          <p className="mt-3 text-xs font-medium text-vs-fg-muted">App Store rating-volume band</p>
           <div className="mt-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <StatTile label={a.venture.name} value={a.competitors ? `${a.competitors.traction} traction` : "Not researched yet"} hint={a.competitors ? `${a.competitors.totalFound} App Store matches found; ratings volume is a proxy, not downloads or revenue` : undefined} />
-            <StatTile label={b.venture.name} value={b.competitors ? `${b.competitors.traction} traction` : "Not researched yet"} hint={b.competitors ? `${b.competitors.totalFound} App Store matches found; ratings volume is a proxy, not downloads or revenue` : undefined} />
+            <StatTile label={a.venture.name} value={a.competitors ? `${a.competitors.traction} rating-volume band` : "Not researched yet"} hint={a.competitors ? `${a.competitors.totalFound} App Store matches found; this band is derived only from rating counts, not downloads, revenue, market share or product success` : undefined} />
+            <StatTile label={b.venture.name} value={b.competitors ? `${b.competitors.traction} rating-volume band` : "Not researched yet"} hint={b.competitors ? `${b.competitors.totalFound} App Store matches found; this band is derived only from rating counts, not downloads, revenue, market share or product success` : undefined} />
           </div>
 
           <p className="mt-3 text-xs font-medium text-vs-fg-muted">Market context (population)</p>

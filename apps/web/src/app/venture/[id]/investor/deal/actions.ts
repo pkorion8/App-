@@ -64,7 +64,9 @@ export async function respondToSimulatedOffer(formData: FormData) {
   await verified.db.from("investor_offers").update({ offer_state: response }).eq("id", offerId).eq("investor_session_id", sessionId);
   await verified.db.from("investor_sessions").update({
     stage: response === "accepted" ? "closed" : "passed",
-    outcome_reason: response === "declined" ? "Founder declined the simulated offer." : null,
+    outcome_reason: response === "accepted"
+      ? "Founder accepted the terms in the negotiation rehearsal. This is not a real investor offer or transaction."
+      : "Founder declined the terms in the negotiation rehearsal. This is not a real investor decision.",
   }).eq("id", sessionId);
   revalidatePath(`/venture/${ventureId}/investor/deal`);
   revalidatePath(`/venture/${ventureId}/investor`);

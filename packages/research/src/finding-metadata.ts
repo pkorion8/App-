@@ -29,7 +29,18 @@ export interface CompetitorTrendSummary {
 export interface CompetitorFindingMetadata {
   kind: "competitors";
   totalFound: number;
-  traction: "Strong" | "Moderate" | "Weak";
+  /**
+   * Descriptive band derived only from the largest App Store rating count in
+   * the returned result set. It is not downloads, revenue, market share,
+   * product success, or verified traction.
+   */
+  ratingVolumeBand?: "High" | "Medium" | "Low";
+  /**
+   * @deprecated Historical rows stored this rating-count band under a
+   * misleading `traction` key. Keep it optional for backward-compatible
+   * reads while new UI/code migrates to `ratingVolumeBand`.
+   */
+  traction?: "Strong" | "Moderate" | "Weak";
   newcomerCount: number;
   weakest: { name: string; ratingCount: number } | null;
   apps: CompetitorAppSummary[];

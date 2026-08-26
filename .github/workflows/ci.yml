@@ -53,4 +53,5 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
+      - run: bash tests/integration/no_production_fixture_seeds.sh
       - run: bash tests/integration/rls_smoke_test.sh

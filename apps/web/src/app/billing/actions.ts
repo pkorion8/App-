@@ -52,20 +52,27 @@ export async function createCheckoutSession(): Promise<void> {
   const stripe = createStripeClient(secretKey as string);
   const origin = await getOrigin();
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: proPriceId as string, quantity: 1 }],
-    customer: billing?.stripe_customer_id ?? undefined,
-    customer_email: billing?.stripe_customer_id ? undefined : (user.email ?? undefined),
-    client_reference_id: workspace.id,
-    metadata: { workspace_id: workspace.id },
-    subscription_data: { metadata: { workspace_id: workspace.id } },
-    success_url: `${origin}/billing?checkout=success`,
-    cancel_url: `${origin}/billing?checkout=cancel`,
-  });
+  let sessionUrl: string | null = null;
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: proPriceId as string, quantity: 1 }],
+      customer: billing?.stripe_customer_id ?? undefined,
+      customer_email: billing?.stripe_customer_id ? undefined : (user.email ?? undefined),
+      client_reference_id: workspace.id,
+      metadata: { workspace_id: workspace.id },
+      subscription_data: { metadata: { workspace_id: workspace.id } },
+      success_url: `${origin}/billing?checkout=success`,
+      cancel_url: `${origin}/billing?checkout=cancel`,
+    });
+    sessionUrl = session.url;
+  } catch (error) {
+    console.error("Failed to create Stripe Checkout session", error);
+    redirect("/billing?error=checkout_failed");
+  }
 
-  if (session.url) {
-    redirect(session.url);
+  if (sessionUrl) {
+    redirect(sessionUrl);
   }
   redirect("/billing?error=checkout_failed");
 }
@@ -84,10 +91,20 @@ export async function createPortalSession(): Promise<void> {
   const stripe = createStripeClient(secretKey as string);
   const origin = await getOrigin();
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: billing.stripe_customer_id as string,
-    return_url: `${origin}/billing`,
-  });
+  let sessionUrl: string | null = null;
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: billing.stripe_customer_id as string,
+      return_url: `${origin}/billing`,
+    });
+    sessionUrl = session.url;
+  } catch (error) {
+    console.error("Failed to create Stripe Billing Portal session", error);
+    redirect("/billing?error=portal_failed");
+  }
 
-  redirect(session.url);
+  if (sessionUrl) {
+    redirect(sessionUrl);
+  }
+  redirect("/billing?error=portal_failed");
 }

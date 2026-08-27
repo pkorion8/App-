@@ -38,7 +38,15 @@ export async function selectExperiment(formData: FormData) {
   if (error) throw new Error("Monetization persistence is unavailable until migration 0011 is applied.");
 
   if (experiment.pricingModelOverride) {
-    await db.from("venture_shapes").update({ pricing_model: experiment.pricingModelOverride }).eq("venture_id", ventureId);
+    const { data: updatedShape, error: shapeError } = await db
+      .from("venture_shapes")
+      .update({ pricing_model: experiment.pricingModelOverride })
+      .eq("venture_id", ventureId)
+      .select("venture_id")
+      .maybeSingle();
+    if (shapeError || !updatedShape) {
+      throw new Error("The monetization experiment was saved, but its pricing-model assumption could not be synchronized to the venture shape. Please retry after the venture shape is available.");
+    }
   }
   revalidatePath(`/venture/${ventureId}/monetization`);
   revalidatePath(`/venture/${ventureId}/simulate`);

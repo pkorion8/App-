@@ -49,3 +49,25 @@ for route in "${routes[@]}"; do
   fi
   echo "${route} -> HTTP ${status}"
 done
+
+# Exercise the built auth callback without a code so no Supabase request is
+# made. The callback must fail safely back to sign-in and must never honor an
+# external or protocol-relative redirect target.
+auth_headers="$(curl --silent --show-error --dump-header - --output /dev/null --max-time 10 \
+  "${BASE_URL}/auth/callback?redirect=%2F%2Fevil.example")"
+auth_status="$(printf '%s\n' "${auth_headers}" | awk 'NR==1 {print $2}')"
+auth_location="$(printf '%s\n' "${auth_headers}" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+
+if [[ "${auth_status}" -lt 300 || "${auth_status}" -ge 400 ]]; then
+  echo "Auth callback smoke failed: expected redirect, got HTTP ${auth_status:-unknown}"
+  cat "${LOG_FILE}"
+  exit 1
+fi
+
+if [[ -z "${auth_location}" || "${auth_location}" != *"/sign-in"* || "${auth_location}" == *"evil.example"* ]]; then
+  echo "Auth callback smoke failed: unsafe or missing redirect location: ${auth_location:-<empty>}"
+  cat "${LOG_FILE}"
+  exit 1
+fi
+
+echo "/auth/callback unsafe redirect -> HTTP ${auth_status}, safe sign-in redirect"

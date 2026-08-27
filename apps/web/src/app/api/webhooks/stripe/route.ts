@@ -69,8 +69,26 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseServiceClient(supabaseUrl, serviceRoleKey);
 
   switch (event.type) {
-    case "checkout.session.completed": {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // A Checkout Session can complete before a delayed payment method has
+      // actually settled. Never grant Pro access from an unpaid completion;
+      // Stripe will send checkout.session.async_payment_succeeded if that
+      // payment later succeeds. Trials/no-payment-required sessions are valid.
+      if (event.type === "checkout.session.completed" && session.payment_status === "unpaid") {
+        logEvent({
+          event: "billing.checkout_payment_pending",
+          actorId: null,
+          workspaceId: session.metadata?.workspace_id ?? session.client_reference_id ?? null,
+          entityType: "stripe_checkout_session",
+          entityId: session.id,
+          metadata: { payment_status: session.payment_status },
+        });
+        break;
+      }
+
       const workspaceId = session.metadata?.workspace_id ?? session.client_reference_id;
       if (workspaceId) {
         const { data, error } = await supabase
@@ -100,6 +118,7 @@ export async function POST(request: NextRequest) {
           workspaceId,
           entityType: "billing_account",
           entityId: workspaceId,
+          metadata: { stripe_event_type: event.type, payment_status: session.payment_status },
         });
       } else {
         // A retry cannot repair missing checkout metadata, so record this as a
@@ -109,7 +128,7 @@ export async function POST(request: NextRequest) {
           event: "billing.checkout_completed_missing_workspace_id",
           actorId: null,
           workspaceId: null,
-          metadata: { stripe_session_id: session.id },
+          metadata: { stripe_session_id: session.id, stripe_event_type: event.type },
         });
       }
       break;

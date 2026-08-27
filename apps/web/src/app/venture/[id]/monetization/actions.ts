@@ -26,6 +26,13 @@ export async function selectExperiment(formData: FormData) {
   }).find((e) => e.key === key);
   if (!experiment) throw new Error("Invalid monetization experiment");
 
+  // A pricing-model override must have a venture shape to synchronize into.
+  // Validate that prerequisite before persisting the selected experiment so a
+  // missing shape cannot leave a saved selection that Simulator cannot honor.
+  if (experiment.pricingModelOverride && !shape) {
+    throw new Error("Shape the venture before selecting a monetization experiment that changes the pricing model.");
+  }
+
   const { error } = await db.from("monetization_experiments").upsert({
     venture_id: ventureId,
     workspace_id: venture.workspace_id,

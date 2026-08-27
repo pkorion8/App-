@@ -3,7 +3,6 @@ export type MonetizationContext = {
   audience?: string | null;
   product?: string | null;
   pricingModel?: string | null;
-  monthlyCost?: number | null;
   hasCompetitorPricing: boolean;
 };
 
@@ -23,7 +22,7 @@ export function createMonetizationExperiments(c: MonetizationContext): Monetizat
   const audience = c.audience || "the intended audience";
   const geo = c.geography || "the chosen market";
   const product = c.product || "the saved product concept";
-  const cost = c.monthlyCost == null ? "No Build Studio cost estimate exists yet." : `Build Studio estimates a $${c.monthlyCost}/month operating-cost floor.`;
+  const cost = "Source-backed operating-cost pricing is not connected. Verify current vendor pricing before using cost assumptions.";
   const pricing = c.hasCompetitorPricing ? "Connected competitor pricing evidence is available." : "Competitor price evidence does not exist in connected sources.";
 
   return [

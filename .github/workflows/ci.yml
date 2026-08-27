@@ -65,4 +65,5 @@ jobs:
       - run: bash tests/integration/no_production_fixture_seeds.sh
       - run: bash tests/integration/no_synthetic_research_persistence.sh
       - run: bash tests/integration/no_simulated_investor_interest.sh
+      - run: bash tests/integration/billing_webhook_retry_contract.sh
       - run: bash tests/integration/rls_smoke_test.sh

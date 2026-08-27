@@ -41,6 +41,15 @@ async function loadWorkspaceAndBilling() {
   return { supabase, user, workspace, billing };
 }
 
+function hasExistingPaidSubscription(
+  billing: { plan?: string | null; status?: string | null; stripe_subscription_id?: string | null } | null,
+): boolean {
+  if (!billing) return false;
+  if (billing.plan === "pro" && billing.status !== "canceled") return true;
+  if (!billing.stripe_subscription_id) return false;
+  return billing.status !== "canceled" && billing.status !== "incomplete_expired";
+}
+
 export async function createCheckoutSession(): Promise<void> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const proPriceId = process.env.STRIPE_PRICE_ID_PRO;
@@ -49,6 +58,10 @@ export async function createCheckoutSession(): Promise<void> {
   }
 
   const { user, workspace, billing } = await loadWorkspaceAndBilling();
+  if (hasExistingPaidSubscription(billing)) {
+    redirect("/billing?error=already_subscribed");
+  }
+
   const stripe = createStripeClient(secretKey as string);
   const origin = await getOrigin();
 

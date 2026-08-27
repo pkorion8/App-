@@ -3,13 +3,17 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createStripeClient, isStripeConfigured } from "@venture-sandbox/integrations/stripe";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-function getOrigin(): string {
-  const h = headers();
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  const host = h.get("host");
-  return `${proto}://${host}`;
+async function getOrigin(): Promise<string> {
+  const requestHeaders = await headers();
+  return resolvePublicOrigin({
+    configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    forwardedHost: requestHeaders.get("x-forwarded-host"),
+    forwardedProto: requestHeaders.get("x-forwarded-proto"),
+    requestOrigin: requestHeaders.get("origin"),
+  });
 }
 
 async function loadWorkspaceAndBilling() {
@@ -46,7 +50,7 @@ export async function createCheckoutSession(): Promise<void> {
 
   const { user, workspace, billing } = await loadWorkspaceAndBilling();
   const stripe = createStripeClient(secretKey as string);
-  const origin = getOrigin();
+  const origin = await getOrigin();
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -78,7 +82,7 @@ export async function createPortalSession(): Promise<void> {
   }
 
   const stripe = createStripeClient(secretKey as string);
-  const origin = getOrigin();
+  const origin = await getOrigin();
 
   const session = await stripe.billingPortal.sessions.create({
     customer: billing.stripe_customer_id as string,

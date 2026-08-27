@@ -12,19 +12,16 @@ export async function selectExperiment(formData: FormData) {
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const [{ data: venture }, { data: shape }, { data: build }] = await Promise.all([
+  const [{ data: venture }, { data: shape }] = await Promise.all([
     db.from("ventures").select("workspace_id,target_user,geography,raw_idea_text").eq("id", ventureId).maybeSingle(),
     db.from("venture_shapes").select("pricing_model,problem_statement").eq("venture_id", ventureId).maybeSingle(),
-    db.from("build_packages").select("cost_estimate").eq("venture_id", ventureId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (!venture) throw new Error("Invalid venture");
-  const cost = (build?.cost_estimate || {}) as { totalMonthly?: number };
   const experiment = createMonetizationExperiments({
     geography: venture.geography,
     audience: venture.target_user,
     product: shape?.problem_statement || venture.raw_idea_text,
     pricingModel: shape?.pricing_model,
-    monthlyCost: cost.totalMonthly,
     hasCompetitorPricing: false,
   }).find((e) => e.key === key);
   if (!experiment) throw new Error("Invalid monetization experiment");

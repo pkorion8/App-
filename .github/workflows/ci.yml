@@ -69,4 +69,5 @@ jobs:
       - run: bash tests/integration/billing_checkout_subscription_contract.sh
       - run: bash tests/integration/monetization_selection_consistency_contract.sh
       - run: bash tests/integration/monitor_status_sync_contract.sh
+      - run: bash tests/integration/build_persistence_consistency_contract.sh
       - run: bash tests/integration/rls_smoke_test.sh

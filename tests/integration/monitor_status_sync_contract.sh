@@ -21,10 +21,15 @@ for token in required:
     if token not in action:
         raise SystemExit(f"monitor status-sync contract missing: {token}")
 
+outcome_insert = action.index('db.from("venture_outcomes").insert')
+status_update = action.index('.update({ status: "learning" })')
 failure_check = action.index('if (statusError || !updatedVenture)')
 success_log = action.index('logEvent({ event: "venture_outcome.logged"')
-if failure_check > success_log:
-    raise SystemExit("monitor success event must only be logged after venture status synchronization succeeds")
+
+if not (outcome_insert < status_update < failure_check < success_log):
+    raise SystemExit(
+        "monitor write ordering must remain outcome insert -> learning status sync -> failure check -> success event"
+    )
 
 print("monitor status-sync contract passed")
 PY

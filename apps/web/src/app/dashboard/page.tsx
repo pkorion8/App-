@@ -20,7 +20,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: ventures } = await supabase.from("ventures").select("id, name, raw_idea_text, status, created_at, target_user, geography").order("created_at", { ascending: false });
+  const { data: membership } = await supabase
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+  const workspaceId = membership?.workspace_id ?? null;
+
+  const { data: ventures } = workspaceId
+    ? await supabase
+        .from("ventures")
+        .select("id, name, raw_idea_text, status, created_at, target_user, geography")
+        .eq("workspace_id", workspaceId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
   const compareStart = ventures && ventures.length >= 2 ? ventures[0]?.id : null;
 
   return (

@@ -9,6 +9,12 @@ import { safeInternalDestination } from "@/lib/safe-internal-destination";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/venture", "/billing", "/channels"];
 
+function isProtectedPath(pathname: string) {
+  return PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -50,7 +56,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = isProtectedPath(pathname);
 
   if (isProtected && !user) {
     const redirectUrl = new URL("/sign-in", request.url);

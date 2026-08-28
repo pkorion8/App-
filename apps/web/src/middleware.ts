@@ -5,8 +5,15 @@ import {
   resolveSupabaseEnv,
   type Database,
 } from "@venture-sandbox/integrations";
+import { safeInternalDestination } from "@/lib/safe-internal-destination";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/venture", "/billing", "/channels"];
+
+function isProtectedPath(pathname: string) {
+  return PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -49,16 +56,22 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = isProtectedPath(pathname);
 
   if (isProtected && !user) {
     const redirectUrl = new URL("/sign-in", request.url);
-    redirectUrl.searchParams.set("redirect", pathname);
+    // Preserve the exact internal destination, including query state such as
+    // ?run=... or ?session=..., and use the same `next` parameter consumed
+    // by the sign-in page. Previously middleware sent `redirect`, so users
+    // were silently dropped on /dashboard after authenticating.
+    const destination = `${pathname}${request.nextUrl.search}`;
+    redirectUrl.searchParams.set("next", destination);
     return NextResponse.redirect(redirectUrl);
   }
 
   if (pathname === "/sign-in" && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const destination = safeInternalDestination(request.nextUrl.searchParams.get("next"));
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   return response;

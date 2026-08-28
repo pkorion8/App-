@@ -21,14 +21,14 @@ function SubmitButton({ waitSeconds }: { waitSeconds: number }) {
   );
 }
 
-export function SignInForm() {
+export function SignInForm({ next = "/dashboard" }: { next?: string }) {
   const [state, formAction] = useFormState(sendSignInLink, initialState);
   const [waitSeconds, setWaitSeconds] = useState(0);
 
   useEffect(() => {
-    const next = state.retryAfterSeconds ?? 0;
-    setWaitSeconds(next);
-    if (next <= 0) return;
+    const nextWait = state.retryAfterSeconds ?? 0;
+    setWaitSeconds(nextWait);
+    if (nextWait <= 0) return;
 
     const timer = window.setInterval(() => {
       setWaitSeconds((current) => {
@@ -56,6 +56,7 @@ export function SignInForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      <input type="hidden" name="next" value={next} />
       <div>
         <Label htmlFor="email">Email</Label>
         <Input

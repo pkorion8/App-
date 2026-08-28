@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { Button } from "@venture-sandbox/ui";
 import { advanceSimDay, advanceToNextCheckpoint, submitSimDecision } from "./actions";
@@ -33,7 +34,14 @@ export function RunControls({
   const [isPending, startTransition] = useTransition();
 
   if (isComplete) {
-    return <p className="text-sm text-vs-fg-muted">This timeline has finished. Start another run or rewind from a saved checkpoint to explore a different path.</p>;
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-vs-fg-muted">This timeline has finished. Start another independent run or rewind from a saved checkpoint to explore a different path.</p>
+        <Link href={`/venture/${ventureId}/simulate/new`} className="inline-flex rounded-vs-sm border border-vs-border px-3 py-2 text-sm font-semibold text-vs-fg transition hover:border-vs-primary hover:text-vs-primary">
+          Start fresh simulation
+        </Link>
+      </div>
+    );
   }
 
   if (awaitingDecision) {
@@ -104,6 +112,9 @@ export function RunControls({
         >
           Advance to next decision
         </Button>
+        <Link href={`/venture/${ventureId}/simulate/new`} className="inline-flex items-center rounded-vs-sm border border-vs-border px-3 py-2 text-sm font-semibold text-vs-fg transition hover:border-vs-primary hover:text-vs-primary">
+          Start fresh simulation
+        </Link>
         {isPending && <span className="self-center text-xs text-vs-fg-muted">Processing timeline…</span>}
       </div>
     </div>

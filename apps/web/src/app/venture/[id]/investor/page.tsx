@@ -9,9 +9,9 @@ import { answerInvestorQuestion, startInvestorSession } from "./actions";
 const STAGES = ["Screening", "Meeting", "Diligence", "Committee", "Negotiation", "Close / pass"];
 const STAGE_INDEX: Record<string, number> = { readiness: 0, screening: 0, meeting: 1, diligence: 2, committee: 3, negotiation: 4, closed: 5, passed: 5 };
 
-export default async function InvestorWorld({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ session?: string }> }) {
+export default async function InvestorWorld({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ session?: string; new?: string }> }) {
   const { id } = await params;
-  const { session: requestedSession } = await searchParams;
+  const { session: requestedSession, new: startNew } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const db = supabase as any;
   const [{ data: venture }, { data: shape }, { data: research }, { data: simulation }] = await Promise.all([
@@ -23,7 +23,7 @@ export default async function InvestorWorld({ params, searchParams }: { params: 
   if (!venture) notFound();
 
   const { data: sessions } = await db.from("investor_sessions").select("*").eq("venture_id", id).order("created_at", { ascending: false });
-  const session = (requestedSession ? sessions?.find((s: any) => s.id === requestedSession) : sessions?.[0]) || null;
+  const session = startNew === "1" ? null : (requestedSession ? sessions?.find((s: any) => s.id === requestedSession) : sessions?.[0]) || null;
   const coverage = [venture.target_user, shape?.problem_statement, research?.id, simulation?.id].filter(Boolean).length;
 
   let messages: any[] = [];
@@ -95,7 +95,7 @@ export default async function InvestorWorld({ params, searchParams }: { params: 
             <h2 className="mt-3 max-w-3xl text-2xl font-semibold leading-9">{ended ? session.outcome_reason : questions[session.question_index] || "The structured questions are complete. The investor can now decide whether to invite deeper diligence."}</h2>
             {state.meeting_status === "challenging" && !ended && <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm leading-6 text-amber-100"><strong>The investor is pushing back.</strong> Your last answer did not resolve the question. Answer it again with clearer reasoning or evidence.</div>}
             {!ended && questions[session.question_index] && <div className="mt-6 rounded-2xl bg-white p-5 text-slate-950"><AnswerForm action={answerInvestorQuestion} sessionId={session.id} ventureId={id}/></div>}
-            {ended && <div className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-5"><p className="font-semibold text-rose-100">This branch of the investor journey has ended.</p><p className="mt-2 text-sm text-rose-200/80">You can start another rehearsal, improve the venture, or return later with stronger evidence.</p><Link href={`/venture/${id}/investor`} className="mt-4 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950">Start another meeting</Link></div>}
+            {ended && <div className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-5"><p className="font-semibold text-rose-100">This branch of the investor journey has ended.</p><p className="mt-2 text-sm text-rose-200/80">You can start another rehearsal, improve the venture, or return later with stronger evidence.</p><Link href={`/venture/${id}/investor?new=1`} className="mt-4 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950">Start another meeting</Link></div>}
           </section>
 
           <aside className="border-t border-white/10 p-5 lg:border-l lg:border-t-0">

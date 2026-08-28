@@ -8,9 +8,24 @@ async function ventureWorkspace(ventureId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
+
   const db = supabase as any;
-  const { data: venture } = await db.from("ventures").select("workspace_id").eq("id", ventureId).maybeSingle();
-  return venture ? { db, workspaceId: venture.workspace_id as string } : null;
+  const { data: membership } = await db
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+  if (!membership?.workspace_id) return null;
+
+  const { data: venture } = await db
+    .from("ventures")
+    .select("id")
+    .eq("id", ventureId)
+    .eq("workspace_id", membership.workspace_id)
+    .maybeSingle();
+
+  return venture ? { db, workspaceId: membership.workspace_id as string } : null;
 }
 
 export async function addVentureNote(formData: FormData) {

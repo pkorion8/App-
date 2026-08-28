@@ -1,62 +1,66 @@
-# Venture Sandbox
+# Sim Venture
 
-Research a venture idea, simulate building and launching it, and decide
-before spending real money.
+Sim Venture helps a user research a venture idea, compare it with another venture, rehearse launch scenarios, prepare a build plan, record reported outcomes, and practice investor conversations before spending real money.
 
-This repository implements **Slice 1 (Foundation)** of the vertical-slice
-plan in the master spec (§21.2): a user can sign in and create/open a
-venture. Later slices (research engine, staged simulator, Build Studio,
-etc.) are not implemented yet — see `packages/research`, `packages/ai`,
-`packages/simulator`, and `packages/build`, which are reserved placeholders.
+The product preserves two levels of detail: **Simple** mode for the main guided journey and **Pro** mode for deeper tools. Evidence-facing features are source-bound: the app does not fabricate market data, traction, pricing, success probability, or investor interest.
+
+## Current product surfaces
+
+- **Explore / Search** — searches connected public sources and can start a venture from a search result.
+- **Research** — collects evidence from connected sources and shows source availability and limitations. It does not create synthetic fallback findings when live sources return nothing.
+- **Compare** — compares two real user ventures; it does not seed a fake second venture.
+- **Simulator** — deterministic rehearsal scenarios. App Store rating volume is descriptive context and is not treated as traction or a growth input.
+- **Build Studio** — prepares a build package. Vendor costs remain unpriced unless backed by a pricing source; historical estimates are labeled as legacy estimates.
+- **Learn / Monitor** — stores user-reported observations separately from simulations and does not present them as independently verified facts.
+- **Investor World / Deal Lab** — investor and negotiation rehearsals only; outputs are not real investor interest, offers, funding probabilities, valuation recommendations, transactions, or legal advice.
+
+## Connected research sources
+
+| Source | Status | What it can support |
+| --- | --- | --- |
+| Apple iTunes Search API | Live | App discovery and public App Store metadata/rating-volume evidence. Rating counts are not downloads, revenue, market share, success, or traction. |
+| World Bank Open Data | Live | Public country/indicator context. Population or macro indicators are not TAM, demand, or willingness to pay. |
+| GitHub public repositories | Partial | Public repository/activity context where relevant. Repository activity is not commercial demand or feasibility proof. |
+| Reviews / live vendor pricing / regulatory data | Not connected unless explicitly shown otherwise in-product | The app must mark these unavailable rather than inventing substitutes. |
 
 ## Stack
 
-Per the spec's reference stack (§16.1): Next.js App Router + TypeScript,
-React + Tailwind, Supabase (Postgres + Auth), pnpm workspaces monorepo.
+Next.js App Router + TypeScript, React + Tailwind, Supabase (Postgres + Auth), and pnpm workspaces.
 
 ## Repository layout
 
-```
+```text
 apps/
-  web/        Next.js app (this slice's only real surface)
-  worker/     Reserved for background jobs (Slice 2+)
+  web/        Next.js application
+  worker/     Background-worker surface
 packages/
-  ui/               Design tokens + tokenized component library
-  domain/           Core domain types (Venture, Workspace, ...)
-  schemas/          Zod validation schemas
-  integrations/     Framework-neutral Supabase client + types
-  observability/     Structured event logging
-  research/ai/simulator/build/   Reserved for later slices
+  ui/               Design tokens + component library
+  domain/           Core domain types
+  schemas/          Validation schemas
+  integrations/     Supabase and external-source integrations
+  observability/    Structured event logging
+  research/         Research/source logic
+  simulator/        Simulation logic
+  build/            Build Studio logic
 supabase/
-  migrations/       SQL migrations (schema + RLS policies)
-  config.toml       Local Supabase CLI config
+  migrations/       Database schema + RLS policies
 tests/
-  integration/      RLS smoke test (runs against real Postgres, no Docker needed for CI)
+  integration/      Database, production-persistence, deployment, and HTTP smoke guards
 ```
 
 ## Local setup
 
-1. **Install dependencies**
+1. Install dependencies:
 
    ```bash
    pnpm install
    ```
 
-2. **Connect a Supabase project.** Either:
-   - **Local**: install the [Supabase CLI](https://supabase.com/docs/guides/cli) and run
-     `supabase start` from the repo root. It applies `supabase/migrations/`
-     automatically and prints your local API URL + anon key.
-   - **Hosted**: create a project at [supabase.com](https://supabase.com),
-     then run the SQL in `supabase/migrations/0001_init.sql` via the SQL
-     editor (or `supabase db push` once linked).
+2. Copy `.env.example` to `.env.local` and configure the required environment variables. At minimum, authenticated use requires valid `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values. For production, set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS application origin so magic-link redirects return to the correct host.
 
-   Copy `.env.example` to `.env.local` in the repo root and fill in
-   `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+   Until Supabase is configured, setup-safe routes render a connection notice instead of entering a broken auth path.
 
-   Until this is done, the app still runs — sign-in and dashboard routes
-   show a "Supabase isn't connected yet" notice instead of crashing.
-
-3. **Run the dev server**
+3. Run the development server:
 
    ```bash
    pnpm dev
@@ -64,31 +68,35 @@ tests/
 
    Visit `http://localhost:3000`.
 
-## Verifying changes
+Optional server-side integrations, including scheduled creator intelligence, have their required secrets documented in `.env.example`. Keep service-role and cron credentials server-only; never expose them as `NEXT_PUBLIC_*` variables.
+
+## Verification
+
+Run the repository checks before shipping:
 
 ```bash
-pnpm typecheck   # all packages + apps
-pnpm lint        # apps/web (eslint-config-next)
-pnpm build       # production build, all apps
-bash tests/integration/rls_smoke_test.sh   # requires a local Postgres; see script header
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+bash tests/integration/production_http_smoke.sh
+bash tests/integration/rls_smoke_test.sh
 ```
 
-CI (`.github/workflows/ci.yml`) runs all four on every push/PR.
+GitHub CI also runs production-safety guards that prevent production fixture seeding, synthetic research persistence, and simulated investor-interest regressions, plus a production-server HTTP smoke test.
 
-## Why RLS has its own test
+## Production data rule
 
-The first draft of `supabase/migrations/0001_init.sql` had a
-self-referential `workspace_members` policy that caused infinite recursion
-under Postgres RLS — a bug `tsc`/`next build` cannot catch, since it only
-happens when Postgres evaluates the policy. `tests/integration/rls_smoke_test.sh`
-exercises it directly (and everything else load-bearing: cross-workspace
-isolation) against a real Postgres instance, no Docker/Supabase CLI
-required, so it runs in plain GitHub Actions.
+Do not seed historical research ideas, demo ventures, or disposable test ventures into the production `ventures` table. A production venture should exist only because a real user explicitly created it. Tests must use fixtures/mocks or isolated disposable data that is cleaned up.
 
-## Decisions still open before later slices
+## Deployment checklist
 
-See the "Pre-Build Decisions Required" section of the latest addendum
-(product spec, not in this repo) for what's still blocking Slices 3, 5,
-8, and 9 — licensed data-provider economics, exact pricing, and the
-deterministic/AI-authored split for the simulator, among others. Nothing
-there blocks the work in this repository today.
+Before treating a deployment as launch-ready:
+
+1. Confirm the production environment has valid Supabase public credentials and the canonical `NEXT_PUBLIC_SITE_URL`.
+2. Confirm any enabled server-side integration secrets from `.env.example` are present and remain server-only.
+3. Complete a real magic-link sign-in against the deployed application.
+4. Smoke-test the authenticated journey with a deliberately created real-user venture: Explore/Create → Research → Shape/Compare → Simulator → Build → Learn, plus Investor World rehearsal if needed.
+5. Verify source-status labels remain truthful when a connected source returns no result or is unavailable.
+
+CI can validate code and the built server, but it cannot substitute for the final live-auth and deployed-environment checks.

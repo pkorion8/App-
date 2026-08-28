@@ -16,6 +16,8 @@ const ERROR_MESSAGE: Record<string, string> = {
   no_workspace: "Couldn't find a workspace for your account.",
   no_customer: "No billing history on this account yet.",
   checkout_failed: "Couldn't start checkout — try again in a moment.",
+  portal_failed: "Couldn't open the billing portal — try again in a moment.",
+  already_subscribed: "This workspace already has a subscription. Use Manage billing instead of starting another checkout.",
 };
 
 export default async function BillingPage({

@@ -6,6 +6,32 @@ import { logEvent } from "@venture-sandbox/observability";
 
 export const dynamic = "force-dynamic";
 
+function billingSyncFailure({
+  eventName,
+  entityId,
+  workspaceId = null,
+  reason,
+}: {
+  eventName: string;
+  entityId: string;
+  workspaceId?: string | null;
+  reason: string;
+}) {
+  logEvent({
+    event: "billing.webhook_sync_failed",
+    actorId: null,
+    workspaceId,
+    entityType: "stripe_event",
+    entityId,
+    metadata: { stripe_event_type: eventName, reason },
+  });
+
+  // Stripe retries non-2xx webhook deliveries. Never acknowledge an event when
+  // the verified payload could not be persisted, otherwise paid access can
+  // silently drift from Stripe's source of truth.
+  return NextResponse.json({ error: "Billing sync failed; retry required" }, { status: 500 });
+}
+
 /**
  * Stripe -> billing_accounts sync. Runs unauthenticated (Stripe can't send
  * a Supabase session), so this is the one place outside the cron route
@@ -43,11 +69,29 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseServiceClient(supabaseUrl, serviceRoleKey);
 
   switch (event.type) {
-    case "checkout.session.completed": {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // A Checkout Session can complete before a delayed payment method has
+      // actually settled. Never grant Pro access from an unpaid completion;
+      // Stripe will send checkout.session.async_payment_succeeded if that
+      // payment later succeeds. Trials/no-payment-required sessions are valid.
+      if (event.type === "checkout.session.completed" && session.payment_status === "unpaid") {
+        logEvent({
+          event: "billing.checkout_payment_pending",
+          actorId: null,
+          workspaceId: session.metadata?.workspace_id ?? session.client_reference_id ?? null,
+          entityType: "stripe_checkout_session",
+          entityId: session.id,
+          metadata: { payment_status: session.payment_status },
+        });
+        break;
+      }
+
       const workspaceId = session.metadata?.workspace_id ?? session.client_reference_id;
       if (workspaceId) {
-        await supabase
+        const { data, error } = await supabase
           .from("billing_accounts")
           .update({
             plan: "pro",
@@ -56,23 +100,35 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id:
               typeof session.subscription === "string" ? session.subscription : null,
           })
-          .eq("workspace_id", workspaceId);
+          .eq("workspace_id", workspaceId)
+          .select("workspace_id");
+
+        if (error || !data?.length) {
+          return billingSyncFailure({
+            eventName: event.type,
+            entityId: event.id,
+            workspaceId,
+            reason: error?.message ?? "No billing account matched the checkout workspace",
+          });
+        }
+
         logEvent({
           event: "billing.upgraded_to_pro",
           actorId: null,
           workspaceId,
           entityType: "billing_account",
           entityId: workspaceId,
+          metadata: { stripe_event_type: event.type, payment_status: session.payment_status },
         });
       } else {
-        // No workspace_id on the session means the update above never ran --
-        // log loudly, since this would otherwise be a silent "customer paid,
-        // nothing happened" failure with no trace anywhere.
+        // A retry cannot repair missing checkout metadata, so record this as a
+        // configuration/data-contract error rather than creating an endless
+        // webhook retry loop.
         logEvent({
           event: "billing.checkout_completed_missing_workspace_id",
           actorId: null,
           workspaceId: null,
-          metadata: { stripe_session_id: session.id },
+          metadata: { stripe_session_id: session.id, stripe_event_type: event.type },
         });
       }
       break;
@@ -86,17 +142,27 @@ export async function POST(request: NextRequest) {
           : subscription.status === "past_due" || subscription.status === "unpaid"
             ? "past_due"
             : "canceled";
-      await supabase
+      const { data, error } = await supabase
         .from("billing_accounts")
         .update({
           status,
           plan: status === "canceled" ? "free" : "pro",
         })
-        .eq("stripe_subscription_id", subscription.id);
+        .eq("stripe_subscription_id", subscription.id)
+        .select("workspace_id");
+
+      if (error || !data?.length) {
+        return billingSyncFailure({
+          eventName: event.type,
+          entityId: event.id,
+          reason: error?.message ?? "No billing account matched the Stripe subscription",
+        });
+      }
+
       logEvent({
         event: "billing.subscription_updated",
         actorId: null,
-        workspaceId: null,
+        workspaceId: data[0]?.workspace_id ?? null,
         entityType: "stripe_subscription",
         entityId: subscription.id,
         metadata: { status },
@@ -106,14 +172,24 @@ export async function POST(request: NextRequest) {
 
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      await supabase
+      const { data, error } = await supabase
         .from("billing_accounts")
         .update({ plan: "free", status: "canceled" })
-        .eq("stripe_subscription_id", subscription.id);
+        .eq("stripe_subscription_id", subscription.id)
+        .select("workspace_id");
+
+      if (error || !data?.length) {
+        return billingSyncFailure({
+          eventName: event.type,
+          entityId: event.id,
+          reason: error?.message ?? "No billing account matched the canceled Stripe subscription",
+        });
+      }
+
       logEvent({
         event: "billing.subscription_canceled",
         actorId: null,
-        workspaceId: null,
+        workspaceId: data[0]?.workspace_id ?? null,
         entityType: "stripe_subscription",
         entityId: subscription.id,
       });

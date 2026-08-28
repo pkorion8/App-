@@ -30,11 +30,13 @@ const STATE_BADGE_STATUS: Record<string, BadgeStatus> = {
   UNKNOWN: "neutral",
 };
 
-const TRACTION_BADGE_STATUS: Record<string, BadgeStatus> = {
-  Strong: "success",
-  Moderate: "warning",
-  Weak: "neutral",
-};
+function legacyTractionToRatingVolumeBand(
+  traction: CompetitorFindingMetadata["traction"],
+): NonNullable<CompetitorFindingMetadata["ratingVolumeBand"]> {
+  if (traction === "Strong") return "High";
+  if (traction === "Moderate") return "Medium";
+  return "Low";
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "unknown date";
@@ -86,23 +88,28 @@ function Footer({ limitations, nextTest }: { limitations: string | null; nextTes
 
 function CompetitorCard({ f, metadata }: { f: FindingRow; metadata: CompetitorFindingMetadata }) {
   const shown = metadata.apps.slice(0, 10);
+  const ratingVolumeBand = metadata.ratingVolumeBand ?? legacyTractionToRatingVolumeBand(metadata.traction);
   return (
     <Card>
       <CardHeader
         title={f.normalized_claim}
         isDemo={f.is_demo}
         state={f.state}
-        extraBadge={{ label: `${metadata.traction} traction`, status: TRACTION_BADGE_STATUS[metadata.traction] ?? "neutral" }}
+        extraBadge={{ label: `${ratingVolumeBand} rating volume`, status: "neutral" }}
       />
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <StatTile label="Apps found" value={metadata.totalFound.toLocaleString()} />
         <StatTile
-          label="Weakest traction"
+          label="Lowest rating volume"
           value={metadata.weakest ? metadata.weakest.name : "—"}
           hint={metadata.weakest ? `${metadata.weakest.ratingCount.toLocaleString()} ratings` : "not enough data"}
         />
       </div>
+
+      <p className="mt-3 text-xs leading-5 text-vs-fg-muted">
+        Rating volume is an App Store listing signal only. It does not establish downloads, revenue, market share, product success, or verified traction.
+      </p>
 
       {metadata.totalFound > 0 && (
         <Meter

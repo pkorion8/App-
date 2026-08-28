@@ -56,6 +56,24 @@ export async function saveShape(
   const { targetUser, geography, problemStatement, valueProposition, mvpScope, differentiation, pricingModel } =
     parsed.data;
 
+  // Persist the Shape brief before advancing the venture journey status. If
+  // this write fails, the venture must not claim that Shape is complete.
+  const { error: shapeError } = await supabase.from("venture_shapes").upsert(
+    {
+      venture_id: ventureId,
+      workspace_id: venture.workspace_id,
+      problem_statement: problemStatement ?? null,
+      value_proposition: valueProposition ?? null,
+      mvp_scope: mvpScope ?? null,
+      differentiation: differentiation ?? null,
+      pricing_model: pricingModel ?? null,
+    },
+    { onConflict: "venture_id" },
+  );
+  if (shapeError) {
+    return { status: "error", message: shapeError.message };
+  }
+
   const ventureUpdate: { target_user: string; geography: string; status?: "shaped" } = {
     target_user: targetUser,
     geography,
@@ -73,22 +91,6 @@ export async function saveShape(
     .eq("id", ventureId);
   if (ventureError) {
     return { status: "error", message: ventureError.message };
-  }
-
-  const { error: shapeError } = await supabase.from("venture_shapes").upsert(
-    {
-      venture_id: ventureId,
-      workspace_id: venture.workspace_id,
-      problem_statement: problemStatement ?? null,
-      value_proposition: valueProposition ?? null,
-      mvp_scope: mvpScope ?? null,
-      differentiation: differentiation ?? null,
-      pricing_model: pricingModel ?? null,
-    },
-    { onConflict: "venture_id" },
-  );
-  if (shapeError) {
-    return { status: "error", message: shapeError.message };
   }
 
   logEvent({

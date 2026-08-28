@@ -26,7 +26,8 @@ export async function addOutcome(ventureId: string, _prevState: AddOutcomeState,
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
-  const { data: venture } = await supabase.from("ventures").select("workspace_id").eq("id", ventureId).maybeSingle();
+  const { data: venture, error: ventureError } = await supabase.from("ventures").select("workspace_id").eq("id", ventureId).maybeSingle();
+  if (ventureError) return { status: "error", message: ventureError.message };
   if (!venture) return { status: "error", message: "Couldn't find this venture." };
 
   // The generated Database type is intentionally hand-maintained and lags migration 0014;
@@ -42,7 +43,19 @@ export async function addOutcome(ventureId: string, _prevState: AddOutcomeState,
   });
   if (error) return { status: "error", message: error.message };
 
-  await supabase.from("ventures").update({ status: "learning" }).eq("id", ventureId);
+  const { data: updatedVenture, error: statusError } = await supabase
+    .from("ventures")
+    .update({ status: "learning" })
+    .eq("id", ventureId)
+    .select("id")
+    .maybeSingle();
+  if (statusError || !updatedVenture) {
+    return {
+      status: "error",
+      message: "Observation was saved, but the venture could not be moved into Learning. Refresh before adding another observation.",
+    };
+  }
+
   logEvent({ event: "venture_outcome.logged", actorId: user.id, workspaceId: venture.workspace_id, entityType: "venture", entityId: ventureId, metadata: { metric_type: parsed.data.metricType } });
   revalidatePath(`/venture/${ventureId}/monitor`);
   revalidatePath(`/venture/${ventureId}`);

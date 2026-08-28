@@ -1,0 +1,30 @@
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+
+export function safeInternalDestination(value: string | null | undefined, fallback = "/dashboard"): string {
+  if (!value) return fallback;
+
+  const candidate = value.trim();
+  if (!candidate.startsWith("/") || candidate.startsWith("//")) return fallback;
+
+  // Backslashes are normalized as slashes by URL parsers in some contexts,
+  // so values like /\\evil.example must never be treated as internal paths.
+  if (candidate.includes("\\")) return fallback;
+
+  // Reject literal control characters before decoding.
+  if (CONTROL_CHARACTERS.test(candidate)) return fallback;
+
+  try {
+    const decoded = decodeURIComponent(candidate);
+
+    // Re-run the dangerous-character checks after decoding so encoded forms
+    // such as /%2F%2Fevil.example, /%5Cevil.example or /%0A... cannot bypass
+    // the validation performed on the raw value.
+    if (decoded.startsWith("//") || decoded.includes("\\") || CONTROL_CHARACTERS.test(decoded)) {
+      return fallback;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return candidate;
+}

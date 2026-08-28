@@ -1,4 +1,9 @@
--- No seed data for Slice 1: workspaces are created automatically for each
--- new auth user via the handle_new_user trigger in 0001_init.sql. Seeded
--- demo scenarios (Coquitlam marketplace, AI nail design app — spec §22.2)
--- land with the slices that actually use them.
+-- Intentionally empty.
+--
+-- Production and shared Supabase environments must not seed ventures, research
+-- findings, simulations, investor sessions, or historical test ideas. A venture
+-- enters the ventures table only through an explicit real-user create action.
+--
+-- Tests that need venture data must use isolated fixtures/mocks or disposable
+-- test records that are cleaned up by the test itself. Do not add demo/sample
+-- venture INSERTs here.

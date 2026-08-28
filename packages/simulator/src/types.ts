@@ -14,21 +14,26 @@ export type SimulationStage =
 
 export type TechnicalRisk = "low" | "medium" | "high";
 export type MarketConfidence = "unknown" | "weak" | "mixed" | "strong";
+export type RatingVolumeBand = "None" | "Low" | "Medium" | "High";
+/** @deprecated Historical simulation rows may still carry this old rating-count-derived label. New runs must not create or use it as market traction. */
 export type CompetitorTraction = "None" | "Weak" | "Moderate" | "Strong";
 /** A founder decision (Shape's job), not Research evidence -- kept separate from MarketContext for that reason. Changes which revenue formula the engine uses. */
 export type PricingModel = "subscription" | "one_time" | "commission" | "ad_supported";
 
 /**
- * What this run's starting conditions were calibrated against, carried
- * over from the venture's own Research findings (real App Store
- * competitor data) rather than the simulation starting blind. `hasResearch:
- * false` is an honest, visible state -- not silently ignored -- so a run
- * started before Research ever ran says so instead of pretending to have
- * market context it doesn't.
+ * What this run's starting conditions were calibrated against. App Store
+ * evidence is retained only as descriptive rating-volume context; rating
+ * counts do not prove downloads, revenue, market share, product success,
+ * competitive pressure, or traction and therefore do not change growth math.
+ * `hasResearch: false` is an honest, visible state so a run started before
+ * Research ever ran says so instead of pretending to have market context.
  */
 export interface MarketContext {
   hasResearch: boolean;
-  competitorTraction: CompetitorTraction;
+  /** Descriptive band based only on App Store rating counts. No traction inference. */
+  ratingVolumeBand?: RatingVolumeBand;
+  /** @deprecated Read-only compatibility for simulation rows created before the rating-volume migration. */
+  competitorTraction?: CompetitorTraction;
   topCompetitorName: string | null;
   summary: string;
   /** World Bank internet-access % for the venture's geography, if Research found it. Null = no evidence -- stays neutral, never penalized. */
@@ -65,7 +70,7 @@ export interface SimulationState {
   marketConfidence: MarketConfidence;
   /** Append-only day-by-day trail, oldest first -- what the Simulate page charts. */
   history: SimulationHistoryPoint[];
-  /** Real market signal this run was seeded with, if any -- see MarketContext. */
+  /** Real source context this run was seeded with, if any -- see MarketContext. */
   marketContext: MarketContext;
   /** The venture's Shape-decided pricing model, snapshotted at run creation -- changes which revenue formula advanceDay() uses. Defaults to "subscription" (the engine's original, still-default behavior). */
   pricingModel: PricingModel;

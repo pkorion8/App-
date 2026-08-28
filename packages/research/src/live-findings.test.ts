@@ -6,11 +6,54 @@ vi.mock("./sources/github", () => ({ searchGitHubRepos: vi.fn(async () => []) })
 import { searchAppStore } from "./sources/itunes-search";
 import { searchGitHubRepos } from "./sources/github";
 import {
+  classifyRatingVolume,
   isActivelyMaintained,
   isNewcomer,
   researchAppStoreCompetitors,
   researchGitHubActivity,
 } from "./live-findings";
+
+describe("classifyRatingVolume", () => {
+  it("derives a descriptive band from public App Store rating counts only", () => {
+    expect(classifyRatingVolume([])).toBe("Low");
+    expect(classifyRatingVolume([99])).toBe("Low");
+    expect(classifyRatingVolume([100])).toBe("Medium");
+    expect(classifyRatingVolume([999])).toBe("Medium");
+    expect(classifyRatingVolume([1000])).toBe("High");
+  });
+
+  it("emits ratingVolumeBand metadata without the legacy traction key", async () => {
+    vi.mocked(searchAppStore).mockReset();
+    vi.mocked(searchAppStore).mockResolvedValueOnce([
+      {
+        appId: 1,
+        name: "Example App",
+        seller: "Example Seller",
+        rating: 4.6,
+        ratingCount: 1200,
+        price: "Free",
+        url: "https://example.com",
+        genre: "Productivity",
+        lastUpdated: "2026-08-01T00:00:00Z",
+        releaseDate: "2025-01-01T00:00:00Z",
+      },
+    ]);
+
+    const finding = await researchAppStoreCompetitors({
+      ventureName: "Example",
+      ideaText: "Example productivity app",
+      geography: "Canada",
+    });
+
+    expect(finding?.metadata?.kind).toBe("competitors");
+    if (finding?.metadata?.kind === "competitors") {
+      expect(finding.metadata.ratingVolumeBand).toBe("High");
+      expect(finding.metadata.traction).toBeUndefined();
+    }
+    expect(finding?.userFacingSummary).toContain("Rating-volume band: High");
+    expect(finding?.limitations).toContain("do not establish downloads, revenue, market share, product success, or traction");
+  });
+});
 
 describe("isNewcomer", () => {
   it("treats a release from a few months ago as a newcomer", () => {
@@ -53,7 +96,8 @@ describe("isActivelyMaintained", () => {
 
 describe("idea-aware search query wiring", () => {
   it("passes idea-derived keywords to the App Store search, not just the bare venture name", async () => {
-    vi.mocked(searchAppStore).mockClear();
+    vi.mocked(searchAppStore).mockReset();
+    vi.mocked(searchAppStore).mockResolvedValue([]);
     await researchAppStoreCompetitors({
       ventureName: "Roti",
       ideaText: "Local roti ordering and delivery marketplace for South Asian customers in Vancouver",
@@ -66,8 +110,8 @@ describe("idea-aware search query wiring", () => {
   });
 
   it("falls back to the bare venture name if the expanded App Store query finds nothing", async () => {
-    vi.mocked(searchAppStore).mockClear();
-    vi.mocked(searchAppStore).mockResolvedValueOnce([]); // expanded query: no results
+    vi.mocked(searchAppStore).mockReset();
+    vi.mocked(searchAppStore).mockResolvedValue([]);
     await researchAppStoreCompetitors({
       ventureName: "Roti",
       ideaText: "Local roti ordering and delivery marketplace for South Asian customers in Vancouver",

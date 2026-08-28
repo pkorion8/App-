@@ -30,9 +30,10 @@ export async function runCommitteeReview(formData: FormData) {
   if (states.length < 3) missing.push("More founder claims tested under investor questioning");
   if (supported < 1) missing.push("At least one claim linked to supporting evidence");
 
-  let outcome: "more_evidence" | "pass" | "conditional_interest" = "more_evidence";
+  // This is a deterministic rehearsal gate only. Never persist or imply real investor interest.
+  let outcome: "more_evidence" | "pass" | "negotiation_rehearsal_ready" = "more_evidence";
   if (contradicted > 0) outcome = "pass";
-  else if (research && simulation && states.length >= 3 && supported >= 1) outcome = "conditional_interest";
+  else if (research && simulation && states.length >= 3 && supported >= 1) outcome = "negotiation_rehearsal_ready";
 
   const rationale = {
     market: research ? "Research exists, so market claims can be challenged against saved evidence." : "No completed research is connected.",
@@ -51,8 +52,8 @@ export async function runCommitteeReview(formData: FormData) {
     missing_evidence: missing,
   });
 
-  const nextStage = outcome === "conditional_interest" ? "negotiation" : outcome === "pass" ? "passed" : "committee";
-  await db.from("investor_sessions").update({ stage: nextStage, outcome_reason: outcome === "pass" ? "Committee found a contradicted founder claim." : null }).eq("id", sessionId);
+  const nextStage = outcome === "negotiation_rehearsal_ready" ? "negotiation" : outcome === "pass" ? "passed" : "committee";
+  await db.from("investor_sessions").update({ stage: nextStage, outcome_reason: outcome === "pass" ? "Committee rehearsal found a contradicted founder claim." : null }).eq("id", sessionId);
   revalidatePath(`/venture/${ventureId}/investor/committee`);
   revalidatePath(`/venture/${ventureId}/investor`);
 }

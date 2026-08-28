@@ -33,6 +33,15 @@ jobs:
       # build doesn't require real (or placeholder) credentials to succeed.
       - run: pnpm build
 
+      # Boot the actual production Next.js build and verify launch-critical
+      # public/setup-safe routes render without production secrets, live-source
+      # calls, or seeded venture data.
+      - run: bash tests/integration/production_http_smoke.sh
+
+      # Keep production-required/optional integration variables documented and
+      # protect server-only cron credentials from accidental browser exposure.
+      - run: bash tests/integration/deployment_env_contract.sh
+
   db:
     runs-on: ubuntu-latest
     services:
@@ -53,4 +62,17 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
+      - run: bash tests/integration/no_production_fixture_seeds.sh
+      - run: bash tests/integration/no_synthetic_research_persistence.sh
+      - run: bash tests/integration/no_simulated_investor_interest.sh
+      - run: bash tests/integration/billing_webhook_retry_contract.sh
+      - run: bash tests/integration/billing_checkout_subscription_contract.sh
+      - run: bash tests/integration/monetization_selection_consistency_contract.sh
+      - run: bash tests/integration/monitor_status_sync_contract.sh
+      - run: bash tests/integration/build_persistence_consistency_contract.sh
+      - run: bash tests/integration/shape_status_consistency_contract.sh
+      - run: bash tests/integration/simulator_build_pricing_source_boundary.sh
+      - run: bash tests/integration/compare_build_pricing_source_boundary.sh
+      - run: bash tests/integration/dashboard_workspace_scope_contract.sh
+      - run: bash tests/integration/venture_workspace_scope_contract.sh
       - run: bash tests/integration/rls_smoke_test.sh

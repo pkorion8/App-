@@ -11,8 +11,8 @@ import type {
  * for the user). Keyword detection on the idea text, not an LLM (none
  * connected yet) -- this is honestly a heuristic pass, same tier as the
  * creator-intelligence claim extractor, not a personalized AI recommendation.
- * Pricing figures are current best-effort estimates, not live-fetched --
- * label them as such in the UI, don't present them as guaranteed.
+ * Vendor pricing is not connected to a live source. Keep monetary values
+ * unpriced rather than inventing current costs.
  */
 
 function detectFeatures(ideaText: string) {
@@ -51,19 +51,20 @@ export function generateBuildPackage(input: GenerateBuildPackageInput): BuildPac
     { title: "Deploy + real domain", description: "Production deploy, connect a real domain, smoke-test the live version.", category: "launch" },
   );
 
+  const unpriced = "Current pricing is not connected. Verify the provider's official pricing before making a budget decision.";
   const costItems: CostLineItem[] = [
-    { name: "Hosting (Vercel Hobby)", monthlyCost: 0, note: "Free tier covers most early-stage traffic." },
-    { name: "Database + Auth (Supabase Free)", monthlyCost: 0, note: "Free tier; upgrade (~$25/mo) once you outgrow its limits." },
-    { name: "Domain", monthlyCost: 1, note: "~$12/year, averaged monthly." },
+    { name: "Hosting (Vercel)", monthlyCost: null, note: unpriced },
+    { name: "Database + Auth (Supabase)", monthlyCost: null, note: unpriced },
+    { name: "Domain", monthlyCost: null, note: "Registrar pricing is not connected. Check a current registrar price before purchase." },
   ];
   if (features.needsAi) {
-    costItems.push({ name: "LLM API usage", monthlyCost: 20, note: "Rough estimate at low volume — scales with usage, not fixed." });
+    costItems.push({ name: "LLM API usage", monthlyCost: null, note: "Usage pricing varies by model and provider and is not live-fetched here." });
   }
   if (features.needsImageGen) {
-    costItems.push({ name: "Image generation API", monthlyCost: 15, note: "Rough estimate at low volume — per-image pricing varies by provider." });
+    costItems.push({ name: "Image generation API", monthlyCost: null, note: "Usage pricing varies by model and provider and is not live-fetched here." });
   }
   if (features.needsPayments) {
-    costItems.push({ name: "Stripe", monthlyCost: 0, note: "No fixed fee — takes a percentage per transaction instead." });
+    costItems.push({ name: "Payments provider", monthlyCost: null, note: "Transaction and platform fees are not live-fetched here. Verify current provider pricing." });
   }
 
   return {
@@ -77,19 +78,19 @@ export function generateBuildPackage(input: GenerateBuildPackageInput): BuildPac
           name: "AI builder (Lovable, Bolt.new, v0, Replit)",
           speed: "Fastest to a clickable first version",
           ownership: "Lower — you're building inside their platform/export model",
-          costNote: "Usually a monthly subscription on top of hosting costs above",
+          costNote: "Pricing is not connected; compare current builder pricing and export/ownership terms before choosing.",
         },
         {
           name: "Write the code yourself (Next.js + Supabase)",
           speed: "Slower to start, most control long-term",
           ownership: "Full — the reference stack this whole plan assumes",
-          costNote: "Just the hosting/API costs above, no builder subscription",
+          costNote: "No builder subscription is assumed here; hosting and API pricing still needs current provider verification.",
         },
         {
           name: "Hire a developer/agency",
           speed: "Depends on who you hire",
           ownership: "Full, once delivered",
-          costNote: "Highest upfront cost, most predictable outcome",
+          costNote: "Project pricing varies; obtain current quotes and confirm code/IP ownership in writing.",
         },
       ],
       rationale:
@@ -99,7 +100,7 @@ export function generateBuildPackage(input: GenerateBuildPackageInput): BuildPac
     backlog,
     costEstimate: {
       items: costItems,
-      totalMonthly: costItems.reduce((sum, item) => sum + item.monthlyCost, 0),
+      totalMonthly: null,
     },
   };
 }

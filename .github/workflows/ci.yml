@@ -74,4 +74,5 @@ jobs:
       - run: bash tests/integration/simulator_build_pricing_source_boundary.sh
       - run: bash tests/integration/compare_build_pricing_source_boundary.sh
       - run: bash tests/integration/dashboard_workspace_scope_contract.sh
+      - run: bash tests/integration/venture_workspace_scope_contract.sh
       - run: bash tests/integration/rls_smoke_test.sh

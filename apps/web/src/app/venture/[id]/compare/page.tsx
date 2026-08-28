@@ -36,17 +36,10 @@ async function loadVentureSummary(
     .limit(1)
     .maybeSingle();
 
-  const [runResult, buildResult, findingsResult] = await Promise.all([
+  const [runResult, findingsResult] = await Promise.all([
     supabase
       .from("simulation_runs")
       .select("stage, virtual_day, total_users, monthly_revenue, cash_remaining")
-      .eq("venture_id", ventureId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("build_packages")
-      .select("cost_estimate")
       .eq("venture_id", ventureId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -63,7 +56,6 @@ async function loadVentureSummary(
   ]);
 
   const run = runResult.data;
-  const build = buildResult.data;
   const findings = (findingsResult.data ?? []) as {
     state: EvidenceState;
     is_demo: boolean;
@@ -75,7 +67,6 @@ async function loadVentureSummary(
   const mixedCount = nonDemoFindings.filter((f) => f.state === "MIXED").length;
   const unresolvedCount = nonDemoFindings.filter((f) => f.state === "WEAK" || f.state === "UNKNOWN").length;
   const demoCount = findings.filter((f) => f.is_demo).length;
-  const buildCost = build?.cost_estimate as unknown as { totalMonthly?: number } | undefined;
 
   const metadataOfKind = (kind: string): Record<string, unknown> | null =>
     nonDemoFindings.map((f) => f.metadata).find((m) => m !== null && (m as { kind?: string }).kind === kind) ?? null;
@@ -94,7 +85,6 @@ async function loadVentureSummary(
     unresolvedCount,
     demoCount,
     run,
-    monthlyCost: buildCost?.totalMonthly,
     competitors,
     population,
     github,
@@ -233,17 +223,9 @@ export default async function ComparePage({
             <StatTile label={b.venture.name} value={b.run ? `${b.run.total_users.toLocaleString()} simulated users` : "Not started"} hint={b.run ? `Scenario day ${b.run.virtual_day} · ${b.run.stage} · $${b.run.monthly_revenue}/mo simulated revenue` : undefined} />
           </div>
         </Card>
-
-        <Card>
-          <p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">Estimated monthly build cost</p>
-          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <StatTile label={a.venture.name} value={a.monthlyCost !== undefined ? `$${a.monthlyCost}` : "—"} hint={a.monthlyCost === undefined ? "No build plan generated yet" : "Build-plan estimate, not a vendor quote or guaranteed price"} />
-            <StatTile label={b.venture.name} value={b.monthlyCost !== undefined ? `$${b.monthlyCost}` : "—"} hint={b.monthlyCost === undefined ? "No build plan generated yet" : "Build-plan estimate, not a vendor quote or guaranteed price"} />
-          </div>
-        </Card>
       </div>
 
-      <p className="mt-3 text-xs text-vs-fg-muted">This page compares recorded evidence and scenario outputs only. It does not compute a winner, success probability, market size, investor interest, or guaranteed cost.</p>
+      <p className="mt-3 text-xs text-vs-fg-muted">This page compares recorded evidence and scenario outputs only. It does not compute a winner, success probability, market size, investor interest, or guaranteed cost. Vendor pricing is not connected, so Compare does not display legacy Build Studio cost estimates.</p>
     </main>
   );
 }

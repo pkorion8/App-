@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "../utils/cn";
 
 const fieldClasses =
-  "w-full rounded-vs-sm border border-vs-border bg-vs-bg px-3 py-2 text-sm text-vs-fg placeholder:text-vs-fg-muted focus:outline-none focus:ring-2 focus:ring-vs-primary/40";
+  "w-full rounded-vs-md border border-vs-border bg-white/75 px-4 py-3 text-sm text-vs-fg shadow-sm placeholder:text-vs-fg-muted/75 focus:border-vs-ink focus:outline-none focus:ring-2 focus:ring-vs-lavender";
 
 export function Input({
   className,

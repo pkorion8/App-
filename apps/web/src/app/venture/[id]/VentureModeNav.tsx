@@ -16,12 +16,12 @@ type JourneyItem = {
 };
 
 const journey: JourneyItem[] = [
-  { route: "research", simple: "Check the problem", pro: "Research", icon: "⌕", active: "border-indigo-300 bg-indigo-50 text-indigo-800", dot: "bg-indigo-500" },
-  { route: "shape", simple: "Make it better", pro: "Shape", icon: "◇", active: "border-emerald-300 bg-emerald-50 text-emerald-800", dot: "bg-emerald-500" },
-  { route: "monetization", simple: "How it can make money", pro: "Monetization", icon: "$", active: "border-violet-300 bg-violet-50 text-violet-800", dot: "bg-violet-500" },
-  { route: "simulate", simple: "Simulate it", pro: "Simulator", icon: "▶", active: "border-amber-300 bg-amber-50 text-amber-800", dot: "bg-amber-500" },
-  { route: "build", simple: "Plan the build", pro: "Build", icon: "▦", active: "border-sky-300 bg-sky-50 text-sky-800", dot: "bg-sky-500" },
-  { route: "monitor", simple: "Learn from reality", pro: "Learn", icon: "↗", active: "border-rose-300 bg-rose-50 text-rose-800", dot: "bg-rose-500" },
+  { route: "research", simple: "Check the problem", pro: "Research", icon: "⌕", active: "border-vs-ink/15 bg-vs-lavender-soft text-vs-ink", dot: "bg-vs-ink" },
+  { route: "shape", simple: "Make it better", pro: "Shape", icon: "◇", active: "border-vs-ink/15 bg-vs-mint-soft text-vs-ink", dot: "bg-vs-ink" },
+  { route: "monetization", simple: "How it can make money", pro: "Monetization", icon: "$", active: "border-vs-ink/15 bg-vs-orange-soft text-vs-ink", dot: "bg-vs-ink" },
+  { route: "simulate", simple: "Simulate it", pro: "Simulator", icon: "▶", active: "border-vs-ink/15 bg-vs-orange text-vs-ink", dot: "bg-vs-ink" },
+  { route: "build", simple: "Plan the build", pro: "Build", icon: "▦", active: "border-vs-ink/15 bg-vs-lavender text-vs-ink", dot: "bg-vs-ink" },
+  { route: "monitor", simple: "Learn from reality", pro: "Learn", icon: "↗", active: "border-vs-ink/15 bg-vs-mint text-vs-ink", dot: "bg-vs-ink" },
 ];
 
 const intelligence = [
@@ -49,12 +49,12 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-3 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6 lg:px-8">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] text-vs-fg-muted">
           {mode === "simple" ? "Simple mode · one clear job at each stage" : "Pro mode · full venture intelligence and advanced tools"}
         </p>
-        <div className="inline-flex rounded-full border border-vs-border bg-vs-bg-subtle p-1" aria-label="Experience mode">
+        <div className="inline-flex rounded-full border border-vs-ink/10 bg-white/55 p-1" aria-label="Experience mode">
           <button type="button" onClick={() => choose("simple")} className={`min-h-9 rounded-full px-3 py-1 text-xs font-semibold ${mode === "simple" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Simple</button>
           <button type="button" onClick={() => choose("pro")} className={`min-h-9 rounded-full px-3 py-1 text-xs font-semibold ${mode === "pro" ? "bg-vs-primary text-vs-primary-fg shadow-sm" : "text-vs-fg-muted"}`}>Pro</button>
         </div>
@@ -64,8 +64,8 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
         {journey.map((item, index) => {
           const active = pathname.includes(`/venture/${ventureId}/${item.route}`);
           return (
-            <Link key={item.route} href={`/venture/${ventureId}/${item.route}`} className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${active ? item.active : "border-transparent bg-vs-bg text-vs-fg-muted hover:border-vs-border hover:bg-vs-bg-subtle hover:text-vs-fg"}`}>
-              <span className={`grid h-7 w-7 place-items-center rounded-lg text-sm ${active ? "bg-white/75 shadow-sm" : "bg-vs-bg-subtle"}`}>{item.icon}</span>
+            <Link key={item.route} href={`/venture/${ventureId}/${item.route}`} className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold transition ${active ? item.active : "border-transparent bg-transparent text-vs-fg-muted hover:border-vs-border hover:bg-white/55 hover:text-vs-fg"}`}>
+              <span className={`grid h-7 w-7 place-items-center rounded-xl text-sm ${active ? "bg-white/60" : "bg-vs-bg-subtle"}`}>{item.icon}</span>
               <span className="flex flex-col leading-tight"><span>{mode === "simple" ? item.simple : item.pro}</span><span className="mt-0.5 text-[10px] font-medium opacity-60">Stage {index + 1}</span></span>
               {active && <span className={`ml-1 h-2 w-2 rounded-full ${item.dot}`} aria-hidden />}
             </Link>
@@ -74,9 +74,9 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
       </nav>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-vs-border/70 pt-2">
-        <Link href={`/venture/${ventureId}/compare`} className={`flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${pathname.includes(`/venture/${ventureId}/compare`) ? "bg-slate-900 text-white" : "border border-vs-border bg-vs-bg text-vs-fg hover:bg-vs-bg-subtle"}`}><span>⇄</span>Compare with another idea</Link>
-        <Link href="/explore" className="flex min-h-10 items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>⌕</span>Explore more ideas</Link>
-        {mode === "simple" && <Link href={`/venture/${ventureId}/investor`} className="flex min-h-10 items-center gap-1.5 rounded-lg border border-vs-border bg-vs-bg px-3 py-2 text-xs font-semibold text-vs-fg hover:bg-vs-bg-subtle"><span>◎</span>Practice investor meeting</Link>}
+        <Link href={`/venture/${ventureId}/compare`} className={`flex min-h-10 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold ${pathname.includes(`/venture/${ventureId}/compare`) ? "bg-vs-ink text-white" : "border border-vs-border bg-white/55 text-vs-fg hover:bg-white"}`}><span>⇄</span>Compare with another idea</Link>
+        <Link href="/explore" className="flex min-h-10 items-center gap-1.5 rounded-full border border-vs-border bg-white/55 px-4 py-2 text-xs font-semibold text-vs-fg hover:bg-white"><span>⌕</span>Explore more ideas</Link>
+        {mode === "simple" && <Link href={`/venture/${ventureId}/investor`} className="flex min-h-10 items-center gap-1.5 rounded-full border border-vs-border bg-white/55 px-4 py-2 text-xs font-semibold text-vs-fg hover:bg-white"><span>◎</span>Practice investor meeting</Link>}
       </div>
 
       {mode === "pro" ? (
@@ -84,7 +84,7 @@ export function VentureModeNav({ ventureId }: { ventureId: string }) {
           <span className="shrink-0 px-2 py-2 text-[10px] font-semibold uppercase tracking-[.18em] text-vs-fg-muted">Deep tools</span>
           {intelligence.map(([label, route, icon]) => {
             const active = pathname.includes(`/venture/${ventureId}/${route}`);
-            return <Link key={route} href={`/venture/${ventureId}/${route}`} className={`flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ${active ? "bg-slate-900 text-white" : "text-vs-fg-muted hover:bg-vs-bg-subtle hover:text-vs-fg"}`}><span>{icon}</span>{label}</Link>;
+            return <Link key={route} href={`/venture/${ventureId}/${route}`} className={`flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold ${active ? "bg-vs-ink text-white" : "text-vs-fg-muted hover:bg-white/55 hover:text-vs-fg"}`}><span>{icon}</span>{label}</Link>;
           })}
         </nav>
       ) : (

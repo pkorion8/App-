@@ -7,6 +7,44 @@
 body {
   background-color: rgb(var(--vs-color-bg));
   color: rgb(var(--vs-color-fg));
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgb(var(--vs-color-lavender));
+  color: rgb(var(--vs-color-ink));
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--vs-color-border));
+  }
+
+  body {
+    min-width: 320px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .vs-panel-shadow {
+    box-shadow: 0 18px 50px rgb(28 27 23 / 0.08), 0 2px 8px rgb(28 27 23 / 0.05);
+  }
+
+  .vs-hairline-dark {
+    border-color: rgb(var(--vs-color-ink) / 0.85);
+  }
+
+  .vs-grid-paper {
+    background-image: linear-gradient(rgb(var(--vs-color-ink) / 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--vs-color-ink) / 0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
 }
 
 /* Indeterminate loading bar (research run, etc.) -- a sliding segment,

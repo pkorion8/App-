@@ -18,8 +18,17 @@ echo "==> Stubbing Supabase database roles"
 $PSQL <<'SQL'
 do $$
 begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin;
+  end if;
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then
     create role authenticated nologin;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nologin bypassrls;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'supabase_auth_admin') then
+    create role supabase_auth_admin nologin;
   end if;
 end
 $$;
@@ -63,6 +72,46 @@ grant select on public.workspace_members to app_user;
 grant select, insert, update on public.venture_shapes to app_user;
 grant select, update on public.billing_accounts to app_user;
 SQL
+
+echo "==> Asserting anonymous Data API access is denied"
+set +e
+ANON_OUTPUT=$($PSQL -d "$DB_NAME" 2>&1 <<'SQL'
+set role anon;
+select count(*) from public.youtube_channels;
+reset role;
+SQL
+)
+ANON_STATUS=$?
+set -e
+if [ $ANON_STATUS -eq 0 ]; then
+  echo "FAIL: anon should not have direct access to application tables"
+  exit 1
+fi
+if ! echo "$ANON_OUTPUT" | grep -q "permission denied"; then
+  echo "FAIL: expected anonymous access to fail with permission denied, got:"
+  echo "$ANON_OUTPUT"
+  exit 1
+fi
+
+echo "==> Asserting security-definer trigger functions are not API-callable"
+set +e
+FUNCTION_OUTPUT=$($PSQL -d "$DB_NAME" 2>&1 <<'SQL'
+set role app_user;
+select public.handle_new_user();
+reset role;
+SQL
+)
+FUNCTION_STATUS=$?
+set -e
+if [ $FUNCTION_STATUS -eq 0 ]; then
+  echo "FAIL: authenticated users must not execute handle_new_user directly"
+  exit 1
+fi
+if ! echo "$FUNCTION_OUTPUT" | grep -q "permission denied"; then
+  echo "FAIL: expected direct function execution to fail with permission denied, got:"
+  echo "$FUNCTION_OUTPUT"
+  exit 1
+fi
 
 OWNER_ID=$($PSQL -d "$DB_NAME" -tAc "select id from auth.users where email='owner@example.com';")
 INTRUDER_ID=$($PSQL -d "$DB_NAME" -tAc "select id from auth.users where email='intruder@example.com';")

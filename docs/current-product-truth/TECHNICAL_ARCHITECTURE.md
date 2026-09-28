@@ -33,7 +33,7 @@ The repository is a pnpm-workspace monorepo.
 
 ## Database architecture
 
-Migrations `0001`–`0010` define:
+Migrations `0001`–`0015` define:
 
 - identity tenancy: `workspaces`, `workspace_members`;
 - core product: `ventures`, `venture_shapes`;
@@ -57,6 +57,8 @@ Supabase TypeScript types are hand-maintained. Schema changes require synchroniz
 - Cron requests require `CRON_SECRET` bearer authentication.
 - Baseline response headers include frame denial, MIME sniffing prevention, referrer policy, and restricted browser permissions.
 - Bad venture identifiers use RLS plus `notFound()` rather than exposing records.
+- Public-table policies explicitly target authenticated users; anonymous Data API table privileges are revoked.
+- The workspace membership security-definer helper lives in a private schema with a fixed empty search path.
 
 ## Configuration
 
@@ -82,7 +84,7 @@ The checked-in `.env.example` currently documents Supabase and Stripe variables 
 - `apps/web/vercel.json` schedules creator intelligence daily at 06:00 UTC.
 - The cron route declares a 60-second duration and caps transcript attempts.
 - `@sparticuz/chromium` supplies serverless Chromium; Playwright/Chromium are externalized from the Next bundle.
-- `AGENTS.md` records the application as deployed to Vercel with a hosted Supabase project, but deployment identity and live configuration are not encoded in this repository.
+- The hosted Supabase project is connected and migrated through `0015`; Vercel deployment identity and configuration remain external to the repository.
 
 ## Testing and CI
 
@@ -91,7 +93,7 @@ GitHub Actions runs on `main` pushes and pull requests:
 - pnpm frozen install;
 - typecheck;
 - lint;
-- 70 Vitest unit tests;
+- 94 Vitest unit tests;
 - production build;
 - PostgreSQL 16 RLS smoke test.
 
@@ -124,7 +126,7 @@ Absent:
 - Research missions use `complete` immediately; queued/running/failed states are not exercised by the current action.
 - External source work runs in request lifetimes and is not resumable.
 - Several schema objects are unused or write-only (`usage_ledger`, application reads of `venture_comparisons`).
-- Live migration state is external. `AGENTS.md` reports `0007`–`0010` pending in the product-owner database.
+- Live migration state was verified through `0015_production_security_hardening.sql` on 2026-09-28.
 
 ## Future architecture
 

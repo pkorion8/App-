@@ -17,12 +17,12 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <Card className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-vs-fg">Something went wrong</h1>
+    <main className="grid-paper flex min-h-screen items-center justify-center bg-vs-lavender-soft p-6">
+      <Card className="max-w-md bg-white/85 text-center shadow-panel">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-vs-orange-soft text-xl" aria-hidden>!</span>
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-vs-fg">Something went wrong</h1>
         <p className="mt-2 text-sm text-vs-fg-muted">
-          That&apos;s on us, not something you did. Your data is safe — this page just hit an
-          error rendering.
+          This page hit an unexpected error. Your saved venture data has not been removed.
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <Button onClick={reset}>Try again</Button>

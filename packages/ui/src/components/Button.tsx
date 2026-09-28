@@ -9,10 +9,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-vs-primary text-vs-primary-fg hover:opacity-90 disabled:opacity-50",
+    "border border-vs-ink bg-vs-primary text-vs-primary-fg shadow-[0_5px_0_rgba(18,18,16,.12)] hover:-translate-y-0.5 hover:shadow-[0_7px_0_rgba(18,18,16,.12)] disabled:opacity-50",
   secondary:
-    "bg-vs-bg-subtle text-vs-fg border border-vs-border hover:bg-vs-border/40 disabled:opacity-50",
-  ghost: "text-vs-fg hover:bg-vs-bg-subtle disabled:opacity-50",
+    "border border-vs-ink/70 bg-white/55 text-vs-fg hover:bg-white disabled:opacity-50",
+  ghost: "border border-transparent text-vs-fg hover:border-vs-border hover:bg-white/55 disabled:opacity-50",
 };
 
 export function Button({
@@ -23,7 +23,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-vs-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed",
         variantClasses[variant],
         className,
       )}

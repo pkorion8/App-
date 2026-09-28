@@ -1,6 +1,8 @@
 # Current Roadmap
 
-Status date: 2026-08-11
+Status date: 2026-09-28
+
+> Launch implementation has moved beyond the historical planning state below. The current release status, external setup and mandatory production verification are recorded in [`../FINAL_LAUNCH_HANDOFF.md`](../FINAL_LAUNCH_HANDOFF.md). The sections below remain as product-history context and must not be used as the current completion report.
 
 ## How to read this roadmap
 
@@ -24,11 +26,12 @@ This roadmap distinguishes repository-backed completion, operational work alread
 
 These items come directly from `AGENTS.md`, not from new product invention:
 
-1. Apply migrations `0007_competitor_snapshots.sql` through `0010_pricing_model.sql` to the live Supabase database if they remain unapplied.
-2. Configure a Stripe test-mode account and required environment variables.
-3. Verify billing Checkout, portal, and webhook behavior end to end.
-4. Verify the GitHub research adapter from the deployed environment.
-5. Verify or reassess the experimental YouTube transcript connector in its real deployment environment.
+1. Configure a Stripe test-mode account and required environment variables.
+2. Verify billing Checkout, portal, and webhook behavior end to end.
+3. Verify the GitHub research adapter from the deployed environment.
+4. Verify or reassess the experimental YouTube transcript connector in its real deployment environment.
+
+Completed on 2026-09-28: the connected production Supabase project was brought through `0015_production_security_hardening.sql`, then checked with the Supabase security advisor.
 
 ## Documentation stabilization
 
@@ -61,7 +64,7 @@ The implementation audit identified these gaps. The priority sections below now 
 
 The Post-Claude delta has been accepted and is preserved in `POST_CLAUDE_DELTA.md`.
 
-## Priority 0 — presentation-ready working prototype
+## Historical Priority 0 — presentation-ready working product
 
 Target: **within the next couple of days from the 2026-08-11 delta**.
 

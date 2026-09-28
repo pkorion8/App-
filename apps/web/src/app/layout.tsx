@@ -3,10 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Venture Sandbox",
-    template: "%s | Venture Sandbox",
+    default: "Sim Venture",
+    template: "%s | Sim Venture",
   },
-  description: "Research, simulate, and build your venture idea.",
+  description: "Research, simulate, and plan your venture before you risk real time and money.",
 };
 
 export default function RootLayout({

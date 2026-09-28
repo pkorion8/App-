@@ -47,25 +47,23 @@ export default async function ChannelsPage() {
   const unresolvedCount = (channels ?? []).filter((c) => !isResolvedId(c.channel_id)).length;
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
       <Link href="/dashboard" className="text-sm text-vs-fg-muted hover:underline">
         ← Your ventures
       </Link>
 
-      <h1 className="mt-4 text-xl font-semibold text-vs-fg">Monitored channels</h1>
-      <p className="mt-1 text-sm text-vs-fg-muted">
-        Shared across everyone — this is the platform&apos;s own accumulating
-        research base, not tied to one venture. A daily job checks each
-        channel for new uploads and pulls out builder claims (cost, revenue,
-        users, tools) where a transcript is available.
-      </p>
+      <section className="grid-paper mt-5 rounded-[32px] border border-vs-border bg-vs-lavender-soft p-6 shadow-panel sm:p-9">
+        <p className="text-xs font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Creator intelligence</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-vs-fg">Monitored channels</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-vs-fg-muted">Build a shared research stream from public creator channels. The daily scan extracts clearly labelled claims about cost, revenue, users and tools whenever a transcript is available.</p>
+      </section>
 
-      <Card className="mt-4">
+      <Card className="mt-5 bg-vs-orange-soft">
         <AddChannelForm />
       </Card>
 
       {unresolvedCount > 0 && (
-        <Card className="mt-4 bg-vs-bg-subtle">
+        <Card className="mt-4 bg-vs-orange-soft">
           <p className="text-sm text-vs-fg-muted">
             {unresolvedCount} channel{unresolvedCount === 1 ? "" : "s"} added by
             handle, not yet resolved to a real channel ID — that needs a
@@ -74,10 +72,10 @@ export default async function ChannelsPage() {
         </Card>
       )}
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-6 grid gap-3 md:grid-cols-2">
         {channels && channels.length > 0 ? (
           channels.map((c) => (
-            <Card key={c.id} className="flex items-center justify-between">
+            <Card key={c.id} className="flex items-center justify-between bg-white/75">
               <div>
                 <p className="font-medium text-vs-fg">{c.channel_name ?? c.channel_id}</p>
                 <p className="text-xs text-vs-fg-muted">
@@ -97,11 +95,12 @@ export default async function ChannelsPage() {
         )}
       </div>
 
-      <h2 className="mt-8 text-lg font-semibold text-vs-fg">Recent claims</h2>
-      <div className="mt-3 space-y-2">
+      <h2 className="mt-10 text-2xl font-semibold tracking-tight text-vs-fg">Recent creator claims</h2>
+      <p className="mt-1 text-sm text-vs-fg-muted">Claims remain unverified until another source corroborates them.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         {recentClaims && recentClaims.length > 0 ? (
           recentClaims.map((claim) => (
-            <Card key={claim.id}>
+            <Card key={claim.id} className="bg-vs-mint-soft">
               <div className="flex items-start justify-between gap-3">
                 <a
                   href={claim.video_url}

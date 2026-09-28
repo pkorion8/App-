@@ -82,29 +82,31 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <section className="grid-paper rounded-[36px] border border-vs-border bg-vs-lavender-soft p-6 shadow-panel sm:p-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[.2em] text-vs-primary">Explore</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-vs-fg">Search before you build.</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-vs-fg sm:text-5xl">Search before you build.</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-vs-fg-muted">Search a category, problem or app concept. Explore checks connected public sources and labels gaps explicitly instead of filling them with generated market claims.</p>
         </div>
         <Badge status="success">LIVE SOURCE SEARCH</Badge>
       </div>
 
-      <form className="mt-8 grid gap-3 sm:grid-cols-[1fr_190px_auto]" action="/explore" method="get">
-        <input name="q" defaultValue={query} placeholder="Try: receipt warranty, meal planner, habit tracker..." className="min-h-12 rounded-vs-md border border-vs-border bg-vs-bg px-4 text-sm text-vs-fg outline-none focus:border-vs-primary" />
-        <select name="country" defaultValue={country} className="min-h-12 rounded-vs-md border border-vs-border bg-vs-bg px-3 text-sm text-vs-fg outline-none focus:border-vs-primary">
+      <form className="mt-8 grid gap-3 rounded-[24px] border border-vs-border bg-white/65 p-3 sm:grid-cols-[1fr_190px_auto]" action="/explore" method="get">
+        <input name="q" defaultValue={query} placeholder="Try: receipt warranty, meal planner, habit tracker..." className="min-h-12 rounded-full border border-vs-border bg-white px-4 text-sm text-vs-fg outline-none focus:border-vs-ink" />
+        <select name="country" defaultValue={country} className="min-h-12 rounded-full border border-vs-border bg-white px-4 text-sm text-vs-fg outline-none focus:border-vs-ink">
           {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
         </select>
-        <button className="rounded-vs-md bg-vs-primary px-5 py-3 text-sm font-semibold text-vs-primary-fg" type="submit">Search sources</button>
+        <button className="rounded-full border border-vs-ink bg-vs-primary px-5 py-3 text-sm font-semibold text-vs-primary-fg transition hover:-translate-y-0.5" type="submit">Search sources</button>
       </form>
+      </section>
 
       {!query && (
         <div className="mt-10 grid gap-4 md:grid-cols-3">
-          <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">1 · Search</p><h2 className="mt-2 font-semibold text-vs-fg">See what already exists</h2><p className="mt-2 text-sm text-vs-fg-muted">Check real App Store competition, country-level World Bank indicators and related public GitHub activity.</p></Card>
-          <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">2 · Compare</p><h2 className="mt-2 font-semibold text-vs-fg">Shortlist ideas</h2><p className="mt-2 text-sm text-vs-fg-muted">Create ventures from promising directions, then compare them side by side.</p></Card>
-          <Card><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">3 · Test</p><h2 className="mt-2 font-semibold text-vs-fg">Move into the venture lab</h2><p className="mt-2 text-sm text-vs-fg-muted">Research, shape, monetize, simulate and plan the first build.</p></Card>
+          <Card className="bg-vs-orange-soft"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">1 · Search</p><h2 className="mt-2 font-semibold text-vs-fg">See what already exists</h2><p className="mt-2 text-sm text-vs-fg-muted">Check real App Store competition, country-level World Bank indicators and related public GitHub activity.</p></Card>
+          <Card className="bg-vs-mint-soft"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">2 · Compare</p><h2 className="mt-2 font-semibold text-vs-fg">Shortlist ideas</h2><p className="mt-2 text-sm text-vs-fg-muted">Create ventures from promising directions, then compare them side by side.</p></Card>
+          <Card className="bg-white"><p className="text-xs font-semibold uppercase tracking-wide text-vs-fg-muted">3 · Test</p><h2 className="mt-2 font-semibold text-vs-fg">Move into the venture lab</h2><p className="mt-2 text-sm text-vs-fg-muted">Research, shape, monetize, simulate and plan the first build.</p></Card>
         </div>
       )}
 

@@ -17,21 +17,35 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   const destination = safeInternalDestination(next);
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="mb-5 text-center"><Link href="/" className="text-xl font-semibold text-vs-fg">Sim Venture</Link><div className="mt-3"><Badge status="primary">TEST YOUR IDEA BEFORE YOU BUILD IT</Badge></div></div>
-        <Card>
-          <h1 className="text-2xl font-semibold text-vs-fg">Start with your idea</h1>
-          <p className="mt-2 text-sm leading-6 text-vs-fg-muted">Enter your email and we&apos;ll send you a sign-in link. No password, business plan or technical knowledge needed.</p>
-          {error === "auth_callback_failed" && (
-            <div className="mt-5 rounded-vs-md border border-vs-border bg-vs-bg-subtle p-3" role="alert">
-              <p className="text-sm font-medium text-vs-fg">That sign-in link could not be completed.</p>
-              <p className="mt-1 text-xs leading-5 text-vs-fg-muted">It may have expired or already been used. Request a fresh link below and use the newest email.</p>
-            </div>
-          )}
-          <div className="mt-6"><SignInForm next={destination} /></div>
-          <div className="mt-5 border-t border-vs-border pt-4"><p className="text-xs leading-5 text-vs-fg-muted">Not ready to create an account? <Link href="/demo" className="font-semibold text-vs-primary">See the public walkthrough first →</Link></p></div>
-        </Card>
+    <main className="min-h-screen bg-vs-bg p-4 sm:p-6">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-[36px] border border-vs-border bg-white shadow-panel lg:grid-cols-[1.05fr_.95fr]">
+        <section className="grid-paper flex flex-col justify-between bg-vs-lavender-soft p-7 sm:p-10 lg:p-14">
+          <div><Link href="/" className="text-lg font-semibold tracking-tight text-vs-fg">Sim Venture</Link></div>
+          <div className="my-14 max-w-xl">
+            <Badge status="primary">IDEA → EVIDENCE → DECISION</Badge>
+            <h1 className="mt-6 text-4xl font-semibold tracking-[-0.045em] text-vs-fg sm:text-6xl">Your next business deserves a better first step.</h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-vs-fg-muted">Research the opportunity, pressure-test the model and plan the smallest useful product—all in one venture workspace.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs font-medium text-vs-fg-muted">
+            <span>01 Research</span><span>02 Simulate</span><span>03 Build</span>
+          </div>
+        </section>
+
+        <section className="flex items-center p-6 sm:p-10 lg:p-14">
+          <div className="mx-auto w-full max-w-md">
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-vs-fg-muted">Secure access</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-vs-fg">Start with your idea</h2>
+            <p className="mt-3 text-sm leading-6 text-vs-fg-muted">Enter your email and we&apos;ll send a secure sign-in link. No password, business plan or technical knowledge needed.</p>
+            {error === "auth_callback_failed" && (
+              <div className="mt-5 rounded-vs-md border border-vs-border bg-vs-orange-soft p-4" role="alert">
+                <p className="text-sm font-medium text-vs-fg">That sign-in link could not be completed.</p>
+                <p className="mt-1 text-xs leading-5 text-vs-fg-muted">It may have expired or already been used. Request a fresh link below and use the newest email.</p>
+              </div>
+            )}
+            <Card className="mt-6 bg-vs-mint-soft"><SignInForm next={destination} /></Card>
+            <p className="mt-5 text-xs leading-5 text-vs-fg-muted">Want to look around first? <Link href="/demo" className="font-semibold text-vs-fg underline decoration-vs-primary decoration-2 underline-offset-4">Open the guided walkthrough →</Link></p>
+          </div>
+        </section>
       </div>
     </main>
   );

@@ -69,9 +69,9 @@ Venture Sandbox lets a signed-in founder record an idea, shape it, collect a mix
 ## Operational truth
 
 - Stack: Next.js App Router, React, TypeScript, Tailwind, pnpm workspaces, Supabase, Vercel, optional Stripe.
-- Latest migration in the repository: `0010_pricing_model.sql`.
-- `AGENTS.md` reports migrations `0007` through `0010` are not yet applied to the live database. This repository alone cannot verify live database state.
-- CI defines typecheck, lint, 70 Vitest tests, production build, and a Postgres RLS smoke test.
+- Latest migration in the repository and connected Supabase project: `0015_production_security_hardening.sql`.
+- The connected Supabase project was verified healthy on 2026-09-28; all public-table policies target authenticated users and anonymous table access is revoked.
+- CI defines typecheck, lint, 94 Vitest tests, production build, contract checks, and a Postgres RLS smoke test.
 - Browser E2E tests and research-quality evals are not implemented.
 - The prior audit could not execute local checks because dependencies were absent and registry access was restricted.
 

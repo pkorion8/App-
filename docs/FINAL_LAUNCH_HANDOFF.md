@@ -24,7 +24,9 @@ Local verification is clean:
 ## Completed production infrastructure
 
 - The connected Supabase project is healthy and contains the full schema through `0015_production_security_hardening.sql`.
-- The Vercel project `app-web` exists and is connected to the GitHub repository.
+- The final release is published from GitHub commit `7c2fac5` through the Vercel project `app-web`.
+- Production URL: `https://app-web-eta-two.vercel.app`
+- The production deployment completed successfully with no Vercel runtime errors during release verification.
 - The production security migration was transaction-tested before it was applied.
 - All 48 public-table RLS policies are restricted to authenticated users.
 - Anonymous Data API table access is revoked.
@@ -35,18 +37,17 @@ Local verification is clean:
 
 These are deployment credentials and product decisions, not missing application development.
 
-1. Authenticate GitHub, push `codex/final-product-ui`, and deploy that branch through the existing Vercel project `app-web`.
-2. Confirm the required Vercel environment variables:
+1. Confirm the required Vercel environment variables before changing the current production integration:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
    - `NEXT_PUBLIC_SITE_URL`
-3. In Supabase Auth, set the production Site URL and allow `<production-origin>/auth/callback` as a redirect URL.
-4. Decide the recurring Pro price, create the Stripe Product/Price, then add:
+2. In Supabase Auth, set the production Site URL to `https://app-web-eta-two.vercel.app` and allow `https://app-web-eta-two.vercel.app/auth/callback` as a redirect URL.
+3. Decide the recurring Pro price, create the Stripe Product/Price, then add:
    - `STRIPE_SECRET_KEY`
    - `STRIPE_PRICE_ID_PRO`
    - `STRIPE_WEBHOOK_SECRET`
-5. Create the Stripe webhook endpoint at `<production-origin>/api/webhooks/stripe`.
-6. Add optional research-operation secrets only if those services will be enabled at launch:
+4. Create the Stripe webhook endpoint at `https://app-web-eta-two.vercel.app/api/webhooks/stripe`.
+5. Add optional research-operation secrets only if those services will be enabled at launch:
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `CRON_SECRET`
    - `YOUTUBE_API_KEY`
@@ -55,7 +56,7 @@ Never commit any secret or production key to Git.
 
 ## Mandatory live verification
 
-After the first Vercel preview is available:
+Against the production URL:
 
 1. Complete a real email magic-link sign-in.
 2. Create a disposable venture and complete: Explore → Create → Research → Shape → Monetization → Simulate → Build → Learn.
